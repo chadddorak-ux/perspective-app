@@ -11,7 +11,7 @@ async function toBase64(file: File): Promise<string> {
   return btoa(binary);
 }
 
-export function ImportFlow({ aiEnabled, example }: { aiEnabled: boolean; example: string }) {
+export function ImportFlow({ aiEnabled, examples }: { aiEnabled: boolean; examples: { label: string; text: string }[] }) {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,7 +66,7 @@ export function ImportFlow({ aiEnabled, example }: { aiEnabled: boolean; example
           className="field min-h-72 text-sm leading-relaxed"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="“I wanted to share something I’m really proud to be part of…”"
+          placeholder="Paste the pitch email, sponsorship one-pager, or the text of a sponsorship deck…"
         />
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -75,7 +75,14 @@ export function ImportFlow({ aiEnabled, example }: { aiEnabled: boolean; example
           {file ? `📎 ${file.name}` : "Attach sponsorship PDF"}
         </label>
         {file && <button className="btn-ghost" onClick={() => setFile(null)}>Remove</button>}
-        <button className="btn-ghost" onClick={() => setText(example)}>Use the EAGLES SOAR example</button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted">Try an example:</span>
+        {examples.map((ex) => (
+          <button key={ex.label} className="rounded-full border border-line px-3 py-1 hover:border-brand" onClick={() => setText(ex.text)}>
+            {ex.label}
+          </button>
+        ))}
       </div>
       {!aiEnabled && (
         <p className="hint">

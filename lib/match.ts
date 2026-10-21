@@ -2,6 +2,8 @@ import {
   AUDIENCES,
   CAUSES,
   CAUSE_ADJACENCY,
+  INDUSTRIES,
+  INDUSTRY_AFFINITY,
   OBJECTIVES,
   REGIONS,
   SUPPORT_TYPES,
@@ -26,12 +28,14 @@ const DAY_MS = 86_400_000;
 
 // Maps sponsorship-package language to the sponsor objective it serves.
 const BENEFIT_SIGNALS: [RegExp, ObjectiveId][] = [
-  [/logo|brand|signage|banner|t-?shirt|website|naming|track car|recognition/i, "brand-visibility"],
-  [/media|press|social|broadcast|livestream/i, "brand-visibility"],
+  [/logo|brand|signage|banner|t-?shirt|jersey|website|naming|title|recognition|bib/i, "brand-visibility"],
+  [/media|press|broadcast|livestream|radio|tv\b/i, "brand-visibility"],
+  [/social|video|photo|story|stories|content|testimonial|feature/i, "content"],
+  [/co-?brand|cause marketing|percent of (sales|proceeds)|round-?up|licens|campaign partner|point of sale/i, "cause-marketing"],
   [/talent|recruit|career|intern|resume|job|database|hiring|workforce/i, "talent-pipeline"],
   [/stage|remarks|keynote|panel|speak|session|workshop|host/i, "thought-leadership"],
   [/leadership|advisory|council|vip|decision|executive|reception|board/i, "relationships"],
-  [/activation|booth|table|sampling|demo|exhibit|display/i, "customer-reach"],
+  [/activation|booth|sampling|demo|exhibit|display|coupon|product/i, "customer-reach"],
   [/volunteer|mentor|employee/i, "employee-engagement"],
 ];
 
@@ -41,7 +45,9 @@ export function lowerLabel(s: string): string {
 }
 
 export function money(n: number): string {
-  return n >= 1000 && n % 1000 === 0 ? `$${n / 1000}K` : `$${n.toLocaleString("en-US")}`;
+  if (n >= 1_000_000 && n % 100_000 === 0) return `$${n / 1_000_000}M`;
+  if (n >= 1000 && n % 100 === 0) return `$${n / 1000}K`;
+  return `$${n.toLocaleString("en-US")}`;
 }
 
 export function objectivesOffered(opp: Opportunity): Set<ObjectiveId> {
@@ -64,9 +70,15 @@ export function objectivesOffered(opp: Opportunity): Set<ObjectiveId> {
   return offered;
 }
 
-// Sponsors list causes in priority order, so a hit on their first cause counts most.
+// Both sides list causes in priority order: a hit on the sponsor's first cause
+// and the organization's first cause counts most.
 const PRIORITY_WEIGHTS = [1, 0.9, 0.8, 0.7];
+const OPP_PRIORITY_WEIGHTS = [1, 0.85, 0.7, 0.6, 0.5];
+const oppWeight = (opp: Opportunity, c: CauseId) =>
+  OPP_PRIORITY_WEIGHTS[Math.min(opp.causes.indexOf(c), OPP_PRIORITY_WEIGHTS.length - 1)];
 const ADJACENT_CREDIT = 0.4;
+
+const INDUSTRY_CREDIT = 0.3;
 
 function scoreCauses(opp: Opportunity, sp: SponsorProfile) {
   const max = WEIGHTS.causes;
@@ -76,21 +88,33 @@ function scoreCauses(opp: Opportunity, sp: SponsorProfile) {
     const w = PRIORITY_WEIGHTS[Math.min(i, PRIORITY_WEIGHTS.length - 1)];
     if (opp.causes.includes(s)) {
       direct.push(s);
-      return w;
+      return w * oppWeight(opp, s);
     }
     const near = opp.causes.find((c) => CAUSE_ADJACENCY[s]?.includes(c));
     if (near) {
       if (!adjacent.includes(near)) adjacent.push(near);
-      return w * ADJACENT_CREDIT;
+      return w * ADJACENT_CREDIT * oppWeight(opp, near);
     }
     return 0;
   });
+  // A brand is credible on causes close to what it sells (pet food ↔ animal
+  // welfare) even if it didn't list them.
+  const natural = sp.industry
+    ? opp.causes.filter((c) => !direct.includes(c) && INDUSTRY_AFFINITY[sp.industry!].includes(c))
+    : [];
+  if (natural.length) credits.push(INDUSTRY_CREDIT * oppWeight(opp, natural[0]));
   credits.sort((a, b) => b - a);
-  const fit = 0.7 * (credits[0] ?? 0) + 0.3 * (credits[1] ?? 0);
+  // Breadth of overlap matters only when both sides list several causes; a
+  // single-cause sponsor or listing that matches perfectly is a perfect fit.
+  const best = credits[0] ?? 0;
+  const second = Math.min(sp.causes.length, opp.causes.length) > 1 ? credits[1] ?? 0 : best;
+  const fit = 0.7 * best + 0.3 * second;
   if (fit === 0) return { score: 0, fit, note: "No overlap with their focus areas" };
   const note = direct.length
     ? `Shared focus: ${direct.map((c) => label(CAUSES, c)).join(", ")}`
-    : `Adjacent to their focus: ${adjacent.map((c) => label(CAUSES, c)).join(", ")}`;
+    : adjacent.length
+      ? `Adjacent to their focus: ${adjacent.map((c) => label(CAUSES, c)).join(", ")}`
+      : `Natural fit for a ${lowerLabel(label(INDUSTRIES, sp.industry!))} brand: ${natural.map((c) => label(CAUSES, c)).join(", ")}`;
   return { score: Math.round(max * fit), fit, note };
 }
 
@@ -110,20 +134,21 @@ function scoreGeography(opp: Opportunity, sp: SponsorProfile) {
   const loc = opp.location;
   if (loc.virtual) {
     return scope === "national"
-      ? { score: max, note: "Virtual reach fits a national giver" }
-      : { score: Math.round(max * 0.6), note: "Virtual — not specific to their home market" };
+      ? { score: max, inArea: true, note: "Virtual reach fits a national giver" }
+      : { score: Math.round(max * 0.6), inArea: true, note: "Virtual — not specific to their home market" };
   }
-  const metroHit =
-    loc.metro && metros.some((m) => m.toLowerCase() === loc.metro!.toLowerCase());
-  if (metroHit) return { score: max, note: `In their home market (${loc.metro})` };
+  const metroHit = loc.metro && metros.some((m) => m.toLowerCase() === loc.metro!.toLowerCase());
+  if (metroHit) return { score: max, inArea: true, note: `In their home market (${loc.metro})` };
   const inState = loc.state ? statesInScope(sp).has(loc.state) : false;
   const where = loc.state ? US_STATES[loc.state] ?? loc.state : "an unknown location";
   if (scope === "national") {
-    return { score: Math.round(max * (inState ? 0.95 : 0.75)), note: `National giver; event is in ${where}` };
+    return { score: Math.round(max * (inState ? 0.95 : 0.75)), inArea: true, note: `National giver; this is in ${where}` };
   }
-  if (inState && scope !== "local") return { score: Math.round(max * 0.85), note: `Inside their giving area (${where})` };
-  if (inState) return { score: Math.round(max * 0.5), note: `Same state, but outside their local market` };
-  return { score: 0, note: `Outside their giving area (${where})` };
+  if (inState && (scope !== "local" || metros.length === 0)) {
+    return { score: Math.round(max * 0.85), inArea: true, note: `Inside their giving area (${where})` };
+  }
+  if (inState) return { score: Math.round(max * 0.4), inArea: false, note: `Same state, but outside their local market` };
+  return { score: 0, inArea: false, note: `Outside their giving area (${where})` };
 }
 
 function scoreBudget(opp: Opportunity, sp: SponsorProfile) {
@@ -164,10 +189,12 @@ function scoreAudience(opp: Opportunity, sp: SponsorProfile) {
   };
 }
 
-function scoreObjectives(opp: Opportunity, sp: SponsorProfile) {
+function scoreObjectives(opp: Opportunity, sp: SponsorProfile, inArea: boolean) {
   const max = WEIGHTS.objectives;
   if (sp.objectives.length === 0) return { score: Math.round(max * 0.6), note: "No stated objectives", met: [] as ObjectiveId[] };
   const offered = objectivesOffered(opp);
+  // Local presence only counts in a market the sponsor actually cares about.
+  if (!inArea || sp.geography.scope === "national") offered.delete("local-presence");
   const met = sp.objectives.filter((o) => offered.has(o));
   const score = Math.round(max * (met.length / sp.objectives.length));
   const note = met.length
@@ -193,6 +220,7 @@ function scoreTiming(opp: Opportunity, sp: SponsorProfile, now: Date) {
 // a well-timed, in-budget event that's off-mission is still a long shot.
 const CORE_CAUSE_FIT = 0.8;
 const OFF_CORE_CAP = 84;
+const OUT_OF_AREA_CAP = 45;
 const SUPPORT_MISMATCH_PENALTY = 10;
 
 function grade(score: number): MatchResult["grade"] {
@@ -211,6 +239,9 @@ export function scoreMatch(opp: Opportunity, sp: SponsorProfile, now: Date = new
   if (excluded.length) {
     blockers.push(`${sp.name} excludes ${excluded.map((c) => label(CAUSES, c)).join(", ")}`);
   }
+  if (sp.industry && opp.excludedIndustries.includes(sp.industry)) {
+    blockers.push(`${opp.orgName} doesn't accept ${lowerLabel(label(INDUSTRIES, sp.industry))} sponsors`);
+  }
   if (opp.startDate && Date.parse(opp.endDate ?? opp.startDate) < now.getTime() - DAY_MS) {
     blockers.push("This opportunity has already ended");
   }
@@ -219,7 +250,7 @@ export function scoreMatch(opp: Opportunity, sp: SponsorProfile, now: Date = new
   const geo = scoreGeography(opp, sp);
   const budget = scoreBudget(opp, sp);
   const audience = scoreAudience(opp, sp);
-  const objectives = scoreObjectives(opp, sp);
+  const objectives = scoreObjectives(opp, sp, geo.inArea);
   const timing = scoreTiming(opp, sp, now);
 
   const breakdown: MatchResult["breakdown"] = [
@@ -253,6 +284,11 @@ export function scoreMatch(opp: Opportunity, sp: SponsorProfile, now: Date = new
   if (causes.fit < CORE_CAUSE_FIT && score > OFF_CORE_CAP) {
     adjustments.push({ label: "Not their primary cause (capped)", points: OFF_CORE_CAP - score });
     score = OFF_CORE_CAP;
+  }
+  // Local and regional givers rarely fund outside their area, however good the fit.
+  if (!geo.inArea && score > OUT_OF_AREA_CAP) {
+    adjustments.push({ label: "Outside their giving area (capped)", points: OUT_OF_AREA_CAP - score });
+    score = OUT_OF_AREA_CAP;
   }
 
   for (const d of breakdown) {

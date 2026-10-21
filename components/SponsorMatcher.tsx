@@ -3,7 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { Ranked } from "@/lib/match";
-import { AUDIENCES, CAUSES, OBJECTIVES, REGIONS, SPONSOR_TYPES, SUPPORT_TYPES, US_STATES } from "@/lib/taxonomy";
+import {
+  AUDIENCES,
+  CAUSES,
+  CAUSE_GROUPS,
+  INDUSTRIES,
+  INDUSTRY_AFFINITY,
+  OBJECTIVES,
+  REGIONS,
+  SPONSOR_TYPES,
+  SUPPORT_TYPES,
+  US_STATES,
+  type IndustryId,
+} from "@/lib/taxonomy";
 import type { Opportunity, SponsorProfile } from "@/lib/types";
 import { ChipSelect } from "./ChipSelect";
 import { MatchCard } from "./MatchCard";
@@ -85,6 +97,37 @@ export function SponsorMatcher() {
             </select>
           </label>
         </div>
+        {(d.type === "brand" || d.type === "small-business") && (
+          <div>
+            <label>
+              <span className="label">Industry</span>
+              <select
+                className="field"
+                value={d.industry ?? ""}
+                onChange={(e) => set("industry", (e.target.value || undefined) as IndustryId | undefined)}
+              >
+                <option value="">Choose your industry</option>
+                {Object.entries(INDUSTRIES).map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+              </select>
+            </label>
+            {d.industry && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-muted">Brands like yours are credible on:</span>
+                {INDUSTRY_AFFINITY[d.industry].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    disabled={d.causes.includes(c)}
+                    onClick={() => set("causes", [...d.causes, c].slice(0, 6))}
+                    className="rounded-full border border-dashed border-brand px-2 py-0.5 text-brand disabled:border-line disabled:text-muted"
+                  >
+                    + {CAUSES[c]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <label className="block">
           <span className="label">About your giving</span>
           <textarea className="field min-h-20" value={d.about} onChange={(e) => set("about", e.target.value)} placeholder="What you fund and why." />
@@ -93,7 +136,7 @@ export function SponsorMatcher() {
         <div>
           <span className="label">Causes you care about</span>
           <p className="hint mb-2">In priority order — your first pick counts most.</p>
-          <ChipSelect options={CAUSES} value={d.causes} onChange={(v) => set("causes", v)} max={6} />
+          <ChipSelect options={CAUSES} groups={CAUSE_GROUPS} value={d.causes} onChange={(v) => set("causes", v)} max={6} />
         </div>
         <div>
           <span className="label">What you want from a partnership</span>
@@ -143,7 +186,7 @@ export function SponsorMatcher() {
                   value={d.geography.metros.join(", ")}
                   onChange={(e) => setGeo({ metros: e.target.value.split(",").map((s) => s.trimStart()) })}
                   onBlur={() => setGeo({ metros: d.geography.metros.map((m) => m.trim()).filter(Boolean) })}
-                  placeholder="Miami, Fort Lauderdale"
+                  placeholder="e.g. Denver, Boulder"
                 />
               </label>
             </div>

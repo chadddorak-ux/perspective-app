@@ -12,7 +12,8 @@ const NAV = [
   { href: "/find", label: "Find sponsors" },
   { href: "/give", label: "Find causes" },
   { href: "/import", label: "Import a pitch" },
-  { href: "/opportunities", label: "Browse" },
+  { href: "/opportunities", label: "Opportunities" },
+  { href: "/sponsors", label: "Sponsors" },
   { href: "/intros", label: "Intros" },
 ];
 
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main className="mx-auto max-w-6xl px-4 pb-24 pt-8">{children}</main>
         <footer className="border-t border-line py-8 text-center text-xs text-muted">
-          Perspective prototype · Sample sponsors are fictional and labeled as such
+          Perspective prototype · Sample organizations and sponsors are fictional and labeled as such
         </footer>
       </body>
     </html>

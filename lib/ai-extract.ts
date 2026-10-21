@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { AUDIENCES, CAUSES, ORG_TYPES, SUPPORT_TYPES, US_STATES } from "./taxonomy";
+import { AUDIENCES, CAUSES, INDUSTRIES, ORG_TYPES, SUPPORT_TYPES, US_STATES } from "./taxonomy";
 import type { ExtractResult } from "./extract";
 
 const keys = <T extends Record<string, string>>(o: T) => Object.keys(o) as [keyof T & string, ...(keyof T & string)[]];
@@ -9,8 +9,9 @@ const keys = <T extends Record<string, string>>(o: T) => Object.keys(o) as [keyo
 const OpportunitySchema = z.object({
   orgName: z.string(),
   orgType: z.enum(keys(ORG_TYPES)),
+  ein: z.string().nullable().describe("IRS EIN as NN-NNNNNNN, only if stated"),
   title: z.string().describe("Event, program or campaign name"),
-  kind: z.enum(["event", "program", "campaign"]),
+  kind: z.enum(["event", "program", "campaign", "general"]).describe("general = general operating support"),
   summary: z.string().describe("2–3 sentence pitch a sponsor would read first"),
   causes: z.array(z.enum(keys(CAUSES))).describe("Most relevant first, max 5"),
   audiences: z.array(z.enum(keys(AUDIENCES))),
@@ -31,6 +32,7 @@ const OpportunitySchema = z.object({
     }),
   ),
   asks: z.array(z.enum(keys(SUPPORT_TYPES))),
+  excludedIndustries: z.array(z.enum(keys(INDUSTRIES))).describe("Sponsor industries the organization says it won't accept"),
   partners: z.array(z.string()),
   contactName: z.string().nullable(),
   contactEmail: z.string().nullable(),
@@ -39,9 +41,9 @@ const OpportunitySchema = z.object({
   warnings: z.array(z.string()).describe("Anything missing or ambiguous a human should confirm"),
 });
 
-const SYSTEM = `You turn sponsorship pitches (emails, one-pagers, sponsorship packages) into a structured listing for a sponsor-matching platform.
+const SYSTEM = `You turn sponsorship pitches (emails, one-pagers, sponsorship packages) from any kind of nonprofit or community organization into a structured listing for a sponsor-matching platform.
 
-Extract only what the material supports. Map causes and audiences to the closest allowed ids. For sponsorship tiers, keep the organizer's tier names, the dollar amount, availability (exclusive/limited/multiple when stated), and the concrete benefits for that tier. When a PDF lays tiers out as a grid, read each column carefully so benefits land on the right tier. "asks" covers every way the organizer asks for help (cash sponsorship, volunteers, mentors, introductions, in-kind, media). Use warnings for anything a human should confirm, such as an unclear year or a benefit grid you couldn't read with confidence.`;
+Extract only what the material supports. Map causes and audiences to the closest allowed ids. For sponsorship tiers, keep the organizer's tier names, the dollar amount, availability (exclusive/limited/multiple when stated), and the concrete benefits for that tier. When a PDF lays tiers out as a grid, read each column carefully so benefits land on the right tier. "asks" covers every way the organizer asks for help (cash, in-kind, pro bono, volunteers, mentors, matching gifts, introductions, media). Only fill excludedIndustries when the organization states it won't accept certain sponsors. Use warnings for anything a human should confirm, such as an unclear year or a benefit grid you couldn't read with confidence.`;
 
 export function aiConfigured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
@@ -78,6 +80,7 @@ export async function extractWithAI(text: string, pdfBase64?: string): Promise<E
     draft: {
       orgName: out.orgName,
       orgType: out.orgType,
+      ein: out.ein ?? undefined,
       title: out.title,
       kind: out.kind,
       summary: out.summary,
@@ -94,6 +97,7 @@ export async function extractWithAI(text: string, pdfBase64?: string): Promise<E
         .map((t) => ({ ...t, availability: t.availability ?? undefined }))
         .sort((a, b) => b.amount - a.amount),
       asks: out.asks,
+      excludedIndustries: out.excludedIndustries,
       partners: out.partners,
       contact: {
         name: out.contactName ?? undefined,

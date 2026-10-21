@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { money } from "@/lib/match";
-import { CAUSES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
+import { CAUSES, INDUSTRIES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
 import type { MatchResult, Opportunity, SponsorProfile } from "@/lib/types";
 import { OutreachModal } from "./OutreachModal";
 import { Breakdown, GradeBadge, Pill, SampleTag, ScoreRing } from "./ui";
@@ -38,7 +38,7 @@ export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
   const title = isOrg ? sponsor.name : opp.title;
   const href = isOrg ? `/sponsors/${sponsor.id}` : `/opportunities/${opp.id}`;
   const subtitle = isOrg
-    ? `${label(SPONSOR_TYPES, sponsor.type)} · gives ${money(sponsor.budget.min)}–${money(sponsor.budget.max)}`
+    ? `${sponsor.industry ? label(INDUSTRIES, sponsor.industry) : label(SPONSOR_TYPES, sponsor.type)} · gives ${money(sponsor.budget.min)}–${money(sponsor.budget.max)}`
     : `${opp.orgName} · ${opp.location.virtual ? "Virtual" : [opp.location.city, opp.location.state].filter(Boolean).join(", ")}`;
   const isSample = isOrg ? sponsor.sample : opp.sample;
 
@@ -110,7 +110,7 @@ export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
             {intro === "done" ? "Intro requested ✓" : intro === "saving" ? "Requesting…" : "Request warm intro"}
           </button>
         )}
-        {eligible && !saved && <span className="hint">Save your listing to request intros</span>}
+        {eligible && !saved && <span className="hint">Save your {isOrg ? "listing" : "giving profile"} to request intros</span>}
         {intro === "error" && <span className="text-sm text-bad">Couldn't request intro</span>}
         <button className="btn-ghost ml-auto" onClick={() => setOpen(!open)}>{open ? "Hide" : "Score"} breakdown</button>
       </div>

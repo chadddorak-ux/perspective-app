@@ -1,21 +1,48 @@
 import Link from "next/link";
+import { FilterBar, toOptions } from "@/components/FilterBar";
 import { Pill, PageHeader, SampleTag } from "@/components/ui";
 import { money } from "@/lib/match";
-import { CAUSES, label } from "@/lib/taxonomy";
-import { listOpportunities, listSponsors } from "@/lib/store";
+import { CAUSES, US_STATES, label } from "@/lib/taxonomy";
+import { listOpportunities } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Browse — Perspective" };
+export const metadata = { title: "Opportunities — Perspective" };
 
-export default async function OpportunitiesPage() {
-  const [opps, sponsors] = await Promise.all([listOpportunities(), listSponsors()]);
+const KINDS = { event: "Events", program: "Programs", campaign: "Campaigns", general: "General support" };
+
+type Search = { q?: string; cause?: string; state?: string; kind?: string };
+
+export default async function OpportunitiesPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const { q, cause, state, kind } = await searchParams;
+  const all = await listOpportunities();
+  const needle = q?.trim().toLowerCase();
+  const opps = all.filter(
+    (o) =>
+      (!cause || o.causes.includes(cause as never)) &&
+      (!state || (state === "virtual" ? o.location.virtual : o.location.state === state)) &&
+      (!kind || o.kind === kind) &&
+      (!needle || `${o.title} ${o.orgName} ${o.summary} ${o.location.city ?? ""}`.toLowerCase().includes(needle)),
+  );
+  const states = new Set(all.map((o) => o.location.state).filter(Boolean) as string[]);
+
   return (
     <>
-      <PageHeader eyebrow="Network" title="Browse the network">
-        {opps.length} opportunities raising support and {sponsors.length} sponsor profiles. Open any one to see its best matches.
+      <PageHeader eyebrow="Network" title="Opportunities raising support">
+        Events, programs and campaigns from nonprofits of every kind. Open any listing to see the sponsors who fit best.
       </PageHeader>
-
-      <h2 className="mb-3 font-semibold">Opportunities</h2>
+      <FilterBar
+        action="/opportunities"
+        query={q}
+        values={{ cause, state, kind }}
+        placeholder="Search by name, organization or city"
+        filters={[
+          { name: "cause", label: "Any cause", options: toOptions(CAUSES) },
+          { name: "state", label: "Anywhere", options: [{ value: "virtual", label: "Virtual / national" }, ...toOptions(US_STATES, states)] },
+          { name: "kind", label: "Any type", options: toOptions(KINDS) },
+        ]}
+      />
+      <p className="mb-3 text-sm text-muted">{opps.length} of {all.length} opportunities</p>
+      {opps.length === 0 && <div className="card p-10 text-center text-muted">Nothing matches those filters yet.</div>}
       <div className="grid gap-4 md:grid-cols-2">
         {opps.map((o) => {
           const amounts = o.tiers.map((t) => t.amount);
@@ -36,23 +63,6 @@ export default async function OpportunitiesPage() {
             </Link>
           );
         })}
-      </div>
-
-      <h2 className="mb-3 mt-12 font-semibold">Sponsors & donors</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {sponsors.map((s) => (
-          <Link key={s.id} href={`/sponsors/${s.id}`} className="card p-5 transition hover:border-brand">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{s.name}</h3>
-              {s.sample && <SampleTag />}
-            </div>
-            <p className="mt-1 line-clamp-2 text-sm text-muted">{s.about}</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <Pill tone="brand">{money(s.budget.min)}–{money(s.budget.max)}</Pill>
-              {s.causes.slice(0, 2).map((c) => <Pill key={c}>{label(CAUSES, c)}</Pill>)}
-            </div>
-          </Link>
-        ))}
       </div>
     </>
   );

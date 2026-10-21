@@ -2,93 +2,140 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { seedOpportunities, seedSponsors } from "../data/seed.ts";
 import { objectivesOffered, rankSponsors, scoreMatch, WEIGHTS } from "./match.ts";
-import type { Opportunity, SponsorProfile } from "./types.ts";
+import { CAUSES, CAUSE_GROUPS, CAUSE_ADJACENCY, INDUSTRIES, INDUSTRY_AFFINITY } from "./taxonomy.ts";
+import { makeOpp, makeSponsor } from "./test-factories.ts";
 
 const NOW = new Date("2026-10-21T12:00:00Z");
-const opp = (id: string) => seedOpportunities.find((o) => o.id === id)!;
-const sponsor = (id: string) => seedSponsors.find((s) => s.id === id)!;
 
-describe("scoreMatch", () => {
+describe("taxonomy", () => {
   it("weights sum to 100 so scores read as percentages", () => {
     assert.equal(Object.values(WEIGHTS).reduce((a, b) => a + b, 0), 100);
   });
 
-  it("ranks an aerospace employer in the same metro first for EAGLES SOAR", () => {
-    const ranked = rankSponsors(opp("eagles-soar-2026"), seedSponsors, NOW);
-    assert.equal(ranked[0].item.id, "aeronova");
-    assert.equal(ranked[0].match.grade, "Excellent");
-    assert.equal(ranked[0].match.suggestedTier?.amount, 40000);
+  it("every cause appears in exactly one display group", () => {
+    const grouped = CAUSE_GROUPS.flatMap((g) => g.ids);
+    assert.deepEqual([...grouped].sort(), Object.keys(CAUSES).sort());
   });
 
-  it("treats a sponsor's excluded cause as a hard blocker", () => {
-    const m = scoreMatch(opp("eagles-soar-2026"), sponsor("redline-energy"), NOW);
+  it("adjacency and industry affinity only reference real causes", () => {
+    for (const list of [...Object.values(CAUSE_ADJACENCY), ...Object.values(INDUSTRY_AFFINITY)]) {
+      for (const c of list ?? []) assert.ok(c in CAUSES, c);
+    }
+    assert.deepEqual(Object.keys(INDUSTRY_AFFINITY).sort(), Object.keys(INDUSTRIES).sort());
+  });
+});
+
+describe("scoreMatch", () => {
+  it("rates a national sponsor with the same top cause and budget as Excellent", () => {
+    const m = scoreMatch(makeOpp(), makeSponsor(), NOW);
+    assert.equal(m.grade, "Excellent");
+    assert.equal(m.suggestedTier?.amount, 25000);
+  });
+
+  it("weights the organization's primary cause above its secondary ones", () => {
+    const primary = scoreMatch(makeOpp({ causes: ["food-security", "arts-culture"] }), makeSponsor(), NOW);
+    const secondary = scoreMatch(makeOpp({ causes: ["arts-culture", "food-security"] }), makeSponsor(), NOW);
+    assert.ok(primary.score > secondary.score, `${primary.score} vs ${secondary.score}`);
+  });
+
+  it("gives partial credit when a brand's industry fits the cause", () => {
+    const opp = makeOpp({ causes: ["animal-welfare"] });
+    const generic = scoreMatch(opp, makeSponsor({ causes: ["arts-culture"] }), NOW);
+    const petBrand = scoreMatch(opp, makeSponsor({ causes: ["arts-culture"], industry: "pets" }), NOW);
+    assert.ok(petBrand.score > generic.score);
+    assert.match(petBrand.breakdown[0].note, /Natural fit for a pet products & services brand/);
+  });
+
+  it("blocks sponsors from industries the organization won't accept", () => {
+    const m = scoreMatch(makeOpp({ excludedIndustries: ["alcohol"] }), makeSponsor({ industry: "alcohol" }), NOW);
     assert.equal(m.grade, "Not eligible");
-    assert.equal(m.score, 0);
-    assert.match(m.blockers[0], /excludes Youth development/);
+    assert.match(m.blockers[0], /doesn't accept alcohol sponsors/);
   });
 
-  it("blocks non-501(c)(3) orgs for sponsors that require it", () => {
-    const school: Opportunity = { ...opp("eagles-soar-2026"), orgType: "other" };
-    const m = scoreMatch(school, sponsor("aeronova"), NOW);
+  it("blocks causes the sponsor excludes", () => {
+    const m = scoreMatch(makeOpp({ causes: ["youth-development"] }), makeSponsor({ excludedCauses: ["youth-development"] }), NOW);
     assert.equal(m.grade, "Not eligible");
   });
 
-  it("keeps off-mission sponsors out of the top grades even when logistics fit", () => {
-    const m = scoreMatch(opp("eagles-soar-2026"), sponsor("coastal-grocers"), NOW);
+  it("blocks non-501(c)(3) organizations for sponsors that require it", () => {
+    assert.equal(scoreMatch(makeOpp({ orgType: "other" }), makeSponsor(), NOW).grade, "Not eligible");
+    assert.notEqual(scoreMatch(makeOpp({ orgType: "other" }), makeSponsor({ requires501c3: false }), NOW).grade, "Not eligible");
+  });
+
+  it("caps local givers outside their area, however good the fit", () => {
+    const local = makeSponsor({ geography: { scope: "local", states: ["IL"], metros: ["Chicago"] } });
+    const m = scoreMatch(makeOpp(), local, NOW);
+    assert.ok(m.score <= 45, `score ${m.score}`);
+    assert.ok(m.adjustments.some((a) => a.label === "Outside their giving area (capped)"));
+    assert.equal(scoreMatch(makeOpp({ location: { city: "Chicago", state: "IL", metro: "Chicago" } }), local, NOW).grade, "Excellent");
+  });
+
+  it("expands a regional sponsor's states to the whole region", () => {
+    const regional = makeSponsor({ geography: { scope: "regional", states: ["CA"], metros: [] } });
+    const m = scoreMatch(makeOpp({ location: { city: "Seattle", state: "WA" } }), regional, NOW);
+    assert.match(m.breakdown.find((d) => d.dimension === "geography")!.note, /Inside their giving area/);
+  });
+
+  it("keeps off-mission sponsors in the long-shot range even when logistics fit", () => {
+    const m = scoreMatch(makeOpp(), makeSponsor({ causes: ["arts-culture"] }), NOW);
     assert.equal(m.grade, "Long shot");
-    assert.ok(m.adjustments.some((a) => a.label === "Outside their core causes"));
   });
 
-  it("caps sponsors whose top cause isn't served below Excellent", () => {
-    const m = scoreMatch(opp("eagles-soar-2026"), sponsor("coral-coast-cu"), NOW);
+  it("caps matches on a sponsor's low-priority cause below Excellent", () => {
+    const sponsor = makeSponsor({ causes: ["food-security", "housing", "arts-culture", "poverty"] });
+    const m = scoreMatch(makeOpp({ causes: ["poverty"] }), sponsor, NOW);
     assert.ok(m.score <= 84, `score ${m.score}`);
-    assert.equal(m.grade, "Strong");
   });
 
-  it("suggests the largest tier inside the sponsor's budget", () => {
-    const m = scoreMatch(opp("eagles-soar-2026"), sponsor("alvarez-fund"), NOW);
-    assert.equal(m.suggestedTier?.amount, 10000);
+  it("suggests the largest tier inside the budget and flags tiers above it", () => {
+    assert.equal(scoreMatch(makeOpp(), makeSponsor({ budget: { min: 1000, max: 10000 } }), NOW).suggestedTier?.amount, 5000);
+    const small = scoreMatch(makeOpp(), makeSponsor({ budget: { min: 100, max: 1000 } }), NOW);
+    assert.equal(small.breakdown.find((d) => d.dimension === "budget")!.score, 0);
+    assert.ok(small.gaps.some((g) => /above their typical/.test(g)));
   });
 
-  it("flags when the cheapest tier is above a sponsor's budget", () => {
-    const small: SponsorProfile = { ...sponsor("alvarez-fund"), budget: { min: 500, max: 2000 } };
-    const m = scoreMatch(opp("eagles-soar-2026"), small, NOW);
-    assert.equal(m.breakdown.find((d) => d.dimension === "budget")!.score, 0);
-    assert.ok(m.gaps.some((g) => /above their typical/.test(g)));
-  });
-
-  it("penalizes events inside the sponsor's decision window", () => {
-    const m = scoreMatch(opp("eagles-soar-2026"), sponsor("atlas-defense"), NOW);
-    const timing = m.breakdown.find((d) => d.dimension === "timing")!;
-    assert.ok(timing.score < timing.max);
-    assert.match(timing.note, /120\+ days ahead/);
-  });
-
-  it("marks past events as not eligible", () => {
-    const later = new Date("2027-01-15T00:00:00Z");
-    assert.equal(scoreMatch(opp("eagles-soar-2026"), sponsor("aeronova"), later).grade, "Not eligible");
+  it("penalizes events inside the sponsor's decision window and blocks past events", () => {
+    const soon = scoreMatch(makeOpp({ startDate: "2026-11-15" }), makeSponsor({ leadTimeDays: 120 }), NOW);
+    assert.match(soon.breakdown.find((d) => d.dimension === "timing")!.note, /120\+ days ahead/);
+    assert.equal(scoreMatch(makeOpp({ startDate: "2026-09-01" }), makeSponsor(), NOW).grade, "Not eligible");
   });
 
   it("penalizes a support-type mismatch", () => {
-    const mediaOnly = sponsor("lumen-media");
-    const cashOnly: Opportunity = { ...opp("tampa-hunger-5k"), asks: ["cash"] };
-    const m = scoreMatch(cashOnly, mediaOnly, NOW);
+    const m = scoreMatch(makeOpp({ asks: ["cash"] }), makeSponsor({ supportTypes: ["media"] }), NOW);
     assert.ok(m.adjustments.some((a) => a.label === "Support type mismatch"));
   });
 
-  it("reads sponsor-relevant objectives out of tier benefits", () => {
-    const offered = objectivesOffered(opp("eagles-soar-2026"));
-    for (const o of ["talent-pipeline", "brand-visibility", "thought-leadership", "relationships", "customer-reach"] as const) {
+  it("reads sponsor objectives out of tier benefits", () => {
+    const offered = objectivesOffered(
+      makeOpp({
+        tiers: [{ name: "Title", amount: 10000, benefits: ["Resume book access", "Keynote", "VIP reception", "Product sampling", "Social video series", "Co-branded campaign"] }],
+      }),
+    );
+    for (const o of ["talent-pipeline", "thought-leadership", "relationships", "customer-reach", "content", "cause-marketing"] as const) {
       assert.ok(offered.has(o), o);
     }
   });
+});
 
+describe("sample network", () => {
   it("scores are always within 0–100", () => {
-    for (const o of seedOpportunities) {
-      for (const s of seedSponsors) {
-        const { score } = scoreMatch(o, s, NOW);
-        assert.ok(score >= 0 && score <= 100, `${o.id} × ${s.id} = ${score}`);
-      }
+    for (const o of seedOpportunities) for (const s of seedSponsors) {
+      const { score } = scoreMatch(o, s, NOW);
+      assert.ok(score >= 0 && score <= 100, `${o.id} × ${s.id} = ${score}`);
     }
+  });
+
+  it("finds a credible top sponsor across very different causes", () => {
+    const top = (id: string) => rankSponsors(seedOpportunities.find((o) => o.id === id)!, seedSponsors, NOW)[0].item.id;
+    assert.equal(top("holiday-adoption-weekend"), "pawsome-pet-co");
+    assert.equal(top("gulf-coast-ready"), "summit-mutual");
+    assert.equal(top("rural-health-tour"), "prairie-health");
+    assert.equal(top("southside-code-camp"), "copperline-software");
+  });
+
+  it("enforces both sides' exclusions", () => {
+    const soccer = seedOpportunities.find((o) => o.id === "eastside-youth-soccer")!;
+    const blocked = rankSponsors(soccer, seedSponsors, NOW).filter((r) => r.match.grade === "Not eligible").map((r) => r.item.id);
+    assert.deepEqual(blocked.sort(), ["big-easy-brewing", "fastbreak-sportsbook"]);
   });
 });

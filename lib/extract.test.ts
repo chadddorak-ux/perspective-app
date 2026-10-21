@@ -1,54 +1,66 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { EAGLES_SOAR_EMAIL } from "../data/examples.ts";
+import { EXAMPLE_PITCHES } from "../data/examples.ts";
 import { extractWithRules, parseAmount, parseDates, parseTiers } from "./extract.ts";
 
-const PACKAGE = readFileSync(new URL("./__fixtures__/eagles-soar-package.txt", import.meta.url), "utf8");
+const fixture = (name: string) => readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
+const example = (label: string) => extractWithRules(EXAMPLE_PITCHES.find((p) => p.label === label)!.text);
 
-describe("extractWithRules on the EAGLES SOAR email", () => {
-  const { draft, warnings } = extractWithRules(EAGLES_SOAR_EMAIL);
-
-  it("finds the organization, event and type", () => {
-    assert.equal(draft.orgName, "Richard P. Hall Eagles Foundation");
-    assert.equal(draft.title, "EAGLES SOAR Aviation & STEM Expo");
-    assert.equal(draft.orgType, "501c3");
-    assert.equal(draft.kind, "event");
+describe("extractWithRules on example pitches", () => {
+  it("food bank gala: org, EIN, venue city, tiers, asks", () => {
+    const { draft, warnings } = example("Food bank gala");
+    assert.equal(draft.orgName, "Riverbend Community Food Bank");
+    assert.equal(draft.ein, "68-0123456");
+    assert.equal(draft.title, "Harvest Table Gala");
+    assert.deepEqual(draft.location, { city: "Sacramento", state: "CA", metro: "Sacramento" });
+    assert.equal(draft.causes[0], "food-security");
+    assert.deepEqual(draft.tiers.map((t) => t.amount), [50000, 15000, 5000, 2500]);
+    assert.ok(draft.asks.includes("matching"));
+    assert.deepEqual(warnings, []);
   });
 
-  it("parses the date range, location and reach", () => {
+  it("animal rescue: names the event after the verb and strips bullets from tiers", () => {
+    const { draft, warnings } = example("Animal rescue adoption weekend");
+    assert.equal(draft.orgName, "Front Range Animal Rescue");
+    assert.equal(draft.title, "Home for the Holidays");
+    assert.deepEqual(draft.causes, ["animal-welfare"]);
+    assert.ok(draft.audiences.includes("pet-owners"));
+    assert.equal(draft.tiers[0].name, "Presenting Sponsor");
+    assert.ok(warnings.some((w) => /501\(c\)\(3\)/.test(w)), "warns when nonprofit status is unclear");
+  });
+
+  it("youth soccer: picks up the sponsors the league won't accept", () => {
+    const { draft } = example("Youth soccer season");
+    assert.deepEqual([...draft.excludedIndustries].sort(), ["alcohol", "gaming-gambling", "tobacco-cannabis"]);
+    assert.equal(draft.expectedReach, 1200);
+    assert.ok(draft.audiences.includes("teen-students"));
+  });
+});
+
+describe("extractWithRules on a real-world pitch email", () => {
+  const { draft } = extractWithRules(fixture("eagles-soar-email.txt"));
+
+  it("finds the organization, event, dates and venue city", () => {
+    assert.equal(draft.orgName, "Richard P. Hall Eagles Foundation");
+    assert.equal(draft.title, "EAGLES SOAR Aviation & STEM Expo");
     assert.equal(draft.startDate, "2026-12-11");
     assert.equal(draft.endDate, "2026-12-12");
     assert.deepEqual(draft.location, { city: "Homestead", state: "FL", metro: "Miami" });
     assert.equal(draft.expectedReach, 5000);
   });
 
-  it("maps causes, audiences and asks onto the taxonomy", () => {
-    assert.ok(draft.causes.includes("aviation-aerospace"));
-    assert.ok(draft.causes.includes("stem-education"));
-    assert.ok(draft.audiences.includes("teen-students"));
-    assert.ok(draft.audiences.includes("families"));
+  it("collects partners and asks", () => {
+    for (const p of ["Amazon", "FPL", "City of Homestead", "Miami-Dade County Public Schools"]) assert.ok(draft.partners.includes(p), p);
     assert.deepEqual([...draft.asks].sort(), ["cash", "introductions", "mentors", "volunteers"]);
-  });
-
-  it("collects partners and the website", () => {
-    for (const p of ["Amazon", "FPL", "City of Homestead", "Miami-Dade County Public Schools"]) {
-      assert.ok(draft.partners.includes(p), p);
-    }
-    assert.equal(draft.contact.website, "https://eaglessoar.co");
-  });
-
-  it("warns that the email alone has no sponsorship tiers", () => {
-    assert.ok(warnings.some((w) => /sponsorship levels/.test(w)));
   });
 });
 
 describe("parseTiers", () => {
-  it("reads the column layout of the sponsorship package", () => {
-    const tiers = parseTiers(PACKAGE);
+  it("reads a column layout from a PDF sponsorship package", () => {
+    const tiers = parseTiers(fixture("eagles-soar-package.txt"));
     assert.deepEqual(tiers.map((t) => t.amount), [40000, 25000, 15000, 10000, 5000]);
     assert.equal(tiers[0].name, "Presenting — Visionary Level");
-    assert.equal(tiers[4].name, "Bronze — Community Partner");
   });
 
   it("reads one-per-line tiers", () => {

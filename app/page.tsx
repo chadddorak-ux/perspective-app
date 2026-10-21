@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { rankSponsors, money } from "@/lib/match";
+import { money, rankSponsors, WEIGHTS } from "@/lib/match";
+import { CAUSES, CAUSE_GROUPS, INDUSTRIES, label } from "@/lib/taxonomy";
 import { listOpportunities, listSponsors } from "@/lib/store";
-import { WEIGHTS } from "@/lib/match";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ const PATHS = [
 ];
 
 const FACTORS: { key: keyof typeof WEIGHTS; label: string; body: string }[] = [
-  { key: "causes", label: "Cause fit", body: "Weighted by the sponsor's priorities, with credit for adjacent causes." },
+  { key: "causes", label: "Cause fit", body: "Weighted by both sides' priorities, with credit for adjacent causes and industry fit." },
   { key: "geography", label: "Geography", body: "Home metro beats home state beats national reach." },
   { key: "budget", label: "Budget", body: "Matches tiers to typical gift size and picks the right ask." },
   { key: "audience", label: "Audience", body: "Students, families, professionals, veterans and more." },
@@ -37,8 +37,16 @@ const FACTORS: { key: keyof typeof WEIGHTS; label: string; body: string }[] = [
 
 export default async function Home() {
   const [opps, sponsors] = await Promise.all([listOpportunities(), listSponsors()]);
-  const featured = opps.find((o) => o.id === "eagles-soar-2026") ?? opps[0];
-  const top = rankSponsors(featured, sponsors).slice(0, 3);
+  // Best match for each listing, then one per cause so the showcase spans the network.
+  const showcase = opps
+    .map((o) => ({ opp: o, top: rankSponsors(o, sponsors)[0] }))
+    .filter((x) => x.top && x.top.match.score >= 70)
+    .sort((a, b) => b.top.match.score - a.top.match.score)
+    .filter((x, i, all) => all.findIndex((y) => y.opp.causes[0] === x.opp.causes[0]) === i)
+    .slice(0, 4);
+  const causeCounts = new Map<string, number>();
+  for (const o of opps) for (const c of o.causes) causeCounts.set(c, (causeCounts.get(c) ?? 0) + 1);
+  const industries = [...new Set(sponsors.map((s) => s.industry).filter(Boolean))] as (keyof typeof INDUSTRIES)[];
 
   return (
     <div className="space-y-20">
@@ -49,7 +57,7 @@ export default async function Home() {
             Get the right people in the room <span className="text-brand">when it matters most.</span>
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted">
-            Perspective matches nonprofits and events with the brands, foundations and donors whose goals they actually serve. It explains why each match fits and drafts the warm intro.
+            Perspective matches nonprofits of every kind (food banks, youth leagues, arts festivals, health clinics, shelters) with the brands, foundations and donors whose goals they actually serve. It explains why each match fits and drafts the warm intro.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/find" className="btn-primary px-5 py-3 text-base">Find sponsors</Link>
@@ -61,22 +69,24 @@ export default async function Home() {
         </div>
 
         <div className="card p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Live example</p>
-          <Link href={`/opportunities/${featured.id}`} className="mt-1 block text-lg font-semibold hover:underline">{featured.title}</Link>
-          <p className="text-sm text-muted">{featured.orgName}</p>
-          <ul className="mt-4 divide-y divide-line">
-            {top.map(({ item, match }) => (
-              <li key={item.id} className="flex items-center gap-3 py-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-bold text-brand">{match.score}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{item.name}</p>
-                  <p className="truncate text-xs text-muted">{match.reasons[0]}</p>
-                </div>
-                {match.suggestedTier && <span className="text-xs font-semibold text-muted">{money(match.suggestedTier.amount)}</span>}
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Top matches across the network</p>
+          <ul className="mt-2 divide-y divide-line">
+            {showcase.map(({ opp, top }) => (
+              <li key={opp.id}>
+                <Link href={`/opportunities/${opp.id}`} className="flex items-center gap-3 py-3 hover:opacity-80">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-bold text-brand">{top.match.score}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{opp.title}</p>
+                    <p className="truncate text-xs text-muted">
+                      {top.item.name} · {label(CAUSES, opp.causes[0])}
+                    </p>
+                  </div>
+                  {top.match.suggestedTier && <span className="text-xs font-semibold text-muted">{money(top.match.suggestedTier.amount)}</span>}
+                </Link>
               </li>
             ))}
           </ul>
-          <Link href={`/opportunities/${featured.id}`} className="btn-ghost mt-2 w-full">See all matches →</Link>
+          <Link href="/opportunities" className="btn-ghost mt-2 w-full">Browse all opportunities →</Link>
         </div>
       </section>
 
@@ -91,10 +101,45 @@ export default async function Home() {
         ))}
       </section>
 
+      <section className="grid gap-8 lg:grid-cols-2">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Every cause</h2>
+          <p className="mt-2 text-muted">{Object.keys(CAUSES).length} cause areas aligned to the IRS nonprofit categories, from early childhood to international development.</p>
+          <div className="mt-4 space-y-3">
+            {CAUSE_GROUPS.map((g) => (
+              <div key={g.label}>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">{g.label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {g.ids.map((c) => (
+                    <Link key={c} href={`/opportunities?cause=${c}`} className="rounded-full border border-line bg-card px-2.5 py-1 text-xs hover:border-brand">
+                      {CAUSES[c]}
+                      {causeCounts.get(c) ? <span className="ml-1 text-muted">{causeCounts.get(c)}</span> : null}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Every kind of sponsor</h2>
+          <p className="mt-2 text-muted">
+            National brands, local businesses, foundations, individual donors and public agencies across {Object.keys(INDUSTRIES).length} industries. Industry matters: a pet brand is credible on animal welfare, and a youth league can rule out alcohol or betting sponsors.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {industries.map((i) => (
+              <Link key={i} href={`/sponsors?industry=${i}`} className="rounded-full border border-line bg-card px-2.5 py-1 text-xs hover:border-brand">
+                {INDUSTRIES[i]}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section>
         <h2 className="text-2xl font-bold tracking-tight">Every match comes with its reasons</h2>
         <p className="mt-2 max-w-2xl text-muted">
-          No black box. Each score is built from six factors you can inspect, plus hard rules like 501(c)(3) requirements and excluded causes.
+          No black box. Each score is built from six factors you can inspect, plus hard rules on both sides: 501(c)(3) requirements, causes a sponsor won&apos;t fund, and industries an organization won&apos;t accept.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FACTORS.map((f) => (

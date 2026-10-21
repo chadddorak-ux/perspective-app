@@ -1,6 +1,6 @@
 "use client";
 
-import { AUDIENCES, CAUSES, ORG_TYPES, SUPPORT_TYPES, US_STATES } from "@/lib/taxonomy";
+import { AUDIENCES, CAUSES, CAUSE_GROUPS, INDUSTRIES, ORG_TYPES, SENSITIVE_INDUSTRIES, SUPPORT_TYPES, US_STATES } from "@/lib/taxonomy";
 import type { OpportunityDraft } from "@/lib/extract";
 import type { Tier } from "@/lib/types";
 import { ChipSelect } from "./ChipSelect";
@@ -16,9 +16,15 @@ export const EMPTY_OPPORTUNITY: OpportunityDraft = {
   location: {},
   tiers: [],
   asks: ["cash"],
+  excludedIndustries: [],
   partners: [],
   contact: {},
 };
+
+const SENSITIVE = Object.fromEntries(SENSITIVE_INDUSTRIES.map((id) => [id, INDUSTRIES[id]])) as Record<
+  (typeof SENSITIVE_INDUSTRIES)[number],
+  string
+>;
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -50,7 +56,7 @@ export function OpportunityForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <label>
             <span className="label">Organization</span>
-            <input className="field" value={value.orgName} onChange={(e) => set("orgName", e.target.value)} placeholder="Eagles Foundation" />
+            <input className="field" value={value.orgName} onChange={(e) => set("orgName", e.target.value)} placeholder="Riverbend Community Food Bank" />
           </label>
           <label>
             <span className="label">Organization type</span>
@@ -60,7 +66,7 @@ export function OpportunityForm({
           </label>
           <label>
             <span className="label">Event, program or campaign</span>
-            <input className="field" value={value.title} onChange={(e) => set("title", e.target.value)} placeholder="Spring STEM Expo" />
+            <input className="field" value={value.title} onChange={(e) => set("title", e.target.value)} placeholder="Spring Gala 2027" />
           </label>
           <label>
             <span className="label">Kind</span>
@@ -68,7 +74,13 @@ export function OpportunityForm({
               <option value="event">Event</option>
               <option value="program">Ongoing program</option>
               <option value="campaign">Campaign</option>
+              <option value="general">General operating support</option>
             </select>
+          </label>
+          <label>
+            <span className="label">EIN <span className="font-normal text-muted">(optional)</span></span>
+            <input className="field" value={value.ein ?? ""} onChange={(e) => set("ein", e.target.value || undefined)} placeholder="12-3456789" />
+            <span className="hint">Lets sponsors confirm your 501(c)(3) status.</span>
           </label>
         </div>
         <label className="block">
@@ -85,7 +97,7 @@ export function OpportunityForm({
       <Section title="Who and what it serves" hint="Pick causes in order of importance — the first counts most.">
         <div>
           <span className="label">Causes</span>
-          <ChipSelect options={CAUSES} value={value.causes} onChange={(v) => set("causes", v)} max={5} />
+          <ChipSelect options={CAUSES} groups={CAUSE_GROUPS} value={value.causes} onChange={(v) => set("causes", v)} max={5} />
         </div>
         <div>
           <span className="label">Audience</span>
@@ -113,7 +125,7 @@ export function OpportunityForm({
             </label>
             <label>
               <span className="label">Metro area</span>
-              <input className="field" value={value.location.metro ?? ""} onChange={(e) => setLoc({ metro: e.target.value })} placeholder="Miami" />
+              <input className="field" value={value.location.metro ?? ""} onChange={(e) => setLoc({ metro: e.target.value })} placeholder="e.g. Chicago" />
             </label>
           </div>
         )}
@@ -194,6 +206,11 @@ export function OpportunityForm({
 
       <Section title="What you're asking for">
         <ChipSelect options={SUPPORT_TYPES} value={value.asks} onChange={(v) => set("asks", v)} />
+        <div>
+          <span className="label">Sponsors you won&apos;t accept</span>
+          <p className="hint mb-2">We&apos;ll never suggest sponsors from these industries.</p>
+          <ChipSelect options={SENSITIVE} value={value.excludedIndustries as (typeof SENSITIVE_INDUSTRIES)[number][]} onChange={(v) => set("excludedIndustries", v)} />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label>
             <span className="label">Current partners</span>
@@ -201,7 +218,7 @@ export function OpportunityForm({
               className="field"
               value={value.partners.join(", ")}
               onChange={(e) => set("partners", e.target.value.split(",").map((s) => s.trimStart()))}
-              placeholder="City of Homestead, M-DCPS"
+              placeholder="City Parks Dept., Local School District"
             />
             <span className="hint">Social proof — sponsors look for who's already in.</span>
           </label>
@@ -231,6 +248,7 @@ export function cleanOpportunity(d: OpportunityDraft): OpportunityDraft {
       .filter((t) => t.amount > 0)
       .map((t) => ({ ...t, name: t.name.trim() || `$${t.amount.toLocaleString()} level`, benefits: t.benefits.map((b) => b.trim()).filter(Boolean) })),
     partners: d.partners.map((p) => p.trim()).filter(Boolean),
+    ein: d.ein?.trim() || undefined,
     location: d.location.virtual ? { virtual: true } : { ...d.location, metro: d.location.metro || d.location.city },
   };
 }

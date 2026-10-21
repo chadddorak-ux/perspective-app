@@ -1,6 +1,7 @@
 import type {
   AudienceId,
   CauseId,
+  IndustryId,
   ObjectiveId,
   OrgTypeId,
   SponsorTypeId,
@@ -26,8 +27,9 @@ export type Opportunity = {
   id: string;
   orgName: string;
   orgType: OrgTypeId;
+  ein?: string; // IRS employer identification number, NN-NNNNNNN
   title: string;
-  kind: "event" | "program" | "campaign";
+  kind: "event" | "program" | "campaign" | "general";
   summary: string;
   causes: CauseId[];
   audiences: AudienceId[];
@@ -38,6 +40,7 @@ export type Opportunity = {
   reachNote?: string;
   tiers: Tier[];
   asks: SupportTypeId[];
+  excludedIndustries: IndustryId[]; // sponsors the organization won't accept
   partners: string[];
   contact: { name?: string; email?: string; phone?: string; website?: string };
   source: "seed" | "import" | "intake";
@@ -50,6 +53,7 @@ export type SponsorProfile = {
   id: string;
   name: string;
   type: SponsorTypeId;
+  industry?: IndustryId; // brands and businesses; foundations and individuals usually leave it empty
   about: string;
   causes: CauseId[];
   audiences: AudienceId[];

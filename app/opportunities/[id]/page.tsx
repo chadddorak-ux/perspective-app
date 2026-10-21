@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { MatchCard } from "@/components/MatchCard";
 import { Pill, SampleTag } from "@/components/ui";
 import { money, rankSponsors } from "@/lib/match";
-import { AUDIENCES, CAUSES, ORG_TYPES, SUPPORT_TYPES, label } from "@/lib/taxonomy";
+import { AUDIENCES, CAUSES, INDUSTRIES, ORG_TYPES, SUPPORT_TYPES, label } from "@/lib/taxonomy";
 import { getOpportunity, listSponsors } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
   const ineligible = ranked.filter((r) => r.match.grade === "Not eligible");
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] [&>*]:min-w-0">
       <aside className="space-y-6 lg:sticky lg:top-20 lg:h-fit">
         <div className="card p-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -30,7 +30,10 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
             {opp.source === "import" && <Pill tone="accent">Imported pitch</Pill>}
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight">{opp.title}</h1>
-          <p className="mt-1 text-muted">{opp.orgName} · {label(ORG_TYPES, opp.orgType)}</p>
+          <p className="mt-1 text-muted">
+            {opp.orgName} · {opp.orgType === "other" ? "Not a 501(c)(3)" : label(ORG_TYPES, opp.orgType)}
+            {opp.ein && <span className="text-xs"> · EIN {opp.ein}</span>}
+          </p>
 
           <dl className="mt-5 space-y-2 text-sm">
             {opp.startDate && (
@@ -42,6 +45,9 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
             )}
             {opp.asks.length > 0 && (
               <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Asking for</dt><dd>{opp.asks.map((a) => label(SUPPORT_TYPES, a)).join(", ")}</dd></div>
+            )}
+            {opp.excludedIndustries.length > 0 && (
+              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Won&apos;t accept</dt><dd>{opp.excludedIndustries.map((i) => label(INDUSTRIES, i)).join(", ")} sponsors</dd></div>
             )}
             {opp.partners.length > 0 && (
               <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Partners</dt><dd>{opp.partners.join(", ")}</dd></div>

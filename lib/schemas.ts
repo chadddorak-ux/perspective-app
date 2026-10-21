@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   AUDIENCES,
   CAUSES,
+  INDUSTRIES,
   OBJECTIVES,
   ORG_TYPES,
   SPONSOR_TYPES,
@@ -26,8 +27,9 @@ export const TierInput = z.object({
 export const OpportunityInput = z.object({
   orgName: text(160),
   orgType: z.enum(keys(ORG_TYPES)),
+  ein: z.string().regex(/^\d{2}-\d{7}$/, "EIN should look like 12-3456789").optional().or(z.literal("").transform(() => undefined)),
   title: text(200),
-  kind: z.enum(["event", "program", "campaign"]),
+  kind: z.enum(["event", "program", "campaign", "general"]),
   summary: text(2000).default(""),
   causes: z.array(z.enum(keys(CAUSES))).min(1, "Pick at least one cause").max(6),
   audiences: z.array(z.enum(keys(AUDIENCES))).max(10).default([]),
@@ -43,6 +45,7 @@ export const OpportunityInput = z.object({
   reachNote: text(300).optional(),
   tiers: z.array(TierInput).max(20).default([]),
   asks: z.array(z.enum(keys(SUPPORT_TYPES))).default([]),
+  excludedIndustries: z.array(z.enum(keys(INDUSTRIES))).default([]),
   partners: z.array(text(120)).max(20).default([]),
   contact: z
     .object({
@@ -59,6 +62,7 @@ export const SponsorInput = z
   .object({
     name: text(160),
     type: z.enum(keys(SPONSOR_TYPES)),
+    industry: z.enum(keys(INDUSTRIES)).optional().or(z.literal("").transform(() => undefined)),
     about: text(1000).default(""),
     causes: z.array(z.enum(keys(CAUSES))).min(1, "Pick at least one cause").max(8),
     audiences: z.array(z.enum(keys(AUDIENCES))).max(10).default([]),

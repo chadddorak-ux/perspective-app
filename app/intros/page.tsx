@@ -19,8 +19,7 @@ export default async function IntrosPage() {
       </PageHeader>
       {rows.length === 0 ? (
         <div className="card p-10 text-center text-muted">
-          No intro requests yet. Open a listing, for example{" "}
-          <Link className="text-brand hover:underline" href="/opportunities/eagles-soar-2026">EAGLES SOAR</Link>, and hit “Request warm intro” on a match.
+          No intro requests yet. Open any <Link className="text-brand hover:underline" href="/opportunities">listing</Link> and hit “Request warm intro” on a match.
         </div>
       ) : (
         <div className="card overflow-x-auto">
