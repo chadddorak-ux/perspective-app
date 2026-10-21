@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f6f7f4;
+  --card: #ffffff;
+  --ink: #102030;
+  --muted: #5c6b78;
+  --line: #e2e7ea;
+  --brand: #0e5f57;
+  --brand-ink: #ffffff;
+  --brand-soft: #e2f0ed;
+  --accent: #d9822b;
+  --accent-soft: #fbefe1;
+  --good: #1f8a4c;
+  --warn: #b7791f;
+  --bad: #b4323c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1418;
+    --card: #141e24;
+    --ink: #e7eef2;
+    --muted: #93a3ae;
+    --line: #24323b;
+    --brand: #46b3a6;
+    --brand-ink: #06231f;
+    --brand-soft: #16312e;
+    --accent: #f0a24f;
+    --accent-soft: #33261a;
+    --good: #4cc27f;
+    --warn: #e0a84a;
+    --bad: #ec6b74;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+input, select, textarea {
+  background: var(--card);
+  color: var(--ink);
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-brand-ink hover:opacity-90;
+}
+@utility btn-secondary {
+  @apply btn border border-line bg-card text-ink hover:border-brand;
+}
+@utility btn-ghost {
+  @apply btn text-brand hover:bg-brand-soft;
+}
+@utility card {
+  @apply rounded-2xl border border-line bg-card;
+}
+@utility field {
+  @apply w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium;
+}
+@utility hint {
+  @apply text-xs text-muted;
+}

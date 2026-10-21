@@ -1,0 +1,18 @@
+// The real outreach email that inspired Perspective; used as the import demo.
+export const EAGLES_SOAR_EMAIL = `I wanted to share something I'm really proud to be part of. I'm on the board of the Richard P. Hall Eagles Foundation, a Florida 501(c)(3) founded by LaTéssa Dotson Hall, a retired USAF Major. The foundation honors Capt. Richard P. Hall's legacy, which traces back to the Tuskegee Airmen, and its mission is to open doors for kids into aviation and STEM.
+
+Our big event is the EAGLES SOAR Aviation & STEM Expo, running Dec 11–12, 2026, 9 AM–2 PM, at Homestead-Miami Speedway. It's powered by the City of Homestead and aligned with Miami-Dade County Public Schools, and admission is free.
+
+- Friday is Student Exploration Day for grades 6–12 from public, charter, private and homeschool programs.
+- Saturday is Community Career Exploration Day for students, families and young adults.
+- We expect 5,000+ attendees, including 3,000+ students.
+- Kids get hands-on time with careers in aviation and aerospace, engineering and robotics, defense and space, healthcare, and mobility. This year we're adding an AI track with a student hackathon.
+- Partners include Amazon, FPL and M-DCPS.
+
+There are a few ways you could get involved:
+- Come out on Saturday, bring family, or spread the word.
+- Sponsor. I've attached our sponsorship package.
+- Volunteer or mentor, including for the AI hackathon.
+- Introduce us to companies or people who might want to partner.
+
+You can find more at eaglessoar.co. I'd love to grab 15 minutes to tell you more.`;
