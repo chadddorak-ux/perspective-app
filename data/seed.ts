@@ -1,16 +1,93 @@
 import type { Opportunity, Pledge, SponsorProfile } from "../lib/types.ts";
 
-// Fictional demo network spanning causes, regions, budgets and sponsor
-// industries. Every record is labeled "Sample" in the UI.
+// Demo network spanning causes, regions, budgets and sponsor industries.
+// EAGLES SOAR is a real campaign; every other record is fictional and
+// labeled "Sample" in the UI.
 const created = "2026-10-21T00:00:00.000Z";
 const base = { source: "seed" as const, sample: true, createdAt: created };
 
-type OppSeed = Omit<Opportunity, "source" | "sample" | "createdAt" | "excludedIndustries" | "partners" | "contact"> &
+type OppSeed = Omit<Opportunity, "source" | "createdAt" | "excludedIndustries" | "partners" | "contact"> &
   Partial<Pick<Opportunity, "excludedIndustries" | "partners" | "contact">>;
 
 const opp = (o: OppSeed): Opportunity => ({ excludedIndustries: [], partners: [], contact: {}, ...base, ...o });
 
 const launched: Opportunity[] = [
+  // A real campaign, from the founder's outreach email and sponsorship package.
+  opp({
+    id: "eagles-soar-2026",
+    orgName: "Richard P. Hall Eagles Foundation",
+    orgType: "501c3",
+    title: "EAGLES SOAR Aviation & STEM Expo 2026",
+    kind: "event",
+    summary:
+      "A free two-day expo at Homestead-Miami Speedway that opens doors for grades 6–12 students into aviation and STEM careers, honoring the Tuskegee Airmen legacy of Capt. Richard P. Hall.",
+    story: [
+      "The Richard P. Hall Eagles Foundation is a Florida 501(c)(3) founded by LaTéssa Dotson Hall, a retired USAF Major. It honors the legacy of Capt. Richard P. Hall, which traces back to the Tuskegee Airmen, and its mission is to open doors for kids into aviation and STEM.",
+      "EAGLES SOAR runs December 11–12, 2026, 9 AM–2 PM, at Homestead-Miami Speedway. It's powered by the City of Homestead, aligned with Miami-Dade County Public Schools, and free to attend. Friday is Student Exploration Day for grades 6–12 from public, charter, private and homeschool programs. Saturday is Community Career Exploration Day for students, families and young adults.",
+      "Students get hands-on time with careers in aviation and aerospace, engineering and robotics, defense and space, healthcare, and mobility. This year adds an AI track with a student hackathon.",
+      "Beyond sponsorship, the foundation welcomes volunteers and mentors (including for the AI hackathon) and introductions to companies and people who might want to partner.",
+    ].join("\n\n"),
+    causes: ["stem-education", "workforce-development", "technology-ai", "youth-development"],
+    audiences: ["teen-students", "families", "young-adults", "educators"],
+    location: { city: "Homestead", state: "FL", metro: "Miami" },
+    startDate: "2026-12-11",
+    endDate: "2026-12-12",
+    expectedReach: 5000,
+    reachNote: "5,000+ attendees including 3,000+ students and 2,000+ engaged families",
+    tiers: [
+      {
+        name: "Presenting — Visionary Level",
+        amount: 40000,
+        availability: "exclusive",
+        benefits: [
+          "Premium activation space (large footprint, prime location)",
+          "Main stage remarks",
+          "Premier branding placement",
+          "Logo on Official Track Car",
+          "“Ignite” session hosting",
+          "M-DCPS leadership & Industry Advisory Council access",
+          "Student Talent Database access",
+          "VIP Lounge + 20 VIP passes",
+        ],
+      },
+      {
+        name: "Platinum — Innovation Level",
+        amount: 25000,
+        availability: "limited",
+        benefits: [
+          "Prominent branding placement",
+          "Large activation space (premium area)",
+          "Main stage recognition",
+          "Media recognition",
+          "Student Talent Database access",
+          "12 VIP passes",
+        ],
+      },
+      {
+        name: "Gold — Pathway Level",
+        amount: 15000,
+        availability: "multiple",
+        benefits: ["Activation space near Platinum sponsors", "Media recognition", "Website & T-shirt logo", "8 VIP passes"],
+      },
+      {
+        name: "Silver — Impact Partner",
+        amount: 10000,
+        availability: "multiple",
+        benefits: ["Table activation space", "Website recognition", "T-shirt logo", "6 VIP passes"],
+      },
+      {
+        name: "Bronze — Community Partner",
+        amount: 5000,
+        availability: "multiple",
+        benefits: ["Table activation space", "Website recognition", "6 VIP passes"],
+      },
+    ],
+    asks: ["cash", "volunteers", "mentors", "introductions"],
+    partners: ["City of Homestead", "Miami-Dade County Public Schools", "Amazon", "FPL"],
+    contact: { name: "LaTéssa Dotson Hall, Founder & Executive Director", website: "https://www.eaglessoar.co" },
+    sample: false,
+    featured: true,
+  }),
   opp({
     id: "harvest-table-gala",
     goal: 100000,
@@ -35,6 +112,7 @@ const launched: Opportunity[] = [
   }),
   opp({
     id: "holiday-adoption-weekend",
+    featured: true,
     goal: 20000,
     orgName: "Front Range Animal Rescue",
     orgType: "501c3",
@@ -281,6 +359,7 @@ const launched: Opportunity[] = [
   }),
   opp({
     id: "gulf-coast-ready",
+    featured: true,
     goal: 50000,
     orgName: "Gulf Coast Ready",
     orgType: "501c3",
@@ -422,6 +501,22 @@ const sponsor = (s: SponsorSeed): SponsorProfile => ({
 const national = { scope: "national" as const, states: [], metros: [] };
 
 export const seedSponsors: SponsorProfile[] = [
+  sponsor({
+    id: "aeronova", name: "Aeronova Systems", type: "brand", industry: "aerospace-defense",
+    about: "Aerospace manufacturer with a growing South Florida maintenance facility, struggling to hire A&P mechanics and engineers.",
+    causes: ["stem-education", "workforce-development", "technology-ai"], audiences: ["teen-students", "young-adults"],
+    objectives: ["talent-pipeline", "brand-visibility", "community-impact"],
+    geography: { scope: "national", states: ["FL", "TX", "WA"], metros: ["Miami"] },
+    budget: { min: 10000, max: 50000 }, supportTypes: ["cash", "mentors", "in-kind"], leadTimeDays: 45, approach: "intro-preferred",
+  }),
+  sponsor({
+    id: "coral-coast-cu", name: "Coral Coast Credit Union", type: "small-business", industry: "financial",
+    about: "Member-owned credit union serving Miami-Dade and Broward with a youth financial-literacy mandate.",
+    causes: ["financial-literacy", "youth-development", "community-development"], audiences: ["teen-students", "families", "underserved"],
+    objectives: ["local-presence", "community-impact", "customer-reach"],
+    geography: { scope: "local", states: ["FL"], metros: ["Miami", "Fort Lauderdale"] },
+    budget: { min: 2500, max: 10000 }, supportTypes: ["cash", "volunteers"], leadTimeDays: 30, requires501c3: false,
+  }),
   sponsor({
     id: "pawsome-pet-co", name: "Pawsome Pet Co.", type: "brand", industry: "pets",
     about: "National pet food and supplies brand with a shelter-adoption giving program.",

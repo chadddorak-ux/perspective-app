@@ -16,7 +16,14 @@ type Row = { opp: Opportunity; f: Funding };
 
 // Kickstarter-style sorts, adapted: "nearly funded" and "happening soon" are
 // where a sponsor's yes makes the most difference.
+const bySoonest = (a: Row, b: Row) => (a.f.daysLeft ?? 9999) - (b.f.daysLeft ?? 9999);
+
 const SORTS: Record<string, { label: string; fn: (a: Row, b: Row) => number }> = {
+  // Featured campaigns keep their curated order (the sort is stable); the rest follow by date.
+  featured: {
+    label: "Featured",
+    fn: (a, b) => Number(!!b.opp.featured) - Number(!!a.opp.featured) || (a.opp.featured ? 0 : bySoonest(a, b)),
+  },
   soon: { label: "Happening soon", fn: (a, b) => (a.f.daysLeft ?? 9999) - (b.f.daysLeft ?? 9999) },
   nearly: { label: "Nearly funded", fn: (a, b) => (b.f.percent < 100 ? b.f.percent : -1) - (a.f.percent < 100 ? a.f.percent : -1) },
   newest: { label: "Just launched", fn: (a, b) => b.opp.createdAt.localeCompare(a.opp.createdAt) },
@@ -29,7 +36,7 @@ type Search = { q?: string; cause?: string; group?: string; state?: string; kind
 export default async function DiscoverPage({ searchParams }: { searchParams: Promise<Search> }) {
   const params = await searchParams;
   const { q, cause, group, state, kind } = params;
-  const sort = params.sort && SORTS[params.sort] ? params.sort : "soon";
+  const sort = params.sort && SORTS[params.sort] ? params.sort : "featured";
   const [all, pledges] = await Promise.all([listOpportunities(), listPledges()]);
   const groupIds = CAUSE_GROUPS.find((g) => g.label === group)?.ids;
   const needle = q?.trim().toLowerCase();

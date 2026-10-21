@@ -23,7 +23,11 @@ export function CampaignCard({ opp, f, badge }: { opp: Opportunity; f: Funding; 
           label={`${KIND[opp.kind]} · ${placeLabel(opp)}`}
           className="aspect-[16/10] transition-transform duration-500 group-hover:scale-[1.03]"
         />
-        {badge && <div className="absolute right-3 top-3">{badge}</div>}
+        {(badge || opp.featured) && (
+          <div className="absolute right-3 top-3">
+            {badge ?? <span className="eyebrow bg-accent px-1.5 py-0.5 text-[9px] text-[#111113]">★ Featured</span>}
+          </div>
+        )}
       </div>
       <div className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted">

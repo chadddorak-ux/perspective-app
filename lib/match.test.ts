@@ -133,6 +133,15 @@ describe("sample network", () => {
     assert.equal(top("southside-code-camp"), "copperline-software");
   });
 
+  it("features EAGLES SOAR as a real campaign with a local aerospace employer on top", () => {
+    const eagles = seedOpportunities.find((o) => o.id === "eagles-soar-2026")!;
+    assert.equal(eagles.featured, true);
+    assert.equal(eagles.sample, false);
+    const ranked = rankSponsors(eagles, seedSponsors, NOW);
+    assert.equal(ranked[0].item.id, "aeronova");
+    assert.equal(ranked[0].match.suggestedTier?.amount, 40000);
+  });
+
   it("enforces both sides' exclusions", () => {
     const soccer = seedOpportunities.find((o) => o.id === "eastside-youth-soccer")!;
     const blocked = rankSponsors(soccer, seedSponsors, NOW).filter((r) => r.match.grade === "Not eligible").map((r) => r.item.id);

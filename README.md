@@ -29,7 +29,9 @@ The difference is that every campaign also shows which sponsors fit it and why.
 
 **Pledges follow the matching rules.** A sponsor in the network can't pledge to a campaign it's blocked from (a cause it excludes, or an industry the organization declines). Tiers also stop accepting pledges once their slots fill.
 
-The demo network has 19 fictional organizations and 27 fictional sponsors, all labeled "Sample" in the UI:
+The featured campaign **EAGLES SOAR Aviation & STEM Expo 2026** is real. It's built from the Richard P. Hall Eagles Foundation's outreach email and sponsorship package, with no pledges recorded yet.
+
+Everything else in the demo network is fictional and labeled "Sample" in the UI: 19 organizations and 29 sponsors.
 - **Organizations:** food banks, animal rescues, youth sports, arts festivals, rural health, refugee services, recovery, disaster preparedness, adaptive sports and more, across 17 states plus one national virtual campaign.
 - **Sponsors:** national brands, local businesses, foundations, individual donors and a public agency, across 20+ industries.
 

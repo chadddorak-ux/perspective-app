@@ -48,6 +48,7 @@ export type Opportunity = {
   contact: { name?: string; email?: string; phone?: string; website?: string };
   source: "seed" | "import" | "intake";
   sample?: boolean;
+  featured?: boolean; // pinned to the top of the home page and Discover
   createdAt: string;
 };
 

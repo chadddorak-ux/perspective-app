@@ -43,13 +43,13 @@ function initials(name: string): string {
   return name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function CardRow({ index, title, href, rows }: { index: string; title: string; href: string; rows: Row[] }) {
+function CardRow({ index, eyebrow = "Discover", title, href, rows }: { index: string; eyebrow?: string; title: string; href: string; rows: Row[] }) {
   if (!rows.length) return null;
   return (
     <section className="py-12">
       <Reveal className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <Eyebrow index={index}>Discover</Eyebrow>
+          <Eyebrow index={index}>{eyebrow}</Eyebrow>
           <h2 className="display mt-3 text-3xl font-semibold sm:text-4xl">{title}</h2>
         </div>
         <Link href={href} className="btn-ghost group shrink-0">
@@ -74,9 +74,14 @@ export default async function Home() {
   const recent = [...pledges].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const titleOf = (id: string) => opps.find((o) => o.id === id)?.title ?? "";
 
-  // Three rows that don't repeat a campaign.
-  const nearly = rows.filter((r) => r.f.percent >= 50 && r.f.percent < 100).sort((a, b) => b.f.percent - a.f.percent).slice(0, 3);
-  const taken = new Set(nearly.map((r) => r.opp.id));
+  // Rows that don't repeat a campaign: featured first, then the rest.
+  const featured = rows.filter((r) => r.opp.featured).slice(0, 3);
+  const taken = new Set(featured.map((r) => r.opp.id));
+  const nearly = rows
+    .filter((r) => !taken.has(r.opp.id) && r.f.percent >= 50 && r.f.percent < 100)
+    .sort((a, b) => b.f.percent - a.f.percent)
+    .slice(0, 3);
+  nearly.forEach((r) => taken.add(r.opp.id));
   const soon = rows
     .filter((r) => r.f.daysLeft !== undefined && !taken.has(r.opp.id))
     .sort((a, b) => a.f.daysLeft! - b.f.daysLeft!)
@@ -167,10 +172,12 @@ export default async function Home() {
         </div>
       </FullBleed>
 
+      <CardRow index="01" eyebrow="Featured" title="Featured campaigns" href="/opportunities?sort=featured" rows={featured} />
+
       {/* Categories */}
       <section className="py-14">
         <Reveal>
-          <Eyebrow index="01">Explore by cause</Eyebrow>
+          <Eyebrow index="02">Explore by cause</Eyebrow>
         </Reveal>
         <div className="mt-6 grid grid-cols-2 border-l border-t border-line sm:grid-cols-4">
           {CAUSE_GROUPS.map((g, i) => {
@@ -195,14 +202,14 @@ export default async function Home() {
         </div>
       </section>
 
-      <CardRow index="02" title="Nearly funded" href="/opportunities?sort=nearly" rows={nearly} />
-      <CardRow index="03" title="Happening soon" href="/opportunities?sort=soon" rows={soon} />
-      <CardRow index="04" title="Just launched" href="/opportunities?sort=newest" rows={fresh} />
+      <CardRow index="03" title="Nearly funded" href="/opportunities?sort=nearly" rows={nearly} />
+      <CardRow index="04" title="Happening soon" href="/opportunities?sort=soon" rows={soon} />
+      <CardRow index="05" title="Just launched" href="/opportunities?sort=newest" rows={fresh} />
 
       {/* How it works */}
       <section className="py-16">
         <Reveal>
-          <Eyebrow index="05">How it works</Eyebrow>
+          <Eyebrow index="06">How it works</Eyebrow>
           <h2 className="display mt-4 max-w-3xl text-4xl font-semibold sm:text-5xl">Two sides. One yes.</h2>
         </Reveal>
         <div className="mt-10 grid gap-px border border-line bg-line lg:grid-cols-2">
@@ -234,7 +241,7 @@ export default async function Home() {
           <Reveal className="lg:col-span-5">
             <p className="eyebrow flex items-center gap-2 text-white/60">
               <span className="h-1.5 w-1.5 bg-accent" />
-              <span className="text-white">06</span> / Why it matches
+              <span className="text-white">07</span> / Why it matches
             </p>
             <h2 className="display mt-4 text-4xl font-semibold sm:text-5xl">
               Six factors. <span className="text-warm">Zero mystery.</span>

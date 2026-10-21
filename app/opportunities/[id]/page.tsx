@@ -69,9 +69,10 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             <ShareButton />
           </div>
           <div className="mt-6 space-y-2 border-t border-line pt-5 text-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium">{opp.orgName}</span>
               {opp.sample && <SampleTag />}
+              {opp.featured && <span className="eyebrow bg-accent px-1.5 py-0.5 text-[9px] text-[#111113]">★ Featured</span>}
             </div>
             <p className="text-muted">
               {opp.orgType === "other" ? "Not a 501(c)(3)" : label(ORG_TYPES, opp.orgType)}
