@@ -55,7 +55,7 @@ export function OutreachModal({
                 setKind(k);
                 setDraft(KINDS[k].make(opp, sponsor, match));
               }}
-              className={`-mb-px border-b-2 px-3 pb-2 text-sm ${k === kind ? "border-brand font-semibold text-ink" : "border-transparent text-muted"}`}
+              className={`-mb-px border-b-2 px-3 pb-2 text-sm ${k === kind ? "border-accent font-semibold text-ink" : "border-transparent text-muted"}`}
             >
               {KINDS[k].label}
             </button>

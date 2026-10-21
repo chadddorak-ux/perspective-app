@@ -25,11 +25,11 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
       <aside className="space-y-6 lg:sticky lg:top-20 lg:h-fit">
         <div className="card p-6">
           <div className="flex flex-wrap items-center gap-2">
-            <Pill tone="brand">{opp.kind}</Pill>
+            <Pill tone="brand">{opp.kind === "general" ? "General support" : opp.kind[0].toUpperCase() + opp.kind.slice(1)}</Pill>
             {opp.sample && <SampleTag />}
             {opp.source === "import" && <Pill tone="accent">Imported pitch</Pill>}
           </div>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight">{opp.title}</h1>
+          <h1 className="display mt-4 text-4xl font-semibold">{opp.title}</h1>
           <p className="mt-1 text-muted">
             {opp.orgName} · {opp.orgType === "other" ? "Not a 501(c)(3)" : label(ORG_TYPES, opp.orgType)}
             {opp.ein && <span className="text-xs"> · EIN {opp.ein}</span>}
@@ -67,13 +67,13 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
 
         {opp.tiers.length > 0 && (
           <div className="card overflow-hidden">
-            <h2 className="border-b border-line px-6 py-3 font-semibold">Sponsorship levels</h2>
+            <h2 className="eyebrow border-b border-line px-6 py-3 text-muted">Sponsorship levels</h2>
             <ul className="divide-y divide-line">
               {opp.tiers.map((t) => (
                 <li key={t.name} className="px-6 py-3">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="font-medium">{t.name}</span>
-                    <span className="font-semibold tabular-nums">{money(t.amount)}</span>
+                    <span className="font-mono font-semibold tabular-nums">{money(t.amount)}</span>
                   </div>
                   {t.availability && <p className="text-xs capitalize text-muted">{t.availability}</p>}
                   {t.benefits.length > 0 && <p className="mt-1 text-xs text-muted">{t.benefits.join(" · ")}</p>}
@@ -86,7 +86,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Who to bring in</h2>
+          <h2 className="display text-4xl font-semibold">Who to bring in</h2>
           <p className="text-sm text-muted">
             {eligible.filter((r) => r.match.score >= 70).length} strong matches. Draft a direct pitch, or request a warm intro and track it on the <Link href="/intros" className="text-brand hover:underline">Intros</Link> board.
           </p>

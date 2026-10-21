@@ -27,7 +27,7 @@ export default async function SponsorPage({ params }: { params: Promise<{ id: st
           {sp.industry && <Pill>{label(INDUSTRIES, sp.industry)}</Pill>}
           {sp.sample && <SampleTag />}
         </div>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight">{sp.name}</h1>
+        <h1 className="display mt-4 text-4xl font-semibold">{sp.name}</h1>
         {sp.about && <p className="mt-2 text-sm leading-relaxed text-muted">{sp.about}</p>}
         <dl className="mt-5 space-y-2 text-sm">
           <div className="flex gap-3"><dt className="w-24 shrink-0 text-muted">Typical gift</dt><dd>{money(sp.budget.min)} – {money(sp.budget.max)}</dd></div>
@@ -36,21 +36,21 @@ export default async function SponsorPage({ params }: { params: Promise<{ id: st
           <div className="flex gap-3"><dt className="w-24 shrink-0 text-muted">Decides</dt><dd>~{sp.leadTimeDays} days ahead</dd></div>
           <div className="flex gap-3"><dt className="w-24 shrink-0 text-muted">Approach</dt><dd>{APPROACH[sp.approach]}{sp.requires501c3 && " · 501(c)(3) only"}</dd></div>
         </dl>
-        <h2 className="mt-5 text-xs font-semibold uppercase tracking-wide text-muted">Priorities</h2>
+        <h2 className="eyebrow mt-6 text-[10px] text-muted">Priorities</h2>
         <ol className="mt-2 flex flex-wrap gap-1.5">
           {sp.causes.map((c, i) => <Pill key={c}>{i + 1}. {label(CAUSES, c)}</Pill>)}
         </ol>
         {sp.excludedCauses.length > 0 && (
           <p className="mt-2 text-xs text-muted">Doesn&apos;t fund: {sp.excludedCauses.map((c) => label(CAUSES, c)).join(", ")}</p>
         )}
-        <h2 className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Wants</h2>
+        <h2 className="eyebrow mt-4 text-[10px] text-muted">Wants</h2>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {sp.objectives.map((o) => <Pill key={o} tone="brand">{label(OBJECTIVES, o)}</Pill>)}
           {sp.audiences.map((a) => <Pill key={a} tone="accent">{label(AUDIENCES, a)}</Pill>)}
         </div>
       </aside>
       <section className="space-y-4">
-        <h2 className="text-xl font-bold tracking-tight">Best-fit opportunities</h2>
+        <h2 className="display text-4xl font-semibold">Best-fit opportunities</h2>
         {ranked.map((r, i) => (
           <MatchCard key={r.item.id} opp={r.item} sponsor={sp} match={r.match} viewer="sponsor" rank={i + 1} />
         ))}

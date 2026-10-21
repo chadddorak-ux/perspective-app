@@ -54,7 +54,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
           <Link
             key={id}
             href={{ pathname: "/sponsors", query: { ...(q && { q }), ...(cause && { cause }), ...(industry && { industry }), ...(state && { state }), ...(type !== id && { type: id }) } }}
-            className={`rounded-full border px-2.5 py-0.5 text-xs ${type === id ? "border-brand bg-brand text-brand-ink" : "border-line"}`}
+            className={`eyebrow rounded-sm border px-2 py-1 text-[10px] ${type === id ? "border-ink bg-ink text-bg" : "border-line"}`}
           >
             {l}
           </Link>
@@ -63,9 +63,9 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
       {sponsors.length === 0 && <div className="card p-10 text-center text-muted">Nothing matches those filters yet.</div>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sponsors.map((s) => (
-          <Link key={s.id} href={`/sponsors/${s.id}`} className="card p-5 transition hover:border-brand">
+          <Link key={s.id} href={`/sponsors/${s.id}`} className="card p-5 transition hover:border-ink">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{s.name}</h3>
+              <h3 className="font-display text-lg font-semibold tracking-tight">{s.name}</h3>
               {s.sample && <SampleTag />}
             </div>
             <p className="text-xs text-muted">{s.industry ? label(INDUSTRIES, s.industry) : label(SPONSOR_TYPES, s.type)}</p>

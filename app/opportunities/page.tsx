@@ -47,9 +47,9 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         {opps.map((o) => {
           const amounts = o.tiers.map((t) => t.amount);
           return (
-            <Link key={o.id} href={`/opportunities/${o.id}`} className="card p-5 transition hover:border-brand">
+            <Link key={o.id} href={`/opportunities/${o.id}`} className="card p-5 transition hover:border-ink">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold">{o.title}</h3>
+                <h3 className="font-display text-lg font-semibold tracking-tight">{o.title}</h3>
                 {o.sample && <SampleTag />}
               </div>
               <p className="text-sm text-muted">

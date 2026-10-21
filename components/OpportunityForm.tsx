@@ -30,7 +30,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <fieldset className="space-y-4 border-t border-line pt-6 first:border-0 first:pt-0">
       <div>
-        <legend className="font-semibold">{title}</legend>
+        <legend className="font-display text-xl font-semibold tracking-tight">{title}</legend>
         {hint && <p className="hint mt-0.5">{hint}</p>}
       </div>
       {children}

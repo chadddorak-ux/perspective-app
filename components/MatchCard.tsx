@@ -43,16 +43,16 @@ export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
   const isSample = isOrg ? sponsor.sample : opp.sample;
 
   return (
-    <article className={`card p-5 ${eligible ? "" : "opacity-70"}`}>
+    <article className={`card p-5 transition-colors hover:border-ink ${eligible ? "" : "opacity-70"}`}>
       <div className="flex gap-4">
         <ScoreRing score={match.score} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            {rank !== undefined && <span className="text-xs font-semibold text-muted">#{rank}</span>}
+            {rank !== undefined && <span className="font-mono text-xs text-muted">{String(rank).padStart(2, "0")}</span>}
             {saved || !isOrg ? (
-              <Link href={href} className="truncate font-semibold hover:underline">{title}</Link>
+              <Link href={href} className="truncate font-display text-lg font-semibold tracking-tight hover:text-brand">{title}</Link>
             ) : (
-              <span className="truncate font-semibold">{title}</span>
+              <span className="truncate font-display text-lg font-semibold tracking-tight">{title}</span>
             )}
             <GradeBadge grade={match.grade} />
             {isSample && <SampleTag />}
@@ -73,14 +73,14 @@ export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
       ) : (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">Why it fits</h4>
+            <h4 className="eyebrow mb-2 text-[10px] text-muted">Why it fits</h4>
             <ul className="space-y-1 text-sm">
               {match.reasons.slice(0, 4).map((r) => <li key={r} className="flex gap-2"><span className="text-good">✓</span>{r}</li>)}
               {match.reasons.length === 0 && <li className="text-muted">No strong signals</li>}
             </ul>
           </div>
           <div>
-            <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">Watch for</h4>
+            <h4 className="eyebrow mb-2 text-[10px] text-muted">Watch for</h4>
             <ul className="space-y-1 text-sm">
               {match.gaps.slice(0, 4).map((g) => <li key={g} className="flex gap-2"><span className="text-warn">!</span>{g}</li>)}
               {match.gaps.length === 0 && <li className="text-muted">Nothing major</li>}

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,38 +14,80 @@ export const metadata: Metadata = {
 const NAV = [
   { href: "/find", label: "Find sponsors" },
   { href: "/give", label: "Find causes" },
-  { href: "/import", label: "Import a pitch" },
+  { href: "/import", label: "Import" },
   { href: "/opportunities", label: "Opportunities" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/intros", label: "Intros" },
 ];
 
+function Logo() {
+  return (
+    <svg aria-hidden viewBox="0 0 28 28" className="h-7 w-7">
+      <rect width="28" height="28" fill="var(--ink)" />
+      <circle cx="14" cy="14" r="7" fill="none" stroke="var(--bg)" strokeWidth="2" />
+      <path d="M14 7a7 7 0 0 1 0 14z" fill="var(--accent)" />
+    </svg>
+  );
+}
+
+// The visible column grid behind every page. Content sits above it; empty
+// space and gutters let the lines show through.
+function GridLines() {
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
+      <div className="mx-auto h-full max-w-6xl px-4">
+        {[
+          { cols: 4, cls: "grid grid-cols-4 md:hidden" },
+          { cols: 6, cls: "hidden grid-cols-6 md:grid lg:hidden" },
+          { cols: 12, cls: "hidden grid-cols-12 lg:grid" },
+        ].map(({ cols, cls }) => (
+          <div key={cols} className={`h-full border-r border-line/60 ${cls}`}>
+            {Array.from({ length: cols }, (_, i) => (
+              <div key={i} className="border-l border-line/60" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
-            <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-              <svg aria-hidden viewBox="0 0 28 28" className="h-7 w-7">
-                <rect width="28" height="28" rx="8" fill="var(--brand)" />
-                <circle cx="14" cy="14" r="7" fill="none" stroke="var(--brand-ink)" strokeWidth="2" />
-                <path d="M14 7a7 7 0 0 1 0 14z" fill="var(--brand-ink)" />
-              </svg>
+        <GridLines />
+        <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur">
+          <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+            <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-semibold tracking-tight">
+              <Logo />
               Perspective
             </Link>
-            <nav className="-mx-2 flex flex-1 gap-1 overflow-x-auto text-sm">
+            <nav className="-mx-2 flex flex-1 gap-0.5 overflow-x-auto">
               {NAV.map((n) => (
-                <Link key={n.href} href={n.href} className="whitespace-nowrap rounded-md px-2 py-1.5 text-muted hover:bg-brand-soft hover:text-ink">
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className="eyebrow whitespace-nowrap px-2.5 py-2 text-muted transition-colors hover:text-ink"
+                >
                   {n.label}
                 </Link>
               ))}
             </nav>
+            <Link href="/find" className="btn-primary hidden py-2 sm:inline-flex">
+              Get matched
+            </Link>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 pb-24 pt-8">{children}</main>
-        <footer className="border-t border-line py-8 text-center text-xs text-muted">
-          Perspective prototype · Sample organizations and sponsors are fictional and labeled as such
+        <main className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-10">{children}</main>
+        <footer className="relative z-10 border-t border-line bg-bg">
+          <div className="mx-auto max-w-6xl px-4 py-10">
+            <p className="display select-none text-[18vw] font-bold leading-none text-ink/[0.06] lg:text-[11rem]">Perspective</p>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
+              <span className="eyebrow">Sponsorship & donor matching · Prototype</span>
+              <span>Sample organizations and sponsors are fictional and labeled as such.</span>
+            </div>
+          </div>
         </footer>
       </body>
     </html>

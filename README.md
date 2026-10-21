@@ -43,6 +43,17 @@ npm run typecheck
 npm run build
 ```
 
+## Design
+
+The visual language is "show the grid, then break it":
+- **Grid:** a visible column grid and hairline rules give every page its structure.
+- **Breaking it:** oversized display type, a warm rose→amber accent, a full-bleed match ticker and a few deliberately off-grid elements cut across that structure.
+- **Fonts:** Bricolage Grotesque (display), Geist (text) and Geist Mono (labels and data). All are self-hosted through `@fontsource`, so builds don't depend on a font CDN.
+- **Palette and modes:** tokens live in `app/globals.css`, with light and dark themes.
+- **Motion:** respects `prefers-reduced-motion`.
+
+![Home, dark](docs/screenshots/home-dark.png)
+
 ## How matching works
 
 Scores (0–100) are the sum of six factors, each shown in the UI's "Score breakdown":

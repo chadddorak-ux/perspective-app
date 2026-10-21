@@ -90,7 +90,7 @@ export function OpportunityMatcher({
         {results && (
           <>
             <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-2xl font-semibold">
                 {eligible.filter((r) => r.match.score >= 70).length} strong matches
                 <span className="font-normal text-muted"> of {results.length} sponsors</span>
               </h2>
