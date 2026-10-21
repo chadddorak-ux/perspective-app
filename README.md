@@ -54,6 +54,27 @@ npm run typecheck
 npm run build
 ```
 
+## Standalone HTML build
+
+```bash
+npm run build:static   # → out-static/perspective.html (one file, ~1 MB)
+```
+
+This produces the whole site as a single self-contained HTML file you can open by double-clicking. No server or install needed.
+
+**What runs in the browser:**
+- The same pages and components as the Next app.
+- The same API route handlers, answered locally by a small fetch layer instead of a server.
+
+**How it works:**
+- Pages render through an in-memory router.
+- Next-only modules are swapped for small browser stand-ins in `static/`.
+- Anything a visitor creates (campaigns, pledges, intros) is saved in their browser's localStorage.
+
+**Limitation:** pitch import always uses the rule-based parser here, because there's no server to hold an API key.
+
+The build also writes `out-static/artifact.html`, the same page without the `<html>`/`<head>`/`<body>` wrapper, for hosts that add their own.
+
 ## Design
 
 The visual language is "show the grid, then break it":
@@ -105,7 +126,10 @@ lib/
   extract.ts         rule-based pitch parser
   ai-extract.ts      Claude-based extraction (structured outputs)
   outreach.ts        pitch / opt-in / intro email drafts
-  store.ts           prototype persistence (.data/db.json + seed)
+  store-core.ts      store logic shared by both builds
+  store.ts           server persistence (.data/db.json + seed)
+static/              browser entry, router and Next stand-ins for the standalone build
+scripts/             build-static.mjs
 data/seed.ts         fictional sample network, goals and pledges
 data/examples.ts     example pitches for the import demo
 docs/                product brief and screenshots

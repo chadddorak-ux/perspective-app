@@ -34,10 +34,17 @@ export function OutreachModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const [copyFailed, setCopyFailed] = useState(false);
   const copy = async () => {
-    await navigator.clipboard.writeText(`Subject: ${draft.subject}\n\n${draft.body}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(`Subject: ${draft.subject}\n\n${draft.body}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Some embedded views refuse clipboard access; select the text so it can be copied by hand.
+      setCopyFailed(true);
+      document.querySelector<HTMLTextAreaElement>("#outreach-body")?.select();
+    }
   };
 
   return (
@@ -64,7 +71,9 @@ export function OutreachModal({
         <div className="flex-1 space-y-3 overflow-y-auto p-5">
           <p className="hint">{KINDS[kind].hint}. Edit freely — nothing is sent from here.</p>
           <input className="field font-medium" value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />
+          {copyFailed && <p className="text-sm text-warn">Couldn&apos;t copy automatically. The text is selected: press Ctrl+C or ⌘C.</p>}
           <textarea
+            id="outreach-body"
             className="field min-h-[320px] font-mono text-[13px] leading-relaxed"
             value={draft.body}
             onChange={(e) => setDraft({ ...draft, body: e.target.value })}

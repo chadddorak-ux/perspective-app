@@ -23,8 +23,9 @@
   --bad: #b42318;
 }
 
+/* Dark palette: follows the OS unless the viewer picked light, and wins when they picked dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0e0e10;
     --card: #151517;
     --ink: #f2f1ec;
@@ -39,7 +40,25 @@
     --good: #4cc98a;
     --warn: #e0a84a;
     --bad: #f0716b;
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --card: #151517;
+  --ink: #f2f1ec;
+  --muted: #9c9a94;
+  --line: #2a2a2e;
+  --brand: #ff5c93;
+  --brand-ink: #0e0e10;
+  --brand-soft: #3a1424;
+  --accent: #ff3d7f;
+  --accent-2: #ffc266;
+  --accent-soft: #33260f;
+  --good: #4cc98a;
+  --warn: #e0a84a;
+  --bad: #f0716b;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -79,6 +98,19 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
+}
+
+/* On phones the sticky header sits below the system bar, and the band above it is painted. */
+.site-header {
+  top: env(safe-area-inset-top, 0px);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 40;
+  background: var(--bg);
 }
 
 input,
@@ -168,9 +200,10 @@ h3 {
   }
 }
 
+/* Starts readable so no frame (thumbnail, slow device) catches an empty hero. */
 @keyframes rise {
   from {
-    opacity: 0;
+    opacity: 0.55;
     transform: translateY(18px);
   }
 }
@@ -216,9 +249,9 @@ h3 {
 }
 
 /* Scroll reveal, driven by components/Reveal.tsx. */
+/* Content is readable before the observer fires (thumbnails, slow devices); only the offset animates. */
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(16px);
   transition:
     opacity 0.7s ease,
     transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -233,6 +266,7 @@ h3 {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }

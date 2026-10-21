@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"lib/**/*.test.ts\""
+    "test": "node --test \"lib/**/*.test.ts\"",
+    "build:static": "node scripts/build-static.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
@@ -26,6 +27,8 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "esbuild": "^0.28.2",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4.1.0",
     "typescript": "5.9.3"
   }

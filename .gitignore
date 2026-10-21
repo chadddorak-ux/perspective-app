@@ -7,3 +7,4 @@ next-env.d.ts
 .env*.local
 .env
 .DS_Store
+out-static/
