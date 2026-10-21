@@ -67,12 +67,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
       </PageHeader>
 
       {/* Category tabs */}
-      <nav className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-y border-line px-4">
+      <nav className="mb-6 flex gap-1.5 overflow-x-auto pb-1">
         {[{ label: "All", value: undefined }, ...CAUSE_GROUPS.map((g) => ({ label: g.label, value: g.label }))].map((t) => (
           <Link
             key={t.label}
             href={link({ group: t.value, cause: undefined })}
-            className={`eyebrow whitespace-nowrap border-b-2 px-3 py-3.5 ${group === t.value ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`}
+            className={`whitespace-nowrap rounded-full border px-4 py-2 font-display text-sm font-semibold transition-colors ${group === t.value ? "border-ink bg-ink text-bg" : "border-line bg-card text-muted hover:border-ink hover:text-ink"}`}
           >
             {t.label}
           </Link>
@@ -100,7 +100,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
             <Link
               key={key}
               href={link({ sort: key })}
-              className={`eyebrow rounded-sm border px-2.5 py-1.5 text-[10px] ${sort === key ? "border-ink bg-ink text-bg" : "border-line hover:border-ink"}`}
+              className={`rounded-full border px-3 py-1.5 font-display text-xs font-semibold ${sort === key ? "border-ink bg-ink text-bg" : "border-line bg-card hover:border-ink"}`}
             >
               {s.label}
             </Link>

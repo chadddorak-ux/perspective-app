@@ -79,12 +79,15 @@ The build also writes `out-static/artifact.html`, the same page without the `<ht
 
 ## Design
 
-The visual language is "show the grid, then break it":
-- **Grid:** a visible column grid and hairline rules give every page its structure.
-- **Breaking it:** oversized display type, a warm rose→amber accent, a full-bleed match ticker and a few deliberately off-grid elements cut across that structure.
-- **Fonts:** Bricolage Grotesque (display), Geist (text) and Geist Mono (labels and data). All are self-hosted through `@fontsource`, so builds don't depend on a font CDN.
-- **Palette and modes:** tokens live in `app/globals.css`, with light and dark themes.
-- **Motion:** respects `prefers-reduced-motion`.
+The visual language is Bauhaus shapes on a Scandinavian page:
+- **Base and color:** warm paper, one ink color, and five flat colors (coral, sun, sky, blush, mint).
+- **Shapes as illustration:** circles, halves, quarters, squares and triangles stand in for causes, sponsors and steps.
+  - Each cause group has its own glyph, and campaign covers are generated from it.
+  - The logo is two halves (a cause and a sponsor) that close into one circle. It also stands in for the "o" in the hero headline.
+- **Hero:** an animated three-step demo on real data. A nonprofit posts a campaign, Perspective scores the best-fit sponsors with reasons, and a sponsor pledges while the progress bar fills. It plays on its own, pauses on hover, and each step is clickable.
+- **Playful elements:** floating shapes drift with the pointer and wobble when clicked. Cards lift with a hard ink shadow, and glyphs tilt on hover.
+- **Fonts:** Outfit (display) and Figtree (text), self-hosted through `@fontsource`.
+- **Themes and motion:** tokens live in `app/globals.css`, with light and dark themes. All motion respects `prefers-reduced-motion`.
 
 ![Home, dark](docs/screenshots/home-dark.png)
 

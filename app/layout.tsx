@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource-variable/geist";
-import "@fontsource-variable/geist-mono";
+import "@fontsource-variable/figtree";
+import "@fontsource-variable/outfit";
 import { SiteChrome } from "@/components/SiteChrome";
 import "./globals.css";
 

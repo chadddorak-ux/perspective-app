@@ -54,7 +54,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
           <Link
             key={id}
             href={{ pathname: "/sponsors", query: { ...(q && { q }), ...(cause && { cause }), ...(industry && { industry }), ...(state && { state }), ...(type !== id && { type: id }) } }}
-            className={`eyebrow rounded-sm border px-2 py-1 text-[10px] ${type === id ? "border-ink bg-ink text-bg" : "border-line"}`}
+            className={`eyebrow rounded-full border px-2 py-1 text-[10px] ${type === id ? "border-ink bg-ink text-bg" : "border-line"}`}
           >
             {l}
           </Link>

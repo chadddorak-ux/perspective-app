@@ -16,7 +16,7 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const r = (...p) => path.join(root, ...p);
 const OUT = r("out-static");
-const FONT_PACKAGES = ["bricolage-grotesque", "geist", "geist-mono"];
+const FONT_PACKAGES = ["outfit", "figtree"];
 
 // Next-only modules swapped for browser stand-ins.
 const SHIMS = {

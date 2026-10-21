@@ -26,14 +26,17 @@ export function TierRail({
       {tiers.map((t) => {
         const soldOut = t.left === 0;
         return (
-          <div key={t.tier.name} className={`group border bg-card p-5 transition-colors ${soldOut || closed ? "border-line opacity-60" : "border-line hover:border-ink"}`}>
+          <div
+            key={t.tier.name}
+            className={`group rounded-3xl border bg-card p-5 transition-all duration-300 ${soldOut || closed ? "border-line opacity-60" : "border-line hover:-translate-y-0.5 hover:border-ink hover:shadow-[4px_4px_0_var(--ink)]"}`}
+          >
             <p className="eyebrow text-[10px] text-muted">Pledge {money(t.tier.amount)}</p>
             <h3 className="mt-1 font-display text-xl font-semibold tracking-tight">{t.tier.name}</h3>
             {t.tier.benefits.length > 0 && (
               <ul className="mt-3 space-y-1.5 text-sm text-muted">
                 {t.tier.benefits.map((b) => (
                   <li key={b} className="flex gap-2">
-                    <span aria-hidden className="mt-1.5 h-1 w-1 shrink-0 bg-accent" />
+                    <span aria-hidden className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" />
                     {b}
                   </li>
                 ))}
@@ -103,8 +106,8 @@ function PledgeModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Sponsor ${tier.tier.name}`}>
-      <div className="card w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-warm px-6 py-5 text-[#111113]">
+      <div className="card w-full max-w-md overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-accent px-6 py-5 text-[#1f1a17]">
           <p className="eyebrow text-[10px]">Pledge {money(tier.tier.amount)}</p>
           <h2 className="display mt-1 text-3xl font-semibold">{tier.tier.name}</h2>
         </div>

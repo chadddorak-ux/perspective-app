@@ -1,17 +1,9 @@
-import { CAUSES, CAUSE_GROUPS, type CauseId } from "@/lib/taxonomy";
+import type { CauseId } from "@/lib/taxonomy";
+import { GROUP_GLYPHS, PALETTE, ShapePiece, groupOf, type PaletteKey, type Piece } from "./Shapes";
 
-// Campaigns don't have photos yet, so each gets a generated typographic cover:
-// a color per cause group, one of four patterns, and its main cause set large.
-const GROUP_COLORS: Record<string, { bg: string; fg: string }> = {
-  "Education & youth": { bg: "#FFB23D", fg: "#111113" },
-  Health: { bg: "#FF3D7F", fg: "#111113" },
-  "Basic needs & community": { bg: "#FF6A3D", fg: "#111113" },
-  "Environment & animals": { bg: "#2FA36B", fg: "#0B1A12" },
-  "Arts, culture & sports": { bg: "#7B5CFF", fg: "#FFFFFF" },
-  "Equity & rights": { bg: "#E0369B", fg: "#FFFFFF" },
-  "Economy & work": { bg: "#2F6BFF", fg: "#FFFFFF" },
-  "Global, civic & faith": { bg: "#14A3A3", fg: "#0A1A1A" },
-};
+// Campaign covers are generated Bauhaus compositions: the cause group's glyph,
+// enlarged and shifted per campaign so no two covers look alike. Shapes play
+// when the card is hovered.
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -19,64 +11,54 @@ function hash(s: string): number {
   return h >>> 0;
 }
 
+const SOFT_BG: Record<PaletteKey, string> = {
+  coral: "var(--brand-soft)",
+  sun: "var(--accent-soft)",
+  sky: "var(--sky-soft)",
+  blush: "var(--brand-soft)",
+  mint: "var(--mint-soft)",
+  ink: "var(--line)",
+};
+
 export function coverColors(cause: CauseId | undefined) {
-  const group = CAUSE_GROUPS.find((g) => cause && g.ids.includes(cause))?.label ?? "Basic needs & community";
-  return GROUP_COLORS[group];
+  const glyph = GROUP_GLYPHS[groupOf(cause)];
+  return { bg: PALETTE[glyph.bg], fg: "#1f1a17", soft: SOFT_BG[glyph.bg] };
 }
 
-export function CoverArt({
-  id,
-  cause,
-  label,
-  className = "",
-}: {
-  id: string;
-  cause?: CauseId;
-  label?: string; // small mono caption, e.g. "Event · Denver"
-  className?: string;
-}) {
-  const { bg, fg } = coverColors(cause);
+export function CoverArt({ id, cause, label, className = "" }: { id: string; cause?: CauseId; label?: string; className?: string }) {
+  const group = groupOf(cause);
+  const glyph = GROUP_GLYPHS[group];
   const h = hash(id);
-  const pattern = h % 4;
-  const word = cause ? CAUSES[cause].split(/[ &]/)[0] : "Community";
-  const pid = `p-${id.replace(/[^a-z0-9]/gi, "")}`;
+  // The glyph sits in a 400×250 frame; position and a little rotation vary per campaign.
+  const flip = h % 2 === 0;
+  const offsetX = 150 + (h % 110);
+  const tilt = (h % 3) * 90;
+  const extras: Piece[] = [
+    { kind: "dot", x: 20 + (h % 60), y: 140 + (h % 50), size: 70, color: glyph.pieces[0].color },
+    { kind: (["quarter", "half", "square"] as const)[h % 3], x: 30 + (h % 40), y: 20, size: 80, color: glyph.pieces[glyph.pieces.length - 1].color, rotate: tilt },
+  ];
   return (
-    <div className={`relative overflow-hidden ${className}`} style={{ background: bg, color: fg }}>
+    <div className={`relative overflow-hidden ${className}`} style={{ background: SOFT_BG[glyph.bg] }}>
       <svg aria-hidden className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice" viewBox="0 0 400 250">
-        <defs>
-          <linearGradient id={`${pid}-g`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#ffffff" stopOpacity="0.28" />
-            <stop offset="1" stopColor="#000000" stopOpacity="0.12" />
-          </linearGradient>
-          <pattern id={`${pid}-dots`} width="16" height="16" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.4" fill={fg} opacity="0.22" />
-          </pattern>
-          <pattern id={`${pid}-grid`} width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M40 0H0V40" fill="none" stroke={fg} strokeOpacity="0.16" />
-          </pattern>
-        </defs>
-        <rect width="400" height="250" fill={`url(#${pid}-g)`} />
-        {pattern === 0 &&
-          [60, 100, 140, 180].map((r) => (
-            <circle key={r} cx={320 - (h % 60)} cy={60 + (h % 40)} r={r} fill="none" stroke={fg} strokeOpacity="0.18" strokeWidth="1.5" />
-          ))}
-        {pattern === 1 && <rect width="400" height="250" fill={`url(#${pid}-grid)`} />}
-        {pattern === 2 && <rect width="400" height="250" fill={`url(#${pid}-dots)`} />}
-        {pattern === 3 &&
-          Array.from({ length: 9 }, (_, i) => (
-            <path key={i} d={`M${-100 + i * 60} 260 L${60 + i * 60} -10`} stroke={fg} strokeOpacity="0.14" strokeWidth="14" />
-          ))}
-        {/* Accent dot stays in the upper area so it never sits on the cause word. */}
-        <circle cx={200 + (h % 150)} cy={52 + (h % 50)} r={22 + (h % 16)} fill={fg} opacity="0.9" />
+        {extras.map((p, i) => (
+          <ShapePiece key={`e${i}`} {...p} className={`transition-transform duration-700 ease-out ${i ? "group-hover:rotate-45" : "group-hover:scale-125"}`} />
+        ))}
+        <g transform={`translate(${offsetX} 25) scale(1.0)`}>
+          <g transform={flip ? "translate(200 0) scale(-1 1)" : undefined}>
+            <rect width="200" height="200" rx="0" fill={PALETTE[glyph.bg]} />
+            {glyph.pieces.map((p, i) => (
+              <ShapePiece
+                key={i}
+                {...p}
+                className={`transition-transform duration-500 ease-out group-hover:scale-105 ${i % 2 ? "group-hover:-rotate-12" : "group-hover:rotate-12"}`}
+              />
+            ))}
+          </g>
+        </g>
       </svg>
-      <span
-        className={`display absolute -bottom-[0.18em] left-3 select-none font-bold leading-none opacity-90 ${
-          word.length > 9 ? "text-[clamp(2rem,7vw,4rem)] sm:text-[clamp(2rem,3.4vw,4rem)]" : "text-[clamp(2.5rem,9vw,5.5rem)] sm:text-[clamp(2.5rem,5vw,5.5rem)]"
-        }`}
-      >
-        {word}
-      </span>
-      {label && <span className="eyebrow absolute left-3 top-3 bg-black/80 px-1.5 py-0.5 text-[9px] text-white">{label}</span>}
+      {label && (
+        <span className="eyebrow absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-[10px] text-ink shadow-sm backdrop-blur">{label}</span>
+      )}
     </div>
   );
 }

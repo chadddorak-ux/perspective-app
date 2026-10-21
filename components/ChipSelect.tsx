@@ -58,7 +58,7 @@ function Chips<T extends string>({
             type="button"
             onClick={() => toggle(id)}
             aria-pressed={on}
-            className={`rounded-sm border px-3 py-1.5 text-sm transition ${
+            className={`rounded-full border px-3 py-1.5 text-sm transition ${
               on ? "border-ink bg-ink text-bg" : "border-line bg-card text-ink hover:border-ink"
             }`}
           >

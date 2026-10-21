@@ -86,8 +86,8 @@ export function CampaignWizard() {
         {/* Step rail */}
         <aside className="lg:col-span-4">
           <div className="lg:sticky lg:top-24">
-            <div className="h-1 bg-line">
-              <div className="bg-warm h-full transition-[width] duration-500" style={{ width: `${percent}%` }} />
+            <div className="h-2 overflow-hidden rounded-full bg-line">
+              <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${percent}%` }} />
             </div>
             <ol className="mt-4 border-l border-line">
               {[...FORM_STEPS.map((s) => s.title), "Review & launch"].map((t, i) => {
@@ -102,7 +102,11 @@ export function CampaignWizard() {
                         state === "current" ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink disabled:hover:text-muted"
                       }`}
                     >
-                      <span className={`grid h-5 w-5 place-items-center font-mono text-[10px] ${state === "done" && i !== step ? "bg-ink text-bg" : "border border-line"}`}>
+                      <span
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-display text-xs font-bold ${
+                          i === step ? "bg-accent text-[#1f1a17]" : state === "done" ? "bg-ink text-bg" : "border border-line"
+                        }`}
+                      >
                         {state === "done" && i !== step ? "✓" : i + 1}
                       </span>
                       {t}

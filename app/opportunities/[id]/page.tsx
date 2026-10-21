@@ -59,7 +59,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
       {/* Cover + funding */}
       <section className="mt-8 grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
-        <CoverArt id={opp.id} cause={opp.causes[0]} className="aspect-[16/9] lg:col-span-8" />
+        <CoverArt id={opp.id} cause={opp.causes[0]} className="group aspect-[16/9] rounded-[28px] lg:col-span-8" />
         <aside className="lg:col-span-4">
           <FundingStats f={f} />
           <div className="mt-6 space-y-2">
@@ -72,7 +72,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium">{opp.orgName}</span>
               {opp.sample && <SampleTag />}
-              {opp.featured && <span className="eyebrow bg-accent px-1.5 py-0.5 text-[9px] text-[#111113]">★ Featured</span>}
+              {opp.featured && <span className="eyebrow rounded-full bg-ink px-2.5 py-1 text-[10px] text-bg">★ Featured</span>}
             </div>
             <p className="text-muted">
               {opp.orgType === "other" ? "Not a 501(c)(3)" : label(ORG_TYPES, opp.orgType)}
@@ -88,14 +88,14 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
       </section>
 
       {/* Section nav */}
-      <nav className="sticky top-14 z-20 mt-12 flex gap-1 overflow-x-auto border-y border-line bg-bg/90 backdrop-blur">
+      <nav className="sticky top-16 z-20 mt-12 flex gap-1 overflow-x-auto rounded-full border border-line bg-card/90 p-1 backdrop-blur">
         {[
           ["#story", "Story"],
           ["#tiers", `Tiers (${opp.tiers.length})`],
           ["#matches", "Best-fit sponsors"],
           ["#sponsors", `Sponsors (${f.sponsors})`],
         ].map(([href, l]) => (
-          <a key={href} href={href} className="eyebrow whitespace-nowrap px-3 py-3.5 text-muted hover:text-ink">
+          <a key={href} href={href} className="whitespace-nowrap rounded-full px-4 py-2 font-display text-sm font-semibold text-muted hover:bg-bg hover:text-ink">
             {l}
           </a>
         ))}

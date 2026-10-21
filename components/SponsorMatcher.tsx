@@ -120,7 +120,7 @@ export function SponsorMatcher() {
                     type="button"
                     disabled={d.causes.includes(c)}
                     onClick={() => set("causes", [...d.causes, c].slice(0, 6))}
-                    className="rounded-sm border border-dashed border-brand px-2 py-0.5 text-brand disabled:border-line disabled:text-muted"
+                    className="rounded-full border border-dashed border-brand px-2 py-0.5 text-brand disabled:border-line disabled:text-muted"
                   >
                     + {CAUSES[c]}
                   </button>
@@ -156,7 +156,7 @@ export function SponsorMatcher() {
                 key={s}
                 type="button"
                 onClick={() => setGeo({ scope: s })}
-                className={`rounded-sm border px-3 py-1.5 text-sm capitalize ${d.geography.scope === s ? "border-ink bg-ink text-bg" : "border-line"}`}
+                className={`rounded-full border px-3 py-1.5 text-sm capitalize ${d.geography.scope === s ? "border-ink bg-ink text-bg" : "border-line"}`}
               >
                 {s}
               </button>
