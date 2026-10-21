@@ -21,6 +21,7 @@ export const TierInput = z.object({
   name: text(120),
   amount: usd,
   availability: z.enum(["exclusive", "limited", "multiple"]).optional(),
+  slots: z.coerce.number().int().min(1).max(500).optional(),
   benefits: z.array(text(200)).max(30).default([]),
 });
 
@@ -31,6 +32,8 @@ export const OpportunityInput = z.object({
   title: text(200),
   kind: z.enum(["event", "program", "campaign", "general"]),
   summary: text(2000).default(""),
+  story: text(8000).optional(),
+  goal: z.coerce.number().int().min(0).max(100_000_000).optional(),
   causes: z.array(z.enum(keys(CAUSES))).min(1, "Pick at least one cause").max(6),
   audiences: z.array(z.enum(keys(AUDIENCES))).max(10).default([]),
   location: z.object({

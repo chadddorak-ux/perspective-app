@@ -72,7 +72,7 @@ export function OpportunityMatcher({
             {busy === "match" ? "Matching…" : submitLabel}
           </button>
           <button className="btn-secondary" onClick={save} disabled={busy !== null}>
-            {busy === "save" ? "Saving…" : "Save listing"}
+            {busy === "save" ? "Launching…" : "Launch campaign"}
           </button>
           {error && <p className="w-full text-sm text-bad">{error}</p>}
         </div>

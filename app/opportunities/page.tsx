@@ -1,69 +1,115 @@
 import Link from "next/link";
+import { CampaignCard } from "@/components/CampaignCard";
 import { FilterBar, toOptions } from "@/components/FilterBar";
-import { Pill, PageHeader, SampleTag } from "@/components/ui";
-import { money } from "@/lib/match";
-import { CAUSES, US_STATES, label } from "@/lib/taxonomy";
-import { listOpportunities } from "@/lib/store";
+import { PageHeader } from "@/components/ui";
+import { fundingFor, type Funding } from "@/lib/funding";
+import { CAUSES, CAUSE_GROUPS, US_STATES } from "@/lib/taxonomy";
+import { listOpportunities, listPledges } from "@/lib/store";
+import type { Opportunity } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Opportunities — Perspective" };
+export const metadata = { title: "Discover campaigns — Perspective" };
 
 const KINDS = { event: "Events", program: "Programs", campaign: "Campaigns", general: "General support" };
 
-type Search = { q?: string; cause?: string; state?: string; kind?: string };
+type Row = { opp: Opportunity; f: Funding };
 
-export default async function OpportunitiesPage({ searchParams }: { searchParams: Promise<Search> }) {
-  const { q, cause, state, kind } = await searchParams;
-  const all = await listOpportunities();
+// Kickstarter-style sorts, adapted: "nearly funded" and "happening soon" are
+// where a sponsor's yes makes the most difference.
+const SORTS: Record<string, { label: string; fn: (a: Row, b: Row) => number }> = {
+  soon: { label: "Happening soon", fn: (a, b) => (a.f.daysLeft ?? 9999) - (b.f.daysLeft ?? 9999) },
+  nearly: { label: "Nearly funded", fn: (a, b) => (b.f.percent < 100 ? b.f.percent : -1) - (a.f.percent < 100 ? a.f.percent : -1) },
+  newest: { label: "Just launched", fn: (a, b) => b.opp.createdAt.localeCompare(a.opp.createdAt) },
+  popular: { label: "Most sponsors", fn: (a, b) => b.f.sponsors - a.f.sponsors || b.f.pledged - a.f.pledged },
+  goal: { label: "Biggest goals", fn: (a, b) => b.f.goal - a.f.goal },
+};
+
+type Search = { q?: string; cause?: string; group?: string; state?: string; kind?: string; sort?: string };
+
+export default async function DiscoverPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const params = await searchParams;
+  const { q, cause, group, state, kind } = params;
+  const sort = params.sort && SORTS[params.sort] ? params.sort : "soon";
+  const [all, pledges] = await Promise.all([listOpportunities(), listPledges()]);
+  const groupIds = CAUSE_GROUPS.find((g) => g.label === group)?.ids;
   const needle = q?.trim().toLowerCase();
-  const opps = all.filter(
-    (o) =>
-      (!cause || o.causes.includes(cause as never)) &&
-      (!state || (state === "virtual" ? o.location.virtual : o.location.state === state)) &&
-      (!kind || o.kind === kind) &&
-      (!needle || `${o.title} ${o.orgName} ${o.summary} ${o.location.city ?? ""}`.toLowerCase().includes(needle)),
-  );
+
+  const rows: Row[] = all
+    .filter(
+      (o) =>
+        (!cause || o.causes.includes(cause as never)) &&
+        (!groupIds || o.causes.some((c) => groupIds.includes(c))) &&
+        (!state || (state === "virtual" ? o.location.virtual : o.location.state === state)) &&
+        (!kind || o.kind === kind) &&
+        (!needle || `${o.title} ${o.orgName} ${o.summary} ${o.location.city ?? ""}`.toLowerCase().includes(needle)),
+    )
+    .map((opp) => ({ opp, f: fundingFor(opp, pledges) }))
+    .filter((r) => r.f.state !== "closed")
+    .sort(SORTS[sort].fn);
   const states = new Set(all.map((o) => o.location.state).filter(Boolean) as string[]);
+  const link = (patch: Partial<Search>) => {
+    const next = { ...params, ...patch };
+    const qs = new URLSearchParams(Object.entries(next).filter(([, v]) => v) as [string, string][]).toString();
+    return `/opportunities${qs ? `?${qs}` : ""}`;
+  };
 
   return (
     <>
-      <PageHeader eyebrow="Network" title="Opportunities raising support">
-        Events, programs and campaigns from nonprofits of every kind. Open any listing to see the sponsors who fit best.
+      <PageHeader eyebrow="Discover" title="Campaigns raising sponsorship">
+        Events, programs and campaigns from nonprofits of every kind. Back a tier directly, or open a campaign to see which sponsors fit it best.
       </PageHeader>
+
+      {/* Category tabs */}
+      <nav className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-y border-line px-4">
+        {[{ label: "All", value: undefined }, ...CAUSE_GROUPS.map((g) => ({ label: g.label, value: g.label }))].map((t) => (
+          <Link
+            key={t.label}
+            href={link({ group: t.value, cause: undefined })}
+            className={`eyebrow whitespace-nowrap border-b-2 px-3 py-3.5 ${group === t.value ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+
       <FilterBar
         action="/opportunities"
         query={q}
         values={{ cause, state, kind }}
-        placeholder="Search by name, organization or city"
+        placeholder="Search campaigns, organizations or cities"
         filters={[
           { name: "cause", label: "Any cause", options: toOptions(CAUSES) },
           { name: "state", label: "Anywhere", options: [{ value: "virtual", label: "Virtual / national" }, ...toOptions(US_STATES, states)] },
           { name: "kind", label: "Any type", options: toOptions(KINDS) },
         ]}
       />
-      <p className="mb-3 text-sm text-muted">{opps.length} of {all.length} opportunities</p>
-      {opps.length === 0 && <div className="card p-10 text-center text-muted">Nothing matches those filters yet.</div>}
-      <div className="grid gap-4 md:grid-cols-2">
-        {opps.map((o) => {
-          const amounts = o.tiers.map((t) => t.amount);
-          return (
-            <Link key={o.id} href={`/opportunities/${o.id}`} className="card p-5 transition hover:border-ink">
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-lg font-semibold tracking-tight">{o.title}</h3>
-                {o.sample && <SampleTag />}
-              </div>
-              <p className="text-sm text-muted">
-                {o.orgName} · {o.location.virtual ? "Virtual" : [o.location.city, o.location.state].filter(Boolean).join(", ")}
-                {o.startDate && ` · ${new Date(`${o.startDate}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {o.causes.slice(0, 3).map((c) => <Pill key={c}>{label(CAUSES, c)}</Pill>)}
-                {amounts.length > 0 && <Pill tone="brand">{money(Math.min(...amounts))}–{money(Math.max(...amounts))}</Pill>}
-              </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted">
+          <span className="font-mono text-ink">{rows.length}</span> live campaigns
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {Object.entries(SORTS).map(([key, s]) => (
+            <Link
+              key={key}
+              href={link({ sort: key })}
+              className={`eyebrow rounded-sm border px-2.5 py-1.5 text-[10px] ${sort === key ? "border-ink bg-ink text-bg" : "border-line hover:border-ink"}`}
+            >
+              {s.label}
             </Link>
-          );
-        })}
+          ))}
+        </div>
       </div>
+
+      {rows.length === 0 ? (
+        <div className="card p-10 text-center text-muted">Nothing matches those filters yet.</div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map(({ opp, f }) => (
+            <CampaignCard key={opp.id} opp={opp} f={f} />
+          ))}
+        </div>
+      )}
     </>
   );
 }

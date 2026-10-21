@@ -4,10 +4,10 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { seedOpportunities, seedSponsors } from "../data/seed.ts";
-import type { IntroRequest, IntroStatus, Opportunity, SponsorProfile } from "./types.ts";
+import { seedOpportunities, seedPledges, seedSponsors } from "../data/seed.ts";
+import type { IntroRequest, IntroStatus, Opportunity, Pledge, SponsorProfile } from "./types.ts";
 
-type DB = { opportunities: Opportunity[]; sponsors: SponsorProfile[]; intros: IntroRequest[] };
+type DB = { opportunities: Opportunity[]; sponsors: SponsorProfile[]; intros: IntroRequest[]; pledges: Pledge[] };
 
 const FILE = path.join(process.cwd(), ".data", "db.json");
 
@@ -28,9 +28,10 @@ async function readDB(): Promise<DB> {
       opportunities: [...(saved.opportunities ?? []), ...seedOpportunities],
       sponsors: [...(saved.sponsors ?? []), ...seedSponsors],
       intros: saved.intros ?? [],
+      pledges: [...(saved.pledges ?? []), ...seedPledges],
     };
   } catch {
-    cache = { opportunities: [...seedOpportunities], sponsors: [...seedSponsors], intros: [] };
+    cache = { opportunities: [...seedOpportunities], sponsors: [...seedSponsors], intros: [], pledges: [...seedPledges] };
   }
   return cache;
 }
@@ -40,6 +41,7 @@ async function save(db: DB): Promise<void> {
     opportunities: db.opportunities.filter((o) => o.source !== "seed"),
     sponsors: db.sponsors.filter((s) => s.source !== "seed"),
     intros: db.intros,
+    pledges: db.pledges.filter((p) => !p.id.startsWith("seed-")),
   };
   try {
     await mkdir(path.dirname(FILE), { recursive: true });
@@ -122,4 +124,16 @@ export async function updateIntroStatus(id: string, status: IntroStatus): Promis
   intro.updatedAt = new Date().toISOString();
   await save(db);
   return intro;
+}
+
+export async function listPledges(): Promise<Pledge[]> {
+  return (await load()).pledges;
+}
+
+export async function createPledge(input: Omit<Pledge, "id" | "createdAt" | "status">): Promise<Pledge> {
+  const db = await load();
+  const pledge: Pledge = { ...input, id: randomUUID(), status: "pledged", createdAt: new Date().toISOString() };
+  db.pledges.unshift(pledge);
+  await save(db);
+  return pledge;
 }

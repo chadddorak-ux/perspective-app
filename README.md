@@ -8,15 +8,26 @@ Think grant finder, but for sponsorships and corporate giving, across every caus
 
 ## What's in the prototype
 
+Perspective borrows the crowdfunding model from Kickstarter and GoFundMe:
+- **Campaigns** have a goal, a progress bar and reward-style tiers.
+- **Sponsors** pledge to a tier.
+- **Discovery** works by category, with sorts like "Nearly funded".
+
+The difference is that every campaign also shows which sponsors fit it and why.
+
 | Flow | Route | What it does |
 |---|---|---|
-| Find sponsors | `/find` | An organization describes its event/program and gets ranked sponsors, why each fits, the suggested tier to ask for, and a drafted pitch. |
-| Find causes | `/give` | A brand or donor describes its goals and gets ranked opportunities. |
-| Import a pitch | `/import` | Paste any sponsorship email or one-pager (and attach the PDF). It becomes a structured listing plus matches. |
-| Browse | `/opportunities`, `/sponsors` | Filter the network by cause, location, type and industry. |
-| Listing | `/opportunities/[id]` | Listing details, tiers, every sponsor ranked; draft outreach or request an intro. |
-| Sponsor | `/sponsors/[id]` | Sponsor profile and its best-fit opportunities. |
+| Discover | `/opportunities` | Browse live campaigns by cause group, with filters and sorts: happening soon, nearly funded, just launched, most sponsors, biggest goals. |
+| Campaign | `/opportunities/[id]` | Cover, story and funding stats ($ pledged of goal, % funded, sponsors, days to go). Tier cards show "X of Y left" and a pledge button. Below: best-fit sponsors with drafted outreach, and the list of sponsors who've pledged. |
+| Start a campaign | `/find` | GoFundMe-style five-step flow (basics, causes, place and time, goal and tiers, asks), then a review with a card preview, matching sponsors, and launch. |
+| Import a pitch | `/import` | Paste any sponsorship email or one-pager (and attach the PDF). It becomes a campaign plus matches. |
+| For sponsors | `/give` | A brand or donor sets its goals and gets ranked campaigns with their funding progress and a "Back this campaign" action. |
+| Sponsor profile | `/sponsors/[id]` | What a sponsor funds, the campaigns it has backed, and its best-fit campaigns. |
 | Intros | `/intros` | Double opt-in intro pipeline: requested → opted in → introduced → won/passed. |
+
+**Pledges are commitments, not payments.** The organizer confirms them and sends an agreement.
+
+**Pledges follow the matching rules.** A sponsor in the network can't pledge to a campaign it's blocked from (a cause it excludes, or an industry the organization declines). Tiers also stop accepting pledges once their slots fill.
 
 The demo network has 19 fictional organizations and 27 fictional sponsors, all labeled "Sample" in the UI:
 - **Organizations:** food banks, animal rescues, youth sports, arts festivals, rural health, refugee services, recovery, disaster preparedness, adaptive sports and more, across 17 states plus one national virtual campaign.
@@ -85,15 +96,17 @@ app/                 Next.js App Router pages and API routes
   api/opportunities  save a listing
   api/sponsors       save a sponsor profile
   api/intros         create / update intro requests
+  api/pledges        pledge to a tier (slots and blockers enforced)
 components/          UI (forms, match cards, outreach drafts)
 lib/
   taxonomy.ts        causes (NTEE-mapped), audiences, objectives, industries, regions
   match.ts           scoring engine
+  funding.ts         goals, pledges, tier slots, days to go
   extract.ts         rule-based pitch parser
   ai-extract.ts      Claude-based extraction (structured outputs)
   outreach.ts        pitch / opt-in / intro email drafts
   store.ts           prototype persistence (.data/db.json + seed)
-data/seed.ts         fictional sample network
+data/seed.ts         fictional sample network, goals and pledges
 data/examples.ts     example pitches for the import demo
 docs/                product brief and screenshots
 ```

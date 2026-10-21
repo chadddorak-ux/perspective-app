@@ -2,8 +2,18 @@
 
 import { AUDIENCES, CAUSES, CAUSE_GROUPS, INDUSTRIES, ORG_TYPES, SENSITIVE_INDUSTRIES, SUPPORT_TYPES, US_STATES } from "@/lib/taxonomy";
 import type { OpportunityDraft } from "@/lib/extract";
+import { suggestedGoal } from "@/lib/funding";
+import { money } from "@/lib/match";
 import type { Tier } from "@/lib/types";
 import { ChipSelect } from "./ChipSelect";
+
+export const FORM_STEPS = [
+  { title: "The basics", prompt: "What are you raising support for?" },
+  { title: "Who it serves", prompt: "Which causes and people does it serve?" },
+  { title: "Where & when", prompt: "Where and when does it happen?" },
+  { title: "Goal & tiers", prompt: "How much are you raising, and what do sponsors get?" },
+  { title: "Asks & guidelines", prompt: "What else do you need, and who won't you accept?" },
+];
 
 export const EMPTY_OPPORTUNITY: OpportunityDraft = {
   orgName: "",
@@ -29,10 +39,12 @@ const SENSITIVE = Object.fromEntries(SENSITIVE_INDUSTRIES.map((id) => [id, INDUS
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <fieldset className="space-y-4 border-t border-line pt-6 first:border-0 first:pt-0">
-      <div>
-        <legend className="font-display text-xl font-semibold tracking-tight">{title}</legend>
-        {hint && <p className="hint mt-0.5">{hint}</p>}
-      </div>
+      {(title || hint) && (
+        <div>
+          {title && <legend className="font-display text-xl font-semibold tracking-tight">{title}</legend>}
+          {hint && <p className="hint mt-0.5">{hint}</p>}
+        </div>
+      )}
       {children}
     </fieldset>
   );
@@ -41,10 +53,16 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 export function OpportunityForm({
   value,
   onChange,
+  step,
 }: {
   value: OpportunityDraft;
   onChange: (next: OpportunityDraft) => void;
+  /** Render a single section (wizard mode) instead of the whole form. */
+  step?: number;
 }) {
+  const show = (i: number) => step === undefined || step === i;
+  const title = (i: number) => (step === undefined ? FORM_STEPS[i].title : "");
+  const suggestion = suggestedGoal(value.tiers.filter((t) => t.amount > 0));
   const set = <K extends keyof OpportunityDraft>(k: K, v: OpportunityDraft[K]) => onChange({ ...value, [k]: v });
   const setLoc = (patch: Partial<OpportunityDraft["location"]>) => set("location", { ...value.location, ...patch });
   const setTier = (i: number, patch: Partial<Tier>) =>
@@ -52,7 +70,8 @@ export function OpportunityForm({
 
   return (
     <div className="space-y-6">
-      <Section title="The basics">
+      {show(0) && (
+      <Section title={title(0)}>
         <div className="grid gap-4 sm:grid-cols-2">
           <label>
             <span className="label">Organization</span>
@@ -84,17 +103,28 @@ export function OpportunityForm({
           </label>
         </div>
         <label className="block">
-          <span className="label">Pitch</span>
+          <span className="label">Short pitch</span>
           <textarea
             className="field min-h-24"
             value={value.summary}
             onChange={(e) => set("summary", e.target.value)}
-            placeholder="Two or three sentences a sponsor would read first."
+            placeholder="Two or three sentences a sponsor would read first. This shows on your campaign card."
+          />
+        </label>
+        <label className="block">
+          <span className="label">Your story <span className="font-normal normal-case tracking-normal">(optional)</span></span>
+          <textarea
+            className="field min-h-32"
+            value={value.story ?? ""}
+            onChange={(e) => set("story", e.target.value || undefined)}
+            placeholder="Why this matters, who it helps, what last year looked like. Blank lines start new paragraphs."
           />
         </label>
       </Section>
+      )}
 
-      <Section title="Who and what it serves" hint="Pick causes in order of importance — the first counts most.">
+      {show(1) && (
+      <Section title={title(1)} hint="Pick causes in order of importance — the first counts most.">
         <div>
           <span className="label">Causes</span>
           <ChipSelect options={CAUSES} groups={CAUSE_GROUPS} value={value.causes} onChange={(v) => set("causes", v)} max={5} />
@@ -104,8 +134,10 @@ export function OpportunityForm({
           <ChipSelect options={AUDIENCES} value={value.audiences} onChange={(v) => set("audiences", v)} />
         </div>
       </Section>
+      )}
 
-      <Section title="Where and when">
+      {show(2) && (
+      <Section title={title(2)}>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={!!value.location.virtual} onChange={(e) => setLoc({ virtual: e.target.checked })} />
           Virtual / nationwide
@@ -151,8 +183,30 @@ export function OpportunityForm({
           </label>
         </div>
       </Section>
+      )}
 
-      <Section title="Sponsorship levels" hint="Tiers let us match on budget and suggest the right ask for each sponsor.">
+      {show(3) && (
+      <Section title={title(3)} hint="Tiers work like rewards: sponsors pledge to one. They also let us suggest the right ask for each sponsor.">
+        <div>
+          <span className="label">Sponsorship goal</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              className="field max-w-48"
+              value={value.goal ?? ""}
+              onChange={(e) => set("goal", e.target.value ? Number(e.target.value) : undefined)}
+              placeholder={suggestion ? String(suggestion) : "$ goal"}
+              aria-label="Sponsorship goal"
+            />
+            {suggestion > 0 && value.goal !== suggestion && (
+              <button type="button" className="btn-ghost py-1.5" onClick={() => set("goal", suggestion)}>
+                Use suggested {money(suggestion)}
+              </button>
+            )}
+          </div>
+          <p className="hint mt-1">Shown as a progress bar on your campaign. Leave blank to use the suggestion from your tiers.</p>
+        </div>
         <div className="space-y-3">
           {value.tiers.map((t, i) => (
             <div key={i} className="rounded-xl border border-line p-3">
@@ -179,9 +233,9 @@ export function OpportunityForm({
                   aria-label="Availability"
                 >
                   <option value="">Availability</option>
-                  <option value="exclusive">Exclusive</option>
-                  <option value="limited">Limited</option>
-                  <option value="multiple">Multiple</option>
+                  <option value="exclusive">Exclusive (1 sponsor)</option>
+                  <option value="limited">Limited (3 sponsors)</option>
+                  <option value="multiple">Multiple (10 sponsors)</option>
                 </select>
               </div>
               <textarea
@@ -203,8 +257,10 @@ export function OpportunityForm({
           </button>
         </div>
       </Section>
+      )}
 
-      <Section title="What you're asking for">
+      {show(4) && (
+      <Section title={title(4)}>
         <ChipSelect options={SUPPORT_TYPES} value={value.asks} onChange={(v) => set("asks", v)} />
         <div>
           <span className="label">Sponsors you won&apos;t accept</span>
@@ -236,6 +292,7 @@ export function OpportunityForm({
           </label>
         </div>
       </Section>
+      )}
     </div>
   );
 }
@@ -249,6 +306,7 @@ export function cleanOpportunity(d: OpportunityDraft): OpportunityDraft {
       .map((t) => ({ ...t, name: t.name.trim() || `$${t.amount.toLocaleString()} level`, benefits: t.benefits.map((b) => b.trim()).filter(Boolean) })),
     partners: d.partners.map((p) => p.trim()).filter(Boolean),
     ein: d.ein?.trim() || undefined,
+    story: d.story?.trim() || undefined,
     location: d.location.virtual ? { virtual: true } : { ...d.location, metro: d.location.metro || d.location.city },
   };
 }

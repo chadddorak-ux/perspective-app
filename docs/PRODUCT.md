@@ -30,6 +30,26 @@ A grant finder for sponsorships, but two-sided and built around warm intros.
 3. **Import a pitch**: a connector pastes a pitch email and attaches the package PDF. Perspective turns it into a structured listing, using Claude when an API key is set and a rule-based parser otherwise. It then shows who in the network should hear about it.
 4. **Warm intro pipeline**: double opt-in. Ask the sponsor first, introduce once they say yes, then track the outcome: requested → opted in → introduced → won/passed.
 
+## The campaign model (borrowed from crowdfunding)
+
+Kickstarter and GoFundMe made raising money legible: a goal, a progress bar, clear rewards, and a single action. Sponsorship has none of that. It lives in PDFs and email threads. Perspective uses the same structure:
+
+| Crowdfunding | Perspective |
+|---|---|
+| Project / fundraiser | Campaign: an event, program or appeal with a sponsorship goal |
+| Rewards with limited quantities | Sponsorship tiers with slots (exclusive = 1, limited = 3, multiple = 10) |
+| Backers pledge | Sponsors pledge to a tier; the organizer confirms and sends an agreement (no payments through us) |
+| Progress bar, % funded, days to go | The same, counted to the event's start date |
+| Discover by category, "nearly funded", "ending soon" | Discover by cause group, nearly funded, happening soon, just launched |
+| Start a fundraiser in a few steps | Five-step "start a campaign" flow, or import an existing pitch |
+| Recent donations as social proof | Recent pledges feed and ticker, plus each campaign's list of sponsors |
+
+**What crowdfunding doesn't have, and Perspective adds:**
+- Every campaign lists its best-fit sponsors, the reasons, and the right tier to ask each one for.
+- Pledges obey both sides' rules, so a sportsbook can't pledge to a youth league.
+
+**Why goals and slots matter:** they create urgency ("2 of 3 left", "75% funded, 46 days to go") and let a sponsor see where their yes makes the biggest difference.
+
 ## Matching model
 
 Explainable by design: every score is the sum of six inspectable factors plus named adjustments.
@@ -83,6 +103,8 @@ This is the hardest part, and it's the moat.
 - Fictional sample network: 19 organizations in 17 states and 27 sponsors across 20+ industries
 - Filterable browse for opportunities and sponsors
 - Intro pipeline with status tracking
+
+- Campaign layer: goals, tier slots, pledges, Discover with category tabs and sorts, five-step campaign creation, sponsor "Backed" history
 
 **Next (v1)**
 - Accounts and roles (organization, sponsor, connector) with a private network per connector

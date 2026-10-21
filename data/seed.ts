@@ -1,4 +1,4 @@
-import type { Opportunity, SponsorProfile } from "../lib/types.ts";
+import type { Opportunity, Pledge, SponsorProfile } from "../lib/types.ts";
 
 // Fictional demo network spanning causes, regions, budgets and sponsor
 // industries. Every record is labeled "Sample" in the UI.
@@ -10,9 +10,10 @@ type OppSeed = Omit<Opportunity, "source" | "sample" | "createdAt" | "excludedIn
 
 const opp = (o: OppSeed): Opportunity => ({ excludedIndustries: [], partners: [], contact: {}, ...base, ...o });
 
-export const seedOpportunities: Opportunity[] = [
+const launched: Opportunity[] = [
   opp({
     id: "harvest-table-gala",
+    goal: 100000,
     orgName: "Riverbend Community Food Bank",
     orgType: "501c3",
     title: "Harvest Table Gala 2027",
@@ -34,6 +35,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "holiday-adoption-weekend",
+    goal: 20000,
     orgName: "Front Range Animal Rescue",
     orgType: "501c3",
     title: "Home for the Holidays Adoption Weekend",
@@ -54,6 +56,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "eastside-youth-soccer",
+    goal: 25000,
     orgName: "Eastside United Youth Soccer",
     orgType: "501c3",
     title: "2027 Season Sponsorship",
@@ -75,6 +78,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "southside-code-camp",
+    goal: 50000,
     orgName: "Southside Code Collective",
     orgType: "501c3",
     title: "Summer Build Camp",
@@ -95,6 +99,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "pride-5k-seattle",
+    goal: 40000,
     orgName: "Rainier Pride Center",
     orgType: "501c3",
     title: "Pride 5K & Wellness Fair",
@@ -114,6 +119,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "new-americans-pathways",
+    goal: 75000,
     orgName: "Northstar Welcome Network",
     orgType: "501c3",
     title: "New Americans Career Pathways",
@@ -132,6 +138,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "heroes-golf-classic",
+    goal: 50000,
     orgName: "Hill Country Veterans Alliance",
     orgType: "501c3",
     title: "Heroes Golf Classic",
@@ -152,6 +159,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "great-river-cleanup",
+    goal: 30000,
     orgName: "Confluence River Alliance",
     orgType: "501c3",
     title: "Great River Cleanup Day",
@@ -172,6 +180,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "second-line-arts-fest",
+    goal: 60000,
     orgName: "Crescent Arts Collective",
     orgType: "fiscally-sponsored",
     title: "Second Line Arts Festival",
@@ -192,6 +201,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "girls-lead-summit",
+    goal: 40000,
     orgName: "Bright Path Girls Leadership",
     orgType: "501c3",
     title: "Girls Lead Summit",
@@ -211,6 +221,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "seniors-online",
+    goal: 60000,
     orgName: "Desert Bridges Senior Services",
     orgType: "501c3",
     title: "Seniors Online",
@@ -229,6 +240,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "rural-health-tour",
+    goal: 100000,
     orgName: "Heartland Rural Health Partnership",
     orgType: "501c3",
     title: "Mobile Health Fair Tour",
@@ -250,6 +262,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "money-smart-teens",
+    goal: 120000,
     orgName: "Money Smart Futures",
     orgType: "501c3",
     title: "Money Smart Teens — National Campaign",
@@ -268,6 +281,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "gulf-coast-ready",
+    goal: 50000,
     orgName: "Gulf Coast Ready",
     orgType: "501c3",
     title: "Hurricane Ready Kit Drive",
@@ -287,6 +301,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "first-gen-breakfast",
+    goal: 50000,
     orgName: "First Gen Scholars Fund",
     orgType: "501c3",
     title: "First-Gen Scholarship Breakfast",
@@ -306,6 +321,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "open-curtain-schools",
+    goal: 90000,
     orgName: "Open Curtain Theater Project",
     orgType: "501c3",
     title: "Free Shakespeare for Schools",
@@ -324,6 +340,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "recovery-walk-columbus",
+    goal: 30000,
     orgName: "Hope Ohio Recovery Network",
     orgType: "501c3",
     title: "Recovery Walk & Resource Fair",
@@ -344,6 +361,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "detroit-business-expo",
+    goal: 40000,
     orgName: "Motor City Main Street Association",
     orgType: "other",
     title: "Neighborhood Business Expo",
@@ -363,6 +381,7 @@ export const seedOpportunities: Opportunity[] = [
   }),
   opp({
     id: "adaptive-sports-day",
+    goal: 45000,
     orgName: "Pacific Adaptive Sports",
     orgType: "501c3",
     title: "Adaptive Sports Day",
@@ -382,6 +401,12 @@ export const seedOpportunities: Opportunity[] = [
     excludedIndustries: ["gaming-gambling", "alcohol"],
   }),
 ];
+
+// Stagger launch dates so "newest" means something: one campaign every three days.
+export const seedOpportunities: Opportunity[] = launched.map((o, i) => ({
+  ...o,
+  createdAt: new Date(Date.parse("2026-10-20T00:00:00Z") - i * 3 * 86_400_000).toISOString(),
+}));
 
 type SponsorSeed = Omit<SponsorProfile, "source" | "sample" | "createdAt" | "excludedCauses" | "requires501c3" | "approach"> &
   Partial<Pick<SponsorProfile, "excludedCauses" | "requires501c3" | "approach">>;
@@ -604,3 +629,55 @@ export const seedSponsors: SponsorProfile[] = [
     budget: { min: 5000, max: 25000 }, supportTypes: ["cash", "introductions"], leadTimeDays: 90, requires501c3: false,
   }),
 ];
+
+type PledgeSeed = [opportunityId: string, sponsor: string, tierName: string, amount: number];
+
+// Commitments already in place. Sponsors with an id in the network are linked
+// by id; the rest are local supporters without a profile.
+const PLEDGES: PledgeSeed[] = [
+  ["holiday-adoption-weekend", "pawsome-pet-co", "Presenting Sponsor", 10000],
+  ["holiday-adoption-weekend", "greenpeak-energy", "Adoption Kit Sponsor", 3000],
+  ["holiday-adoption-weekend", "Mile High Vet Clinic", "Kennel Sponsor", 1000],
+  ["holiday-adoption-weekend", "Denver Dog Walkers Co-op", "Kennel Sponsor", 1000],
+  ["eastside-youth-soccer", "metro-motors", "Jersey Sponsor", 8000],
+  ["eastside-youth-soccer", "sunny-side-burgers", "Field Banner", 3000],
+  ["eastside-youth-soccer", "trailhead-outfitters", "Field Banner", 3000],
+  ["eastside-youth-soccer", "Ramirez Family Dental", "Team Sponsor", 750],
+  ["eastside-youth-soccer", "Eastside Taqueria", "Team Sponsor", 750],
+  ["second-line-arts-fest", "big-easy-brewing", "Stage Sponsor", 10000],
+  ["second-line-arts-fest", "magnolia-hotels", "Stage Sponsor", 10000],
+  ["second-line-arts-fest", "civic-media", "Neighborhood Partner", 2500],
+  ["gulf-coast-ready", "summit-mutual", "Lead Partner", 25000],
+  ["gulf-coast-ready", "atlas-logistics", "Kit Partner", 10000],
+  ["gulf-coast-ready", "gulf-petroleum", "Kit Partner", 10000],
+  ["pride-5k-seattle", "glow-beauty", "Rainbow Sponsor", 20000],
+  ["pride-5k-seattle", "chen-giving-fund", "Wellness Fair Sponsor", 7500],
+  ["rural-health-tour", "prairie-health", "Tour Presenter", 50000],
+  ["rural-health-tour", "novagen-bio", "Stop Sponsor", 15000],
+  ["money-smart-teens", "keystone-community-bank", "Classroom Sponsor", 10000],
+  ["money-smart-teens", "hartwell-foundation", "Classroom Sponsor", 10000],
+  ["seniors-online", "lumen-telecom", "Connectivity Partner", 35000],
+  ["seniors-online", "greenpeak-energy", "Classroom Sponsor", 10000],
+  ["adaptive-sports-day", "peak-athletic", "Presenting Sponsor", 25000],
+  ["adaptive-sports-day", "morales-family-fund", "Sport Sponsor", 8000],
+  ["harvest-table-gala", "freshfield-market", "Pavilion Sponsor", 15000],
+  ["harvest-table-gala", "atlas-logistics", "Table Sponsor", 5000],
+  ["southside-code-camp", "copperline-software", "Title Partner", 25000],
+  ["heroes-golf-classic", "gulf-petroleum", "Dinner Sponsor", 10000],
+  ["heroes-golf-classic", "metro-motors", "Hole Sponsor", 5000],
+];
+
+export const seedPledges: Pledge[] = PLEDGES.map(([opportunityId, who, tierName, amount], i) => {
+  const profile = seedSponsors.find((s) => s.id === who);
+  return {
+    id: `seed-pledge-${i + 1}`,
+    opportunityId,
+    sponsorId: profile?.id,
+    sponsorName: profile?.name ?? who,
+    tierName,
+    amount,
+    status: "confirmed",
+    // Spread pledge dates so the "recent" feed mixes campaigns (7 is coprime with the count).
+    createdAt: new Date(Date.parse("2026-10-19T00:00:00Z") - ((i * 7) % PLEDGES.length) * 86_400_000).toISOString(),
+  };
+});

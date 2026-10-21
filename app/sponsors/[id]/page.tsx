@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { MatchCard } from "@/components/MatchCard";
 import { Pill, SampleTag } from "@/components/ui";
+import Link from "next/link";
+import { fundingFor } from "@/lib/funding";
 import { money, rankOpportunities } from "@/lib/match";
 import { AUDIENCES, CAUSES, INDUSTRIES, OBJECTIVES, SPONSOR_TYPES, SUPPORT_TYPES, US_STATES, label } from "@/lib/taxonomy";
-import { getSponsor, listOpportunities } from "@/lib/store";
+import { getSponsor, listOpportunities, listPledges } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,10 @@ export default async function SponsorPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const sp = await getSponsor(id);
   if (!sp) notFound();
-  const ranked = rankOpportunities(sp, await listOpportunities()).filter((r) => r.match.grade !== "Not eligible");
+  const [opps, pledges] = await Promise.all([listOpportunities(), listPledges()]);
+  const ranked = rankOpportunities(sp, opps).filter((r) => r.match.grade !== "Not eligible");
+  const backed = pledges.filter((p) => p.sponsorId === sp.id);
+  const backedTotal = backed.reduce((sum, p) => sum + p.amount, 0);
   const where =
     sp.geography.scope === "national"
       ? "Nationwide"
@@ -50,9 +55,31 @@ export default async function SponsorPage({ params }: { params: Promise<{ id: st
         </div>
       </aside>
       <section className="space-y-4">
-        <h2 className="display text-4xl font-semibold">Best-fit opportunities</h2>
+        {backed.length > 0 && (
+          <div className="mb-12">
+            <h2 className="display text-4xl font-semibold">Backed</h2>
+            <p className="mt-1 text-sm text-muted">
+              {backed.length} campaign{backed.length === 1 ? "" : "s"} · <span className="font-mono text-ink">{money(backedTotal)}</span> pledged
+            </p>
+            <ul className="mt-4 divide-y divide-line border-y border-line">
+              {backed.map((p) => {
+                const o = opps.find((x) => x.id === p.opportunityId);
+                return (
+                  <li key={p.id} className="flex items-center gap-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/opportunities/${p.opportunityId}`} className="font-medium hover:text-brand">{o?.title ?? p.opportunityId}</Link>
+                      <p className="text-xs text-muted">{o?.orgName} · {p.tierName}</p>
+                    </div>
+                    <span className="font-mono text-sm font-semibold">{money(p.amount)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+        <h2 className="display text-4xl font-semibold">Best-fit campaigns</h2>
         {ranked.map((r, i) => (
-          <MatchCard key={r.item.id} opp={r.item} sponsor={sp} match={r.match} viewer="sponsor" rank={i + 1} />
+          <MatchCard key={r.item.id} opp={r.item} sponsor={sp} match={r.match} viewer="sponsor" rank={i + 1} funding={fundingFor(r.item, pledges)} />
         ))}
       </section>
     </div>

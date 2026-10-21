@@ -19,6 +19,7 @@ export type Tier = {
   name: string;
   amount: number; // USD
   availability?: "exclusive" | "limited" | "multiple";
+  slots?: number; // how many sponsors can take this tier; defaults from availability
   benefits: string[];
 };
 
@@ -30,7 +31,9 @@ export type Opportunity = {
   ein?: string; // IRS employer identification number, NN-NNNNNNN
   title: string;
   kind: "event" | "program" | "campaign" | "general";
-  summary: string;
+  summary: string; // the short blurb shown on cards
+  story?: string; // longer campaign story
+  goal?: number; // sponsorship goal in USD; suggested from tiers when absent
   causes: CauseId[];
   audiences: AudienceId[];
   location: Location;
@@ -105,4 +108,17 @@ export type IntroRequest = {
   status: IntroStatus;
   createdAt: string;
   updatedAt: string;
+};
+
+/** A sponsor's commitment to a tier, like a backer pledging to a reward. */
+export type Pledge = {
+  id: string;
+  opportunityId: string;
+  sponsorId?: string; // set when the sponsor has a profile in the network
+  sponsorName: string;
+  tierName: string;
+  amount: number;
+  message?: string;
+  status: "pledged" | "confirmed";
+  createdAt: string;
 };

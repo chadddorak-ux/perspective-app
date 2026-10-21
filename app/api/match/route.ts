@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { fundingFor } from "@/lib/funding";
 import { rankOpportunities, rankSponsors } from "@/lib/match";
 import { OpportunityInput, SponsorInput, firstError } from "@/lib/schemas";
-import { listOpportunities, listSponsors } from "@/lib/store";
+import { listOpportunities, listPledges, listSponsors } from "@/lib/store";
 import type { Opportunity, SponsorProfile } from "@/lib/types";
 
 // Scores a draft listing or sponsor profile against everything in the network
@@ -21,7 +22,9 @@ export async function POST(req: Request) {
     const parsed = SponsorInput.safeParse(body.sponsor);
     if (!parsed.success) return NextResponse.json({ error: firstError(parsed.error) }, { status: 400 });
     const sp: SponsorProfile = { ...parsed.data, id: "draft", source: "intake", createdAt: now };
-    return NextResponse.json({ results: rankOpportunities(sp, await listOpportunities()) });
+    const [opps, pledges] = await Promise.all([listOpportunities(), listPledges()]);
+    const results = rankOpportunities(sp, opps).map((r) => ({ ...r, funding: fundingFor(r.item, pledges) }));
+    return NextResponse.json({ results });
   }
 
   return NextResponse.json({ error: "Send an opportunity or a sponsor profile" }, { status: 400 });

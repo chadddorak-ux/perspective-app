@@ -1,108 +1,207 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { placeLabel } from "@/components/CampaignCard";
+import { CoverArt } from "@/components/CoverArt";
+import { FundingStats } from "@/components/Funding";
 import { MatchCard } from "@/components/MatchCard";
-import { Pill, SampleTag } from "@/components/ui";
-import { money, rankSponsors } from "@/lib/match";
+import { ShareButton } from "@/components/ShareButton";
+import { TierRail, type SponsorOption } from "@/components/TierRail";
+import { Arrow, Eyebrow, Pill, SampleTag } from "@/components/ui";
+import { fundingFor } from "@/lib/funding";
+import { money, rankSponsors, scoreMatch } from "@/lib/match";
 import { AUDIENCES, CAUSES, INDUSTRIES, ORG_TYPES, SUPPORT_TYPES, label } from "@/lib/taxonomy";
-import { getOpportunity, listSponsors } from "@/lib/store";
+import { getOpportunity, listPledges, listSponsors } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
+
+const KIND = { event: "Event", program: "Program", campaign: "Campaign", general: "General support" };
 
 function fmt(d: string) {
   return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
-export default async function OpportunityPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const opp = await getOpportunity(id);
   if (!opp) notFound();
-  const ranked = rankSponsors(opp, await listSponsors());
+  const [sponsors, pledges] = await Promise.all([listSponsors(), listPledges()]);
+  const f = fundingFor(opp, pledges);
+  const mine = pledges.filter((p) => p.opportunityId === opp.id).sort((a, b) => b.amount - a.amount);
+  const ranked = rankSponsors(opp, sponsors);
   const eligible = ranked.filter((r) => r.match.grade !== "Not eligible");
   const ineligible = ranked.filter((r) => r.match.grade === "Not eligible");
+  const options: SponsorOption[] = sponsors
+    .map((s) => ({ id: s.id, name: s.name, blocked: scoreMatch(opp, s).blockers[0] }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const details: [string, React.ReactNode][] = [
+    ...(opp.startDate ? [["When", `${fmt(opp.startDate)}${opp.endDate && opp.endDate !== opp.startDate ? ` – ${fmt(opp.endDate)}` : ""}`] as [string, React.ReactNode]] : []),
+    ["Where", placeLabel(opp)],
+    ...(opp.reachNote || opp.expectedReach ? [["Reach", opp.reachNote ?? `${opp.expectedReach!.toLocaleString()} people`] as [string, React.ReactNode]] : []),
+    ...(opp.audiences.length ? [["Serves", opp.audiences.map((a) => label(AUDIENCES, a)).join(", ")] as [string, React.ReactNode]] : []),
+    ...(opp.asks.length ? [["Asking for", opp.asks.map((a) => label(SUPPORT_TYPES, a)).join(", ")] as [string, React.ReactNode]] : []),
+    ...(opp.partners.length ? [["Partners", opp.partners.join(", ")] as [string, React.ReactNode]] : []),
+    ...(opp.excludedIndustries.length
+      ? [["Won't accept", `${opp.excludedIndustries.map((i) => label(INDUSTRIES, i)).join(", ")} sponsors`] as [string, React.ReactNode]]
+      : []),
+  ];
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] [&>*]:min-w-0">
-      <aside className="space-y-6 lg:sticky lg:top-20 lg:h-fit">
-        <div className="card p-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill tone="brand">{opp.kind === "general" ? "General support" : opp.kind[0].toUpperCase() + opp.kind.slice(1)}</Pill>
-            {opp.sample && <SampleTag />}
-            {opp.source === "import" && <Pill tone="accent">Imported pitch</Pill>}
-          </div>
-          <h1 className="display mt-4 text-4xl font-semibold">{opp.title}</h1>
-          <p className="mt-1 text-muted">
-            {opp.orgName} · {opp.orgType === "other" ? "Not a 501(c)(3)" : label(ORG_TYPES, opp.orgType)}
-            {opp.ein && <span className="text-xs"> · EIN {opp.ein}</span>}
-          </p>
+    <div className="-mt-2">
+      {/* Title block */}
+      <header className="animate-rise max-w-4xl">
+        <Eyebrow>
+          {KIND[opp.kind]} · {opp.causes[0] ? label(CAUSES, opp.causes[0]) : "Community"}
+        </Eyebrow>
+        <h1 className="display mt-4 text-4xl font-semibold sm:text-6xl">{opp.title}</h1>
+        <p className="mt-4 max-w-3xl text-lg text-muted">{opp.summary}</p>
+      </header>
 
-          <dl className="mt-5 space-y-2 text-sm">
-            {opp.startDate && (
-              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">When</dt><dd>{fmt(opp.startDate)}{opp.endDate && opp.endDate !== opp.startDate && ` – ${fmt(opp.endDate)}`}</dd></div>
-            )}
-            <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Where</dt><dd>{opp.location.virtual ? "Virtual" : [opp.location.city, opp.location.state].filter(Boolean).join(", ") || "—"}</dd></div>
-            {(opp.reachNote || opp.expectedReach) && (
-              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Reach</dt><dd>{opp.reachNote ?? `${opp.expectedReach!.toLocaleString()} people`}</dd></div>
-            )}
-            {opp.asks.length > 0 && (
-              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Asking for</dt><dd>{opp.asks.map((a) => label(SUPPORT_TYPES, a)).join(", ")}</dd></div>
-            )}
-            {opp.excludedIndustries.length > 0 && (
-              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Won&apos;t accept</dt><dd>{opp.excludedIndustries.map((i) => label(INDUSTRIES, i)).join(", ")} sponsors</dd></div>
-            )}
-            {opp.partners.length > 0 && (
-              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Partners</dt><dd>{opp.partners.join(", ")}</dd></div>
-            )}
+      {/* Cover + funding */}
+      <section className="mt-8 grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
+        <CoverArt id={opp.id} cause={opp.causes[0]} className="aspect-[16/9] lg:col-span-8" />
+        <aside className="lg:col-span-4">
+          <FundingStats f={f} />
+          <div className="mt-6 space-y-2">
+            <a href="#tiers" className="btn-primary group w-full py-3">
+              Sponsor this campaign <Arrow />
+            </a>
+            <ShareButton />
+          </div>
+          <div className="mt-6 space-y-2 border-t border-line pt-5 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{opp.orgName}</span>
+              {opp.sample && <SampleTag />}
+            </div>
+            <p className="text-muted">
+              {opp.orgType === "other" ? "Not a 501(c)(3)" : label(ORG_TYPES, opp.orgType)}
+              {opp.ein && <span className="font-mono text-xs"> · EIN {opp.ein}</span>}
+            </p>
             {opp.contact.website && (
-              <div className="flex gap-3"><dt className="w-20 shrink-0 text-muted">Website</dt><dd><a className="text-brand hover:underline" href={opp.contact.website} target="_blank" rel="noreferrer">{opp.contact.website.replace(/^https?:\/\//, "")}</a></dd></div>
+              <a className="inline-block text-brand hover:underline" href={opp.contact.website} target="_blank" rel="noreferrer">
+                {opp.contact.website.replace(/^https?:\/\//, "")}
+              </a>
             )}
-          </dl>
-
-          {opp.summary && <p className="mt-5 text-sm leading-relaxed">{opp.summary}</p>}
-
-          <div className="mt-5 flex flex-wrap gap-1.5">
-            {opp.causes.map((c) => <Pill key={c}>{label(CAUSES, c)}</Pill>)}
-            {opp.audiences.map((a) => <Pill key={a} tone="accent">{label(AUDIENCES, a)}</Pill>)}
           </div>
-        </div>
-
-        {opp.tiers.length > 0 && (
-          <div className="card overflow-hidden">
-            <h2 className="eyebrow border-b border-line px-6 py-3 text-muted">Sponsorship levels</h2>
-            <ul className="divide-y divide-line">
-              {opp.tiers.map((t) => (
-                <li key={t.name} className="px-6 py-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="font-medium">{t.name}</span>
-                    <span className="font-mono font-semibold tabular-nums">{money(t.amount)}</span>
-                  </div>
-                  {t.availability && <p className="text-xs capitalize text-muted">{t.availability}</p>}
-                  {t.benefits.length > 0 && <p className="mt-1 text-xs text-muted">{t.benefits.join(" · ")}</p>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </aside>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="display text-4xl font-semibold">Who to bring in</h2>
-          <p className="text-sm text-muted">
-            {eligible.filter((r) => r.match.score >= 70).length} strong matches. Draft a direct pitch, or request a warm intro and track it on the <Link href="/intros" className="text-brand hover:underline">Intros</Link> board.
-          </p>
-        </div>
-        {eligible.map((r, i) => (
-          <MatchCard key={r.item.id} opp={opp} sponsor={r.item} match={r.match} viewer="organization" rank={i + 1} />
-        ))}
-        {ineligible.length > 0 && (
-          <details className="card p-5 text-sm">
-            <summary className="cursor-pointer font-medium">{ineligible.length} not eligible</summary>
-            <ul className="mt-3 space-y-1 text-muted">
-              {ineligible.map((r) => <li key={r.item.id}><span className="text-ink">{r.item.name}</span>: {r.match.blockers.join("; ")}</li>)}
-            </ul>
-          </details>
-        )}
+        </aside>
       </section>
+
+      {/* Section nav */}
+      <nav className="sticky top-14 z-20 mt-12 flex gap-1 overflow-x-auto border-y border-line bg-bg/90 backdrop-blur">
+        {[
+          ["#story", "Story"],
+          ["#tiers", `Tiers (${opp.tiers.length})`],
+          ["#matches", "Best-fit sponsors"],
+          ["#sponsors", `Sponsors (${f.sponsors})`],
+        ].map(([href, l]) => (
+          <a key={href} href={href} className="eyebrow whitespace-nowrap px-3 py-3.5 text-muted hover:text-ink">
+            {l}
+          </a>
+        ))}
+      </nav>
+
+      <div className="mt-10 grid gap-12 lg:grid-cols-12 [&>*]:min-w-0">
+        <div className="space-y-16 lg:col-span-8">
+          <section id="story" className="scroll-mt-32">
+            <h2 className="display text-3xl font-semibold">Story</h2>
+            <div className="mt-4 space-y-4 text-lg leading-relaxed">
+              {(opp.story ?? opp.summary).split(/\n{2,}/).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+            <dl className="mt-8 border-t border-line">
+              {details.map(([k, v]) => (
+                <div key={k} className="grid gap-1 border-b border-line py-3 sm:grid-cols-[140px_1fr]">
+                  <dt className="eyebrow text-[10px] text-muted">{k}</dt>
+                  <dd className="text-sm">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-5 flex flex-wrap gap-1.5">
+              {opp.causes.map((c) => (
+                <Link key={c} href={`/opportunities?cause=${c}`}>
+                  <Pill>{label(CAUSES, c)}</Pill>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section id="matches" className="scroll-mt-32 space-y-4">
+            <div>
+              <h2 className="display text-3xl font-semibold">Best-fit sponsors</h2>
+              <p className="mt-1 text-sm text-muted">
+                {eligible.filter((r) => r.match.score >= 70).length} strong matches from the network. Draft a pitch, or request a warm intro and track it on the{" "}
+                <Link href="/intros" className="text-brand hover:underline">Intros</Link> board.
+              </p>
+            </div>
+            {eligible.slice(0, 5).map((r, i) => (
+              <MatchCard key={r.item.id} opp={opp} sponsor={r.item} match={r.match} viewer="organization" rank={i + 1} />
+            ))}
+            {eligible.length > 5 && (
+              <details className="group">
+                <summary className="btn-secondary w-full cursor-pointer list-none">Show {eligible.length - 5} more matches</summary>
+                <div className="mt-4 space-y-4">
+                  {eligible.slice(5).map((r, i) => (
+                    <MatchCard key={r.item.id} opp={opp} sponsor={r.item} match={r.match} viewer="organization" rank={i + 6} />
+                  ))}
+                </div>
+              </details>
+            )}
+            {ineligible.length > 0 && (
+              <details className="card p-5 text-sm">
+                <summary className="cursor-pointer font-medium">{ineligible.length} not eligible</summary>
+                <ul className="mt-3 space-y-1 text-muted">
+                  {ineligible.map((r) => (
+                    <li key={r.item.id}>
+                      <span className="text-ink">{r.item.name}</span>: {r.match.blockers.join("; ")}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </section>
+
+          <section id="sponsors" className="scroll-mt-32">
+            <h2 className="display text-3xl font-semibold">Sponsors</h2>
+            {mine.length === 0 ? (
+              <p className="mt-3 text-muted">No sponsors yet. Be the first to back this campaign.</p>
+            ) : (
+              <ul className="mt-4 divide-y divide-line border-y border-line">
+                {mine.map((p) => (
+                  <li key={p.id} className="flex items-center gap-4 py-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink font-mono text-xs text-bg">
+                      {p.sponsorName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      {p.sponsorId ? (
+                        <Link href={`/sponsors/${p.sponsorId}`} className="font-medium hover:text-brand">{p.sponsorName}</Link>
+                      ) : (
+                        <span className="font-medium">{p.sponsorName}</span>
+                      )}
+                      <p className="text-xs text-muted">
+                        {p.tierName}
+                        {p.status === "pledged" && " · awaiting confirmation"}
+                      </p>
+                    </div>
+                    <span className="font-mono text-sm font-semibold">{money(p.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <aside id="tiers" className="scroll-mt-32 lg:col-span-4">
+          <div className="lg:sticky lg:top-32">
+            <h2 className="eyebrow mb-3 text-muted">Choose a tier</h2>
+            {opp.tiers.length ? (
+              <TierRail opportunityId={opp.id} tiers={f.tiers} sponsors={options} closed={f.state === "closed"} />
+            ) : (
+              <p className="card p-5 text-sm text-muted">This campaign hasn&apos;t listed sponsorship tiers yet.</p>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

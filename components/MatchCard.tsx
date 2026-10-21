@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { Funding } from "@/lib/funding";
 import { money } from "@/lib/match";
 import { CAUSES, INDUSTRIES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
 import type { MatchResult, Opportunity, SponsorProfile } from "@/lib/types";
+import { ProgressBar, daysLabel } from "./Funding";
 import { OutreachModal } from "./OutreachModal";
 import { Breakdown, GradeBadge, Pill, SampleTag, ScoreRing } from "./ui";
 
@@ -15,9 +17,11 @@ type Props = {
   /** Which side is looking: an organization sees sponsors, a sponsor sees opportunities. */
   viewer: "organization" | "sponsor";
   rank?: number;
+  /** Campaign progress, shown when a sponsor is browsing campaigns. */
+  funding?: Funding;
 };
 
-export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
+export function MatchCard({ opp, sponsor, match, viewer, rank, funding }: Props) {
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState(false);
   const [intro, setIntro] = useState<"idle" | "saving" | "done" | "error">("idle");
@@ -89,6 +93,18 @@ export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
         </div>
       )}
 
+      {funding && !isOrg && (
+        <div className="mt-4">
+          <ProgressBar percent={funding.percent} />
+          <div className="mt-1.5 flex justify-between text-xs text-muted">
+            <span>
+              <span className="font-mono text-ink">{money(funding.pledged)}</span> of {money(funding.goal)} · {funding.percent}%
+            </span>
+            <span className="eyebrow text-[10px]">{daysLabel(funding)}</span>
+          </div>
+        </div>
+      )}
+
       {match.suggestedTier && eligible && (
         <p className="mt-4 rounded-lg bg-brand-soft px-3 py-2 text-sm">
           <span className="font-semibold">Suggested ask:</span> {match.suggestedTier.name} · {money(match.suggestedTier.amount)}
@@ -101,7 +117,8 @@ export function MatchCard({ opp, sponsor, match, viewer, rank }: Props) {
         {eligible && isOrg && (
           <button className="btn-primary" onClick={() => setModal(true)}>Draft outreach</button>
         )}
-        {!isOrg && <Link className="btn-primary" href={href}>View listing</Link>}
+        {!isOrg && eligible && <Link className="btn-primary" href={`${href}#tiers`}>Back this campaign</Link>}
+        {!isOrg && <Link className={eligible ? "btn-secondary" : "btn-primary"} href={href}>View campaign</Link>}
         {!isOrg && opp.contact.website && (
           <a className="btn-secondary" href={opp.contact.website} target="_blank" rel="noreferrer">Website ↗</a>
         )}

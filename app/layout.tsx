@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const NAV = [
-  { href: "/find", label: "Find sponsors" },
-  { href: "/give", label: "Find causes" },
-  { href: "/import", label: "Import" },
-  { href: "/opportunities", label: "Opportunities" },
+  { href: "/find", label: "Start", mobileOnly: true },
+  { href: "/opportunities", label: "Discover" },
+  { href: "/give", label: "For sponsors" },
+  { href: "/import", label: "Import a pitch" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/intros", label: "Intros" },
 ];
@@ -68,14 +68,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link
                   key={n.href}
                   href={n.href}
-                  className="eyebrow whitespace-nowrap px-2.5 py-2 text-muted transition-colors hover:text-ink"
+                  className={`eyebrow whitespace-nowrap px-2.5 py-2 text-muted transition-colors hover:text-ink ${"mobileOnly" in n ? "text-brand sm:hidden" : ""}`}
                 >
                   {n.label}
                 </Link>
               ))}
             </nav>
             <Link href="/find" className="btn-primary hidden py-2 sm:inline-flex">
-              Get matched
+              Start a campaign
             </Link>
           </div>
         </header>

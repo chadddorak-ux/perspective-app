@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import type { Funding } from "@/lib/funding";
 import type { Ranked } from "@/lib/match";
 import {
   AUDIENCES,
@@ -41,7 +42,7 @@ const EMPTY: SponsorDraft = {
 export function SponsorMatcher() {
   const router = useRouter();
   const [d, setD] = useState<SponsorDraft>(EMPTY);
-  const [results, setResults] = useState<Ranked<Opportunity>[] | null>(null);
+  const [results, setResults] = useState<(Ranked<Opportunity> & { funding: Funding })[] | null>(null);
   const [busy, setBusy] = useState<"match" | "save" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -253,7 +254,7 @@ export function SponsorMatcher() {
               <span className="font-normal text-muted"> of {results.length} open opportunities</span>
             </h2>
             {live.map((r, i) => (
-              <MatchCard key={r.item.id} opp={r.item} sponsor={sponsor} match={r.match} viewer="sponsor" rank={i + 1} />
+              <MatchCard key={r.item.id} opp={r.item} sponsor={sponsor} match={r.match} viewer="sponsor" rank={i + 1} funding={r.funding} />
             ))}
           </>
         )}
