@@ -39,7 +39,7 @@ The site speaks to nonprofits first, and everything for sponsors sits in one "Fo
 | Flow | Route | What it does |
 |---|---|---|
 | Discover | `/opportunities` | Browse live campaigns by cause group, with filters and sorts: happening soon, nearly funded, just launched, most sponsors, biggest goals. |
-| Campaign | `/opportunities/[id]` | Cover, story and funding stats ($ pledged of goal, % funded, sponsors, days to go). Tier cards show "X of Y left" and a pledge button. Below: best-fit sponsors with drafted outreach, and the list of sponsors who've pledged. |
+| Campaign | `/opportunities/[id]` | A Peep one-pager: a poster with the title, organizer, date, place and funding, beside an arch window with an animated illustration for the cause. Then numbered chapters: the story (with a pull quote and polaroid photos), at a glance, best-fit sponsors with drafted outreach, and who's backed it. Funding stats and the tiers ("X of Y left", pledge) sit in a sticky column. |
 | Start a campaign | `/find` | GoFundMe-style five-step flow (basics, causes, place and time, goal and tiers, asks), then a review with a card preview, matching sponsors, and launch. |
 | Upload a pitch PDF | `/import` | Drop a sponsorship deck or one-pager. Peep reads the text and photos, fills in the campaign, flags what's missing (required gaps block posting), and posts it free. A sample deck is built in; pasting a pitch email still works. |
 | For sponsors | `/give` | A brand or donor sets its goals and gets ranked campaigns with their funding progress and a "Back this campaign" action. |
@@ -120,6 +120,8 @@ The visual language is a storybook at dusk, inspired by [Passionfroot](https://w
 - **Demos that fit:** the PDF demo and the matching walkthrough scale to fit one window (`components/home/WatchFrame.tsx`), and grow slightly with a soft glow as they scroll into view, a nudge to watch.
 - **Real data everywhere:** the hero card, the PDF demo and the matching walkthrough all use the EAGLES SOAR campaign and its actual top match.
 - **Campaign covers:** painted landscapes generated per cause group (sunrise hills, a calm sea, a village, a mountain forest, a night sky, dunes, a city, a planet), varied per campaign.
+- **Cause illustrations:** each campaign page gets an animated scene picked from its title, then its causes (`components/CauseArt.tsx`): paper planes and a rocket for aviation, an atom and gears for STEM, a book turning its pages, paw prints and a bouncing ball, produce dropping into a basket, a beating heart and ECG line, falling leaves and a sprout, curtains and floating notes, a bouncing ball and trophy, a street whose windows light up, an umbrella in the rain with a rainbow after, and a cheering crowd.
+- **Why Peep:** two big statements to actually read, "Level the playing field." and "No busywork. Just giving.", each beside its four points, the second flipped. Key words get a hand-drawn scribble that draws itself.
 - **Themes and motion:** tokens live in `app/globals.css`, with light and dark themes. The site opens in dark mode; the sun/moon toggle in the header switches to light (saved per browser, `lib/theme.ts`). In dark mode the hero's arch is a starry night. All motion respects `prefers-reduced-motion`.
 
 ![Home, dark](docs/screenshots/home-dark.png)

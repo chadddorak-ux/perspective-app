@@ -594,6 +594,158 @@ textarea {
   transform: none;
 }
 
+/* Cause illustrations on campaign pages (components/CauseArt.tsx). */
+.cause-art .ca {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes ca-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+@keyframes ca-float { from { transform: translateY(-6px); } to { transform: translateY(6px); } }
+@keyframes ca-twinkle { from { opacity: 0.25; } to { opacity: 1; } }
+@keyframes ca-path { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes ca-flicker { from { transform: scaleY(0.7); } to { transform: scaleY(1.25); } }
+@keyframes ca-launch {
+  0%, 55% { transform: translateY(0); opacity: 1; }
+  58% { transform: translateY(2px); }
+  90% { transform: translateY(-420px); opacity: 1; }
+  91% { opacity: 0; transform: translateY(-420px); }
+  92% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes ca-pulse { from { transform: scale(0.9); } to { transform: scale(1.12); } }
+@keyframes ca-spin { to { transform: rotate(360deg); } }
+@keyframes ca-spin-rev { to { transform: rotate(-360deg); } }
+@keyframes ca-rise {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-90px) scale(1); opacity: 0; }
+}
+@keyframes ca-rise-far {
+  0% { transform: translateY(0) rotate(-8deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-200px) rotate(10deg); opacity: 0; }
+}
+@keyframes ca-note {
+  0% { transform: translate(0, 0) rotate(-10deg); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translate(14px, -120px) rotate(8deg); }
+  100% { transform: translate(-10px, -260px) rotate(-6deg); opacity: 0; }
+}
+@keyframes ca-page {
+  0%, 15% { transform: scaleX(1); }
+  50%, 65% { transform: scaleX(-1); }
+  100% { transform: scaleX(1); }
+}
+@keyframes ca-toss {
+  0%, 30% { transform: translate(0, 0) rotate(0); }
+  60% { transform: translate(-30px, -170px) rotate(-200deg); }
+  90%, 100% { transform: translate(0, 0) rotate(-360deg); }
+}
+@keyframes ca-print {
+  0% { opacity: 0; }
+  10%, 55% { opacity: 1; }
+  80%, 100% { opacity: 0; }
+}
+@keyframes ca-bounce {
+  0%, 100% { transform: translateY(0) scale(1.15, 0.85); }
+  50% { transform: translateY(-80px) scale(0.95, 1.05); }
+}
+@keyframes ca-bounce-big {
+  0%, 100% { transform: translateY(6px) scale(1.18, 0.82); }
+  50% { transform: translateY(-150px) scale(0.95, 1.05); }
+}
+@keyframes ca-shadow {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(0.45); opacity: 0.1; }
+}
+@keyframes ca-drop {
+  0% { transform: translateY(-160px) rotate(-20deg); opacity: 0; }
+  15% { opacity: 1; }
+  70% { transform: translateY(250px) rotate(25deg); opacity: 1; }
+  80%, 100% { transform: translateY(262px) rotate(25deg); opacity: 0; }
+}
+@keyframes ca-beat {
+  0%, 40%, 100% { transform: scale(1); }
+  12% { transform: scale(1.14); }
+  24% { transform: scale(0.98); }
+  30% { transform: scale(1.08); }
+}
+@keyframes ca-ecg {
+  from { stroke-dashoffset: 1; opacity: 1; }
+  70% { stroke-dashoffset: 0; opacity: 1; }
+  to { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes ca-leaf {
+  0% { transform: translate(0, -40px) rotate(0); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate(30px, 220px) rotate(160deg); }
+  90% { opacity: 1; }
+  100% { transform: translate(-10px, 470px) rotate(320deg); opacity: 0; }
+}
+@keyframes ca-grow {
+  0% { transform: scale(0, 0); }
+  35%, 85% { transform: scale(1, 1); }
+  100% { transform: scale(0, 0); }
+}
+@keyframes ca-ripple {
+  from { transform: scale(0.3); opacity: 0.9; }
+  to { transform: scale(2.2); opacity: 0; }
+}
+@keyframes ca-sweep { from { transform: rotate(-22deg); } to { transform: rotate(14deg); } }
+@keyframes ca-sweep-rev { from { transform: rotate(22deg); } to { transform: rotate(-14deg); } }
+@keyframes ca-shine {
+  0%, 30% { transform: translateX(0); opacity: 0; }
+  40% { opacity: 0.7; }
+  70% { transform: translateX(60px); opacity: 0.7; }
+  80%, 100% { transform: translateX(60px); opacity: 0; }
+}
+@keyframes ca-confetti {
+  from { transform: translateY(-40px) rotate(0); }
+  to { transform: translateY(460px) rotate(540deg); }
+}
+@keyframes ca-window { from { opacity: 0.25; } to { opacity: 1; } }
+@keyframes ca-coin {
+  0% { transform: translateY(-40px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { transform: translateY(100px); opacity: 1; }
+  100% { transform: translateY(104px); opacity: 0; }
+}
+@keyframes ca-rain {
+  from { transform: translateY(-20px); opacity: 0; }
+  20% { opacity: 1; }
+  to { transform: translateY(300px); opacity: 0; }
+}
+@keyframes ca-rainbow {
+  0%, 20% { stroke-dashoffset: 1; opacity: 1; }
+  55%, 80% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes ca-sway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes ca-hop {
+  0%, 60%, 100% { transform: translateY(0); }
+  70% { transform: translateY(-16px); }
+  80% { transform: translateY(0); }
+}
+@keyframes ca-cheer {
+  0%, 60%, 100% { transform: rotate(40deg); }
+  68%, 82% { transform: rotate(-10deg); }
+}
+
+/* Scribble underlines draw themselves once their section is on screen. */
+.scribble path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.is-visible .scribble path,
+.scribble.is-drawn path {
+  animation: scribble-draw 0.9s 0.35s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+}
+@keyframes scribble-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* Peep can be grabbed wherever she shows through. */
 [data-peep-hover="1"],
 [data-peep-hover="1"] * {

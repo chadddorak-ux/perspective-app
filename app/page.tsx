@@ -9,7 +9,7 @@ import { Marquee } from "@/components/Marquee";
 import { CountUp, Reveal } from "@/components/Motion";
 import { PeepMark } from "@/components/Peep";
 import { World } from "@/components/scene/World";
-import { Arrow, Eyebrow } from "@/components/ui";
+import { Arrow, Eyebrow, Scribble } from "@/components/ui";
 import { fundingFor, type Funding } from "@/lib/funding";
 import { money, rankSponsors } from "@/lib/match";
 import { directPitch, optInAsk } from "@/lib/outreach";
@@ -302,52 +302,44 @@ export default async function Home() {
       {/* Step two: how a match is made, on one real example */}
       <MatchStory data={story} />
 
-      {/* Both sides of the table */}
-      <section className="pb-24" aria-labelledby="both-sides">
-        <Reveal className="max-w-3xl">
-          <p className="eyebrow text-brand">Why Peep</p>
-          <h2 id="both-sides" className="display mt-3 text-4xl sm:text-5xl">
-            A fair shot for every cause. Simple giving for every brand.
-          </h2>
-        </Reveal>
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          <Reveal className="flex flex-col rounded-[28px] bg-mint-soft p-7 sm:p-9">
-            <p className="eyebrow text-good">For nonprofits</p>
-            <h3 className="display mt-3 text-3xl sm:text-4xl">A level playing field</h3>
-            <p className="mt-4 text-lg text-muted">
-              Most nonprofits don&apos;t have a design team, and the brands they pitch are used to immaculate decks. Peep turns any pitch deck, PDF or email into the same polished campaign page, so every cause is judged on its idea, not its design budget.
-            </p>
-            <ul className="mt-6 flex-1 space-y-3">
-              {["Any PDF, deck or email in", "The same polished layout for every campaign", "Room to add your own story and photos"].map((x) => (
-                <li key={x} className="flex gap-3 font-semibold">
-                  <span aria-hidden className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-mint text-xs text-[#2a2826]">
-                    ✓
-                  </span>
-                  {x}
-                </li>
-              ))}
-            </ul>
-            <Link href="/import" className="btn-primary group mt-8 self-start">
-              Upload your pitch PDF <Arrow />
-            </Link>
-          </Reveal>
-          <Reveal delay={100} className="flex flex-col rounded-[28px] bg-sky-soft p-7 sm:p-9">
-            <p className="eyebrow text-sky">For brands and donors</p>
-            <h3 className="display mt-3 text-3xl sm:text-4xl">Giving, without the busywork</h3>
-            <p className="mt-4 text-lg text-muted">
-              Set aside your giving budget, pick what your brand actually cares about, and Peep matches you with campaigns that fit. Peep moves the funds, confirms they reached the nonprofit, and hands you the tax receipt the moment they land.
-            </p>
-            <ol className="mt-6 grid flex-1 gap-3 sm:grid-cols-2">
-              {["Set a giving budget", "Pick what matters", "Peep matches and transfers", "Tax receipt, right away"].map((x, i) => (
-                <li key={x} className="flex items-center gap-3 rounded-2xl bg-card/70 p-3 font-semibold">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-xs font-extrabold text-bg">{i + 1}</span>
-                  {x}
-                </li>
-              ))}
-            </ol>
-            <p className="mt-5 text-sm text-muted">Want to meet the team you funded? Say thanks, set up a call, or keep it to the essentials. Your call.</p>
-          </Reveal>
-        </div>
+      {/* Both sides of the table: two statements to actually read */}
+      <section className="pb-24" aria-label="Why Peep">
+        <WhyRow
+          eyebrow="For nonprofits"
+          tone="mint"
+          title={
+            <>
+              Level the <Scribble color="var(--mint)">playing field.</Scribble>
+            </>
+          }
+          lede="The brands you pitch are used to immaculate decks. You shouldn't need a design team to get a yes."
+          points={[
+            ["Any pitch in", "Drop in a deck, a PDF or a plain email. Peep reads every page."],
+            ["One polished page", "Every campaign gets the same clean one-pager, so ideas compete, not design budgets."],
+            ["Make it yours", "Add your story and photos on top. Put in more, stand out more, from the same starting line."],
+            ["Posted free", "No fees to list. Peep flags anything missing before it goes live."],
+          ]}
+          cta={{ href: "/import", label: "Upload your pitch PDF" }}
+        />
+        <WhyRow
+          flip
+          eyebrow="For brands and donors"
+          tone="sky"
+          title={
+            <>
+              No busywork. <Scribble color="var(--sky)">Just giving.</Scribble>
+            </>
+          }
+          lede="Set it once, pick what your brand actually cares about, and let Peep handle the rest."
+          points={[
+            ["Set a giving budget", "One amount for the year, with your funds verified up front."],
+            ["Pick what matters", "Causes, places and goals your brand genuinely stands behind."],
+            ["Peep matches and transfers", "We move the funds and confirm they reached the nonprofit."],
+            ["Tax receipt, right away", "Your paperwork lands the moment the transfer clears."],
+          ]}
+          note="Want to meet the team you funded? Say thanks, set up a call, or keep it to the essentials. Your call."
+          cta={{ href: "/give", label: "Find campaigns to back" }}
+        />
       </section>
 
       {/* Featured campaigns */}
@@ -504,6 +496,55 @@ export default async function Home() {
             </Link>
           </div>
         </section>
+      </Reveal>
+    </div>
+  );
+}
+
+/** One big statement beside the points that back it up. `flip` swaps the sides. */
+function WhyRow({
+  eyebrow,
+  title,
+  lede,
+  points,
+  cta,
+  note,
+  tone,
+  flip = false,
+}: {
+  eyebrow: string;
+  title: React.ReactNode;
+  lede: string;
+  points: [string, string][];
+  cta: { href: string; label: string };
+  note?: string;
+  tone: "mint" | "sky";
+  flip?: boolean;
+}) {
+  const dot = tone === "mint" ? "bg-mint" : "bg-sky";
+  return (
+    <div className="grid items-center gap-10 border-t border-line py-16 sm:py-24 lg:grid-cols-2 lg:gap-20">
+      <Reveal className={flip ? "lg:order-2" : ""}>
+        <p className={`eyebrow ${tone === "mint" ? "text-good" : "text-sky"}`}>{eyebrow}</p>
+        <h2 className="display mt-4 text-[clamp(2.8rem,6vw,5.6rem)] leading-[0.95]">{title}</h2>
+        <p className="mt-7 max-w-md text-xl text-muted">{lede}</p>
+      </Reveal>
+      <Reveal delay={120} className={flip ? "lg:order-1" : ""}>
+        <ol className="divide-y divide-line">
+          {points.map(([head, body], i) => (
+            <li key={head} className="flex gap-5 py-5 first:pt-0">
+              <span className={`mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full font-display text-lg font-semibold text-[#2a2826] ${dot}`}>{i + 1}</span>
+              <div>
+                <p className="text-2xl font-bold leading-tight">{head}</p>
+                <p className="mt-1.5 text-lg text-muted">{body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        {note && <p className="mt-4 rounded-2xl bg-card px-5 py-4 text-base text-muted ring-1 ring-line">{note}</p>}
+        <Link href={cta.href} className="btn-primary group mt-8">
+          {cta.label} <Arrow />
+        </Link>
       </Reveal>
     </div>
   );

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 
-export function ShareButton() {
+export function ShareButton({ className = "w-full" }: { className?: string }) {
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
   return (
     <button
-      className="btn-secondary w-full"
+      className={`btn-secondary ${className}`}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(window.location.href);
