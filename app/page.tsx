@@ -209,19 +209,19 @@ export default async function Home() {
           </ul>
         </div>
 
-        {/* An arched window onto Peep's sky, with the proof floating around it */}
-        <div className="animate-rise relative mx-auto mb-12 w-full max-w-[500px] px-6 [animation-delay:120ms] sm:mb-0 sm:px-10">
+        {/* An arched window onto Peep's sky. The proof floats in the sky above Peep and hangs below the arch, never over Peep. */}
+        <div className="animate-rise relative mx-auto mb-16 w-full max-w-[500px] px-6 [animation-delay:120ms] sm:px-10 lg:mb-20">
           <div className="relative aspect-[5/6] overflow-hidden rounded-b-[40px] rounded-t-[999px] shadow-[0_40px_80px_-40px_rgba(60,30,90,0.6)] ring-1 ring-line" data-scene-host>
-            <World kind="day" gremlin={{ desktop: { x: 0.52, y: 0.9, size: 230 }, mobile: { x: 0.52, y: 0.9, size: 160 } }} />
+            <World kind="day" gremlin={{ desktop: { x: 0.5, y: 0.93, size: 0.4 }, mobile: { x: 0.5, y: 0.93, size: 0.4 } }} />
           </div>
-          <div className="glass animate-float absolute left-0 top-[4%] w-[170px] rounded-2xl p-2.5 sm:top-[14%] sm:w-[230px] sm:p-3">
+          <div className="glass animate-float absolute left-0 top-[5%] w-[56%] rounded-2xl p-2.5 sm:p-3">
             <span className="rounded-full bg-mint-soft px-2 py-0.5 text-[10px] font-bold text-good">✓ Funds verified</span>
             <p className="mt-2 truncate text-sm font-bold">{sp.name}</p>
-            <p className="text-xs text-muted">
+            <p className="truncate text-xs text-muted">
               Ready to give <b className="text-ink">{budget}</b>
             </p>
           </div>
-          <div className="glass animate-float absolute right-0 top-[26%] w-[160px] rounded-2xl p-2.5 [animation-delay:1.4s] sm:top-[40%] sm:w-[210px] sm:p-3">
+          <div className="glass animate-float absolute right-0 top-[27%] w-[50%] rounded-2xl p-2.5 [animation-delay:1.4s] sm:p-3">
             <p className="eyebrow text-[10px] text-muted">Wants to support</p>
             <div className="mt-2 flex flex-wrap gap-1">
               {[label(CAUSES, sp.causes[0]), sp.geography.metros[0], label(OBJECTIVES, sp.objectives[0]).split(" & ")[0]].filter(Boolean).map((w) => (
@@ -231,19 +231,19 @@ export default async function Home() {
               ))}
             </div>
           </div>
-          <div className="glass animate-float absolute -bottom-[10%] left-0 w-[220px] rounded-2xl p-2.5 [animation-delay:2.6s] sm:bottom-[7%] sm:w-[250px] sm:p-3">
+          <div className="glass animate-float absolute -bottom-12 left-1/2 w-[78%] -translate-x-1/2 rounded-2xl p-2.5 [animation-delay:2.6s] sm:p-3">
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-mint font-display text-lg font-semibold text-[#2a2826]">{top.match.score}</span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted">Fit with your campaign</p>
                 <p className="truncate text-sm font-bold">{lead.title}</p>
               </div>
+              {story.ask && (
+                <p className="hidden shrink-0 rounded-xl bg-accent-soft px-2.5 py-1.5 text-xs sm:block">
+                  Ask <b>{money(story.ask.amount)}</b>
+                </p>
+              )}
             </div>
-            {story.ask && (
-              <p className="mt-2 rounded-xl bg-accent-soft px-2.5 py-1.5 text-xs">
-                Ask for <b>{story.ask.tier} · {money(story.ask.amount)}</b>
-              </p>
-            )}
           </div>
         </div>
       </section>

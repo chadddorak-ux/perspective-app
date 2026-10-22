@@ -9,7 +9,7 @@ import { makeGremlin, type Reaction } from "./gremlin";
 import { rng, withRim } from "./materials";
 
 export type SceneKind = "night" | "day" | "mountains";
-/** x and y are fractions of the canvas (y is where the feet go, from the top); size is Peep's height in px. */
+/** x and y are fractions of the canvas (y is where the feet go, from the top); size is Peep's height in px, or a fraction of the canvas height when 1 or less. */
 export type Placement = { x: number; y: number; size: number };
 export type WorldOptions = {
   kind: SceneKind;
@@ -399,11 +399,12 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
       const at = (mobile && opts.gremlin.mobile) || opts.gremlin.desktop;
       const x = (at.x - 0.5) * W;
       const y = (0.5 - at.y) * H;
-      const s = ((at.size / pxH) * H) / 2.3;
+      const sizePx = at.size <= 1 ? at.size * pxH : at.size;
+      const s = ((sizePx / pxH) * H) / 2.3;
       peep.root.position.set(x, y, 0);
       peep.root.scale.setScalar(s);
-      peepScreen.set(at.x * pxW, (at.y - (at.size / pxH) * 0.5) * pxH);
-      peepRadiusPx = at.size * 0.55;
+      peepScreen.set(at.x * pxW, (at.y - (sizePx / pxH) * 0.5) * pxH);
+      peepRadiusPx = sizePx * 0.55;
       if (rock) {
         rock.position.set(x, y - 0.3 * s, -0.2 * s);
         rock.scale.set(1.15 * s, 0.42 * s, 0.8 * s);

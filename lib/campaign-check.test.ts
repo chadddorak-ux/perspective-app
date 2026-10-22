@@ -41,6 +41,11 @@ describe("campaign gaps", () => {
     assert.match(gap!.hint, /already passed/);
   });
 
+  it("blocks a malformed EIN, which the server would reject", () => {
+    const gap = campaignGaps(makeOpp({ ein: "123456789", contact: { email: "a@b.org" } }), TODAY).find((g) => g.field === "ein");
+    assert.equal(gap?.level, "required");
+  });
+
   it("suggests a goal from the tiers", () => {
     const gap = campaignGaps(makeOpp(), TODAY).find((g) => g.field === "goal");
     assert.equal(gap?.level, "recommended");

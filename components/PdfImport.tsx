@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { campaignGaps, readiness, type Gap } from "@/lib/campaign-check";
+import { campaignGaps, readiness, type Gap, type GapField } from "@/lib/campaign-check";
 import type { ExtractResult, OpportunityDraft } from "@/lib/extract";
 import { money } from "@/lib/match";
 import { takePendingUpload } from "@/lib/pending-upload";
@@ -318,6 +318,16 @@ function Review({
   const gaps = campaignGaps(draft);
   const required = gaps.filter((g) => g.level === "required");
   const nice = gaps.filter((g) => g.level === "recommended");
+  // Flags stay put once raised, turning into "done" when fixed, so a flag's input
+  // doesn't vanish after the first keystroke that satisfies the check.
+  const [raised, setRaised] = useState<Gap[]>(gaps);
+  const open = new Set<GapField>(gaps.map((g) => g.field));
+  const fresh = gaps.filter((g) => !raised.some((r) => r.field === g.field));
+  useEffect(() => {
+    if (fresh.length) setRaised((r) => [...r, ...fresh]);
+  }, [fresh.map((g) => g.field).join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  const flagList = (level: Gap["level"]) =>
+    [...raised, ...fresh].filter((g) => g.level === level).map((g) => gaps.find((x) => x.field === g.field) ?? g);
   const ready = readiness(draft);
   const photosRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -409,17 +419,17 @@ function Review({
           </h3>
           <p className="mt-1 text-sm text-muted">{required.length ? "Peep couldn't find these in your PDF. Sponsors need them to say yes." : "Your campaign has everything sponsors need."}</p>
           <div className="mt-4 space-y-3">
-            {required.map((g) => (
-              <Flag key={g.field} gap={g} draft={draft} setDraft={setDraft} onPhotos={() => photosRef.current?.scrollIntoView({ behavior: "smooth" })} onDetails={() => detailsRef.current?.scrollIntoView({ behavior: "smooth" })} />
+            {flagList("required").map((g) => (
+              <Flag key={g.field} gap={g} done={!open.has(g.field)} draft={draft} setDraft={setDraft} onPhotos={() => photosRef.current?.scrollIntoView({ behavior: "smooth" })} onDetails={() => detailsRef.current?.scrollIntoView({ behavior: "smooth" })} />
             ))}
           </div>
-          {nice.length > 0 && (
+          {flagList("recommended").length > 0 && (
             <>
               <h4 className="mt-8 text-lg font-semibold">Suggestions</h4>
               <p className="text-sm text-muted">Optional, but they help sponsors decide.</p>
               <div className="mt-3 space-y-3">
-                {nice.map((g) => (
-                  <Flag key={g.field} gap={g} draft={draft} setDraft={setDraft} onPhotos={() => photosRef.current?.scrollIntoView({ behavior: "smooth" })} onDetails={() => detailsRef.current?.scrollIntoView({ behavior: "smooth" })} />
+                {flagList("recommended").map((g) => (
+                  <Flag key={g.field} gap={g} done={!open.has(g.field)} draft={draft} setDraft={setDraft} onPhotos={() => photosRef.current?.scrollIntoView({ behavior: "smooth" })} onDetails={() => detailsRef.current?.scrollIntoView({ behavior: "smooth" })} />
                 ))}
               </div>
             </>
@@ -436,25 +446,39 @@ function Review({
           <OpportunityForm value={draft} onChange={setDraft} />
         </section>
 
-        <div className="glass sticky bottom-3 z-20 flex flex-wrap items-center gap-3 rounded-2xl p-3">
+        <div className="glass sticky bottom-3 z-20 flex items-center gap-3 rounded-2xl p-2 pr-4">
           <button type="button" className="btn-primary px-6 py-3 text-base" disabled={busy || required.length > 0} onClick={post}>
             {busy ? "Posting…" : required.length ? `Fix ${required.length} thing${required.length === 1 ? "" : "s"} to post` : "Post campaign · free"}
           </button>
-          <p className="text-sm text-muted">
+          <p className="min-w-0 flex-1 text-sm text-muted">
             {required.length
               ? "Fill in the flagged fields above and this unlocks."
               : nice.length
                 ? `${nice.length} optional suggestion${nice.length === 1 ? "" : "s"} left. You can post now and add them later.`
                 : "Everything's in place."}
           </p>
-          {error && <p className="w-full text-sm font-semibold text-bad">{error}</p>}
         </div>
+        {error && <p className="text-sm font-semibold text-bad">{error}</p>}
       </div>
     </div>
   );
 }
 
-function Flag({ gap, draft, setDraft, onPhotos, onDetails }: { gap: Gap; draft: OpportunityDraft; setDraft: (d: OpportunityDraft) => void; onPhotos: () => void; onDetails: () => void }) {
+function Flag({
+  gap,
+  done,
+  draft,
+  setDraft,
+  onPhotos,
+  onDetails,
+}: {
+  gap: Gap;
+  done: boolean;
+  draft: OpportunityDraft;
+  setDraft: (d: OpportunityDraft) => void;
+  onPhotos: () => void;
+  onDetails: () => void;
+}) {
   const set = (patch: Partial<OpportunityDraft>) => setDraft({ ...draft, ...patch });
   const [tierName, setTierName] = useState("");
   const [tierAmount, setTierAmount] = useState("");
@@ -542,16 +566,19 @@ function Flag({ gap, draft, setDraft, onPhotos, onDetails }: { gap: Gap; draft: 
   }
 
   return (
-    <div className={`animate-pop rounded-2xl p-4 ring-1 ${req ? "bg-card ring-accent/50" : "bg-card ring-line"}`}>
+    <div className={`animate-pop rounded-2xl p-4 ring-1 transition-colors duration-300 ${done ? "bg-mint-soft ring-mint/40" : req ? "bg-card ring-accent/50" : "bg-card ring-line"}`}>
       <div className="flex items-start gap-3">
-        <span aria-hidden className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-extrabold ${req ? "bg-accent text-[#2a2826]" : "bg-sky-soft text-sky"}`}>
-          {req ? "!" : "+"}
+        <span
+          aria-hidden
+          className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-extrabold ${done ? "bg-mint text-[#2a2826]" : req ? "bg-accent text-[#2a2826]" : "bg-sky-soft text-sky"}`}
+        >
+          {done ? "✓" : req ? "!" : "+"}
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-bold">
-            {gap.label} <span className="sr-only">{req ? "(required)" : "(suggested)"}</span>
+            {gap.label} <span className="sr-only">{done ? "(done)" : req ? "(required)" : "(suggested)"}</span>
           </p>
-          <p className="text-sm text-muted">{gap.hint}</p>
+          <p className="text-sm text-muted">{done ? "Done. You can keep editing it here." : gap.hint}</p>
           <div className="mt-3">{fix}</div>
         </div>
       </div>

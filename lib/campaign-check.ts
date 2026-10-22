@@ -32,6 +32,7 @@ export type Gap = {
 };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EIN = /^\d{2}-\d{7}$/;
 
 export function campaignGaps(d: CampaignDraft, today: string = new Date().toISOString().slice(0, 10)): Gap[] {
   const gaps: Gap[] = [];
@@ -46,6 +47,7 @@ export function campaignGaps(d: CampaignDraft, today: string = new Date().toISOS
   const tiers = d.tiers.filter((t) => t.amount > 0);
   if (!tiers.length) need("tiers", "Sponsorship tiers", "At least one level with a dollar amount, so sponsors know what to give.");
   if (!d.contact.email || !EMAIL.test(d.contact.email)) need("email", "Contact email", "Where sponsors send their yes.");
+  if (d.ein && !EIN.test(d.ein)) need("ein", "EIN", "Use the IRS format, like 12-3456789.");
   if (d.kind === "event" && !d.startDate) need("startDate", "Event date", "Sponsors plan around it.");
   else if (d.startDate && (d.endDate ?? d.startDate) < today) need("startDate", "Event date", "This date has already passed. Is it this year's?");
 
