@@ -14,12 +14,12 @@ export default async function IntrosPage() {
 
   return (
     <>
-      <PageHeader eyebrow="For connectors" title="Warm intro pipeline">
+      <PageHeader art="international" eyebrow="For connectors" title="Warm intro pipeline">
         Every intro runs double opt-in: ask the sponsor first, introduce once they say yes, then track the outcome. Outcomes feed back into future matching.
       </PageHeader>
       {rows.length === 0 ? (
         <div className="card p-10 text-center text-muted">
-          No intro requests yet. Open any <Link className="text-brand hover:underline" href="/opportunities">listing</Link> and hit “Request warm intro” on a match.
+          No intro requests yet. Open any <Link  href="/opportunities">listing</Link> and hit “Request warm intro” on a match.
         </div>
       ) : (
         <div className="card overflow-x-auto">

@@ -62,7 +62,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader eyebrow="Discover" title="Campaigns raising sponsorship">
+      <PageHeader art="arts-culture" eyebrow="Discover" title="Campaigns raising sponsorship">
         Events, programs and campaigns from nonprofits of every kind. Back a tier directly, or open a campaign to see which sponsors fit it best.
       </PageHeader>
 
@@ -72,7 +72,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
           <Link
             key={t.label}
             href={link({ group: t.value, cause: undefined })}
-            className={`whitespace-nowrap rounded-full border px-4 py-2 font-display text-sm font-semibold transition-colors ${group === t.value ? "border-ink bg-ink text-bg" : "border-line bg-card text-muted hover:border-ink hover:text-ink"}`}
+            className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-bold transition-colors ${group === t.value ? "border-ink bg-ink text-bg" : "border-line bg-card text-muted hover:border-ink/30 hover:text-ink"}`}
           >
             {t.label}
           </Link>
@@ -100,7 +100,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
             <Link
               key={key}
               href={link({ sort: key })}
-              className={`rounded-full border px-3 py-1.5 font-display text-xs font-semibold ${sort === key ? "border-ink bg-ink text-bg" : "border-line bg-card hover:border-ink"}`}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold ${sort === key ? "border-ink bg-ink text-bg" : "border-line bg-card hover:border-ink/30"}`}
             >
               {s.label}
             </Link>

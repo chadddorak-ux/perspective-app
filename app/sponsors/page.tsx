@@ -34,7 +34,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader eyebrow="Network" title="Sponsors & donors">
+      <PageHeader art="workforce-development" eyebrow="Network" title="Sponsors & donors">
         Brands, local businesses, foundations, individual donors and agencies. Open a profile to see the opportunities that fit it best.
       </PageHeader>
       <FilterBar
@@ -63,7 +63,7 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
       {sponsors.length === 0 && <div className="card p-10 text-center text-muted">Nothing matches those filters yet.</div>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sponsors.map((s) => (
-          <Link key={s.id} href={`/sponsors/${s.id}`} className="card p-5 transition hover:border-ink">
+          <Link key={s.id} href={`/sponsors/${s.id}`} className="card p-5 transition hover:border-ink/30">
             <div className="flex items-center gap-2">
               <h3 className="font-display text-lg font-semibold tracking-tight">{s.name}</h3>
               {s.sample && <SampleTag />}

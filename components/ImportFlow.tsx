@@ -79,7 +79,7 @@ export function ImportFlow({ aiEnabled, examples }: { aiEnabled: boolean; exampl
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted">Try an example:</span>
         {examples.map((ex) => (
-          <button key={ex.label} className="rounded-full border border-line px-3 py-1 hover:border-ink" onClick={() => setText(ex.text)}>
+          <button key={ex.label} className="rounded-full border border-line px-3 py-1 hover:border-ink/30" onClick={() => setText(ex.text)}>
             {ex.label}
           </button>
         ))}

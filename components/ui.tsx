@@ -1,10 +1,12 @@
+import type { CauseId } from "@/lib/taxonomy";
 import type { MatchResult } from "@/lib/types";
-import { Shape } from "./Shapes";
+import { CoverArt } from "./CoverArt";
+import { PeepMark } from "./Peep";
 
 const GRADE_STYLE: Record<MatchResult["grade"], string> = {
-  Excellent: "bg-mint text-[#1f1a17]",
-  Strong: "bg-sky text-[#1f1a17]",
-  Possible: "bg-accent-2 text-[#1f1a17]",
+  Excellent: "bg-mint text-[#2a2826]",
+  Strong: "bg-sky text-white",
+  Possible: "bg-accent-2 text-[#2a2826]",
   "Long shot": "border border-line text-muted",
   "Not eligible": "bg-bad/10 text-bad",
 };
@@ -35,7 +37,7 @@ export function ScoreRing({ score, size = 56 }: { score: number; size?: number }
           style={{ "--ring-c": c } as React.CSSProperties}
         />
       </svg>
-      <span className="absolute inset-0 grid place-items-center font-display text-base font-bold tabular-nums">{score}</span>
+      <span className="absolute inset-0 grid place-items-center text-base font-extrabold tabular-nums">{score}</span>
     </div>
   );
 }
@@ -57,7 +59,7 @@ export function SampleTag() {
 export function Eyebrow({ index, children, className = "" }: { index?: string; children: React.ReactNode; className?: string }) {
   return (
     <p className={`eyebrow flex items-center gap-2 text-muted ${className}`}>
-      <Shape kind="half" color="coral" className="h-3 w-3" />
+      <span aria-hidden className="h-2 w-2 rounded-full bg-accent shadow-[0_0_0_3px_var(--brand-soft)]" />
       {index && <span className="text-ink">{index}</span>}
       {index && <span aria-hidden>/</span>}
       {children}
@@ -65,20 +67,20 @@ export function Eyebrow({ index, children, className = "" }: { index?: string; c
   );
 }
 
-export function PageHeader({ eyebrow, title, children }: { eyebrow?: string; title: string; children?: React.ReactNode }) {
+/** A page title on a painted landscape, with Peep peeking in from the corner. */
+export function PageHeader({ eyebrow, title, art = "environment", children }: { eyebrow?: string; title: string; art?: CauseId; children?: React.ReactNode }) {
   return (
-    <div className="relative mb-10 flex items-start justify-between gap-6">
-      <div className="max-w-3xl animate-rise">
-        {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
-        <h1 className="display text-4xl font-bold sm:text-6xl">{title}</h1>
-        {children && <div className="mt-4 max-w-2xl text-lg text-muted">{children}</div>}
+    <div className="group relative mb-10 animate-rise overflow-hidden rounded-[28px]" data-nav-dark>
+      <CoverArt id={title} cause={art} className="absolute inset-0" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#1b1236]/75 via-[#1b1236]/45 to-[#1b1236]/0" />
+      <div className="relative px-6 py-10 text-white sm:px-10 sm:py-14 [&_a]:font-semibold [&_a]:text-white [&_a]:underline [&_a]:decoration-white/50 [&_a]:underline-offset-4">
+        <div className="max-w-3xl">
+          {eyebrow && <p className="eyebrow text-white/75">{eyebrow}</p>}
+          <h1 className="display mt-3 text-4xl text-white sm:text-6xl">{title}</h1>
+          {children && <div className="mt-4 max-w-2xl text-lg text-white/85">{children}</div>}
+        </div>
       </div>
-      <div aria-hidden className="hidden shrink-0 grid-cols-2 gap-1.5 md:grid">
-        <Shape kind="quarter" color="coral" rotate={90} className="h-14 w-14" />
-        <Shape kind="circle" color="sky" className="h-14 w-14 animate-float" />
-        <Shape kind="square" color="sun" className="h-14 w-14" />
-        <Shape kind="half" color="mint" rotate={180} className="h-14 w-14" />
-      </div>
+      <PeepMark className="animate-float absolute -bottom-3 right-6 hidden h-24 w-28 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)] md:block" />
     </div>
   );
 }

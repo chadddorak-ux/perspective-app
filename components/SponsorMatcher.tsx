@@ -20,6 +20,7 @@ import {
 import type { Opportunity, SponsorProfile } from "@/lib/types";
 import { ChipSelect } from "./ChipSelect";
 import { MatchCard } from "./MatchCard";
+import { PeepMark } from "./Peep";
 
 type SponsorDraft = Omit<SponsorProfile, "id" | "createdAt" | "source" | "sample">;
 
@@ -239,11 +240,12 @@ export function SponsorMatcher() {
         </div>
       </div>
 
-      <div ref={resultsRef} className="scroll-mt-20 space-y-4">
+      <div ref={resultsRef} className="scroll-mt-28 space-y-4">
         {!results ? (
           <div className="card grid min-h-80 place-items-center p-10 text-center text-muted">
-            <div>
-              <p className="font-medium text-ink">Opportunities that fit will appear here</p>
+            <div className="group">
+              <PeepMark className="animate-float mx-auto mb-4 h-20 w-24" />
+              <p className="font-display text-xl text-ink">Opportunities that fit will appear here</p>
               <p className="mt-1 text-sm">Tell us what you care about and where you give.</p>
             </div>
           </div>

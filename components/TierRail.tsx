@@ -28,7 +28,7 @@ export function TierRail({
         return (
           <div
             key={t.tier.name}
-            className={`group rounded-3xl border bg-card p-5 transition-all duration-300 ${soldOut || closed ? "border-line opacity-60" : "border-line hover:-translate-y-0.5 hover:border-ink hover:shadow-[4px_4px_0_var(--ink)]"}`}
+            className={`group rounded-3xl border bg-card p-5 transition-all duration-300 ${soldOut || closed ? "border-line opacity-60" : "border-line hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-20px_rgba(60,30,90,0.45)]"}`}
           >
             <p className="eyebrow text-[10px] text-muted">Pledge {money(t.tier.amount)}</p>
             <h3 className="mt-1 font-display text-xl font-semibold tracking-tight">{t.tier.name}</h3>
@@ -107,7 +107,7 @@ function PledgeModal({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Sponsor ${tier.tier.name}`}>
       <div className="card w-full max-w-md overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-accent px-6 py-5 text-[#1f1a17]">
+        <div className="bg-accent px-6 py-5 text-[#2a2826]">
           <p className="eyebrow text-[10px]">Pledge {money(tier.tier.amount)}</p>
           <h2 className="display mt-1 text-3xl font-semibold">{tier.tier.name}</h2>
         </div>

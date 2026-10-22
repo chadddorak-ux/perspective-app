@@ -79,14 +79,19 @@ The build also writes `out-static/artifact.html`, the same page without the `<ht
 
 ## Design
 
-The visual language is Bauhaus shapes on a Scandinavian page:
-- **Base and color:** warm paper, one ink color, and five flat colors (coral, sun, sky, blush, mint).
-- **Shapes as illustration:** circles, halves, quarters, squares and triangles stand in for causes, sponsors and steps.
-  - Each cause group has its own glyph, and campaign covers are generated from it.
-  - The logo is two halves (a cause and a sponsor) that close into one circle. It also stands in for the "o" in the hero headline.
+The visual language is a storybook at dusk, inspired by [Passionfroot](https://www.passionfroot.me):
+- **Pages and type:** cream paper pages, Fraunces with its soft-corner axis for headlines and Nunito Sans for UI, self-hosted through `@fontsource`.
+- **Environments:** big rounded windows onto live 3D scenes built with three.js (`components/scene/`), each with a cream card rising out of its lower edge.
+  - The hero is a starry night over drifting sunset clouds.
+  - "Meet Peep" is a daytime cloudscape; the pledges section is a mountain forest at dusk.
+  - Scenes load three.js on demand, pause off screen, render a single still frame under `prefers-reduced-motion`, and fall back to a painted CSS sky without WebGL.
+- **Peep, the matchmaking gremlin:** a character built from primitives (`components/scene/gremlin.ts`).
+  - It blinks, flicks its ears, follows the pointer, and waves.
+  - In the hero it reacts to the demo: a wave when a campaign is posted, a look around while matching, and a jump with hearts when a pledge lands. Click it for a cheer.
+  - A 2D version is the logo mark and favicon.
+- **Glass bubble buttons:** every button is a frosted glass pill with a curved specular shine, a glint that follows the pointer, a soap-film rim that swirls on hover, a jelly squish on press and a pop ring on click (`app/globals.css`, `components/ButtonFX.tsx`).
 - **Hero:** an animated three-step demo on real data. A nonprofit posts a campaign, Perspective scores the best-fit sponsors with reasons, and a sponsor pledges while the progress bar fills. It plays on its own, pauses on hover, and each step is clickable.
-- **Playful elements:** floating shapes drift with the pointer and wobble when clicked. Cards lift with a hard ink shadow, and glyphs tilt on hover.
-- **Fonts:** Outfit (display) and Figtree (text), self-hosted through `@fontsource`.
+- **Campaign covers:** painted landscapes generated per cause group (sunrise hills, a calm sea, a village, a mountain forest, a night sky, dunes, a city, a planet), varied per campaign.
 - **Themes and motion:** tokens live in `app/globals.css`, with light and dark themes. All motion respects `prefers-reduced-motion`.
 
 ![Home, dark](docs/screenshots/home-dark.png)

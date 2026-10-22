@@ -59,7 +59,7 @@ function Chips<T extends string>({
             onClick={() => toggle(id)}
             aria-pressed={on}
             className={`rounded-full border px-3 py-1.5 text-sm transition ${
-              on ? "border-ink bg-ink text-bg" : "border-line bg-card text-ink hover:border-ink"
+              on ? "border-ink bg-ink text-bg" : "border-line bg-card text-ink hover:border-ink/30"
             }`}
           >
             {on && value.length > 1 && max ? `${value.indexOf(id) + 1}. ` : ""}

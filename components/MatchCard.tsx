@@ -47,7 +47,7 @@ export function MatchCard({ opp, sponsor, match, viewer, rank, funding }: Props)
   const isSample = isOrg ? sponsor.sample : opp.sample;
 
   return (
-    <article className={`card p-5 transition-colors hover:border-ink ${eligible ? "" : "opacity-70"}`}>
+    <article className={`card p-5 transition-colors hover:border-ink/30 ${eligible ? "" : "opacity-70"}`}>
       <div className="flex gap-4">
         <ScoreRing score={match.score} />
         <div className="min-w-0 flex-1">

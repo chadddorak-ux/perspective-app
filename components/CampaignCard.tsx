@@ -17,7 +17,7 @@ export function CampaignCard({ opp, f, badge }: { opp: Opportunity; f: Funding; 
   return (
     <Link
       href={`/opportunities/${opp.id}`}
-      className="group block overflow-hidden rounded-3xl border border-line bg-card transition-all duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-[6px_6px_0_var(--ink)]"
+      className="group block overflow-hidden rounded-3xl bg-card ring-1 ring-line transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(60,30,90,0.45)]"
     >
       <div className="relative overflow-hidden">
         <CoverArt
@@ -28,7 +28,7 @@ export function CampaignCard({ opp, f, badge }: { opp: Opportunity; f: Funding; 
         />
         {(badge || opp.featured) && (
           <div className="absolute right-3 top-3">
-            {badge ?? <span className="eyebrow rounded-full bg-ink px-2.5 py-1 text-[10px] text-bg">★ Featured</span>}
+            {badge ?? <span className="rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-bold text-[#2a2826] shadow-sm backdrop-blur">★ Featured</span>}
           </div>
         )}
       </div>
@@ -45,7 +45,7 @@ export function CampaignCard({ opp, f, badge }: { opp: Opportunity; f: Funding; 
             <span className="font-mono font-semibold text-ink">{money(f.pledged)}</span>
             <span className="text-muted"> of {money(f.goal)}</span>
           </span>
-          <span className="font-display font-semibold text-muted">{f.percent}%</span>
+          <span className="font-bold text-muted">{f.percent}%</span>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-xs text-muted">
           <span className="truncate">{opp.causes[0] ? label(CAUSES, opp.causes[0]) : ""}</span>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/figtree";
-import "@fontsource-variable/outfit";
+import "@fontsource-variable/fraunces/soft.css";
+import "@fontsource-variable/nunito-sans";
 import { SiteChrome } from "@/components/SiteChrome";
 import "./globals.css";
 

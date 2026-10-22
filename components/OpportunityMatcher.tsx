@@ -7,6 +7,7 @@ import type { Ranked } from "@/lib/match";
 import type { Opportunity, SponsorProfile } from "@/lib/types";
 import { MatchCard } from "./MatchCard";
 import { OpportunityForm, cleanOpportunity } from "./OpportunityForm";
+import { PeepMark } from "./Peep";
 
 export function OpportunityMatcher({
   initial,
@@ -78,11 +79,12 @@ export function OpportunityMatcher({
         </div>
       </div>
 
-      <div ref={resultsRef} className="scroll-mt-20 space-y-4">
+      <div ref={resultsRef} className="scroll-mt-28 space-y-4">
         {!results && (
           <div className="card grid min-h-80 place-items-center p-10 text-center text-muted">
-            <div>
-              <p className="font-medium text-ink">Your matches will appear here</p>
+            <div className="group">
+              <PeepMark className="animate-float mx-auto mb-4 h-20 w-24" />
+              <p className="font-display text-xl text-ink">Your matches will appear here</p>
               <p className="mt-1 text-sm">Fill in the listing (at least one cause), then hit “{submitLabel}”.</p>
             </div>
           </div>

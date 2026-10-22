@@ -16,7 +16,11 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const r = (...p) => path.join(root, ...p);
 const OUT = r("out-static");
-const FONT_PACKAGES = ["outfit", "figtree"];
+// [package, stylesheet] pairs; Fraunces ships its soft-corner axis separately.
+const FONTS = [
+  ["fraunces", "soft.css"],
+  ["nunito-sans", "index.css"],
+];
 
 // Next-only modules swapped for browser stand-ins.
 const SHIMS = {
@@ -62,12 +66,12 @@ async function compileCss() {
 
 // Latin and Latin Extended faces only, embedded as data URIs.
 function inlineFonts() {
-  return FONT_PACKAGES.map((pkg) => {
+  return FONTS.map(([pkg, sheet]) => {
     const dir = r("node_modules/@fontsource-variable", pkg);
-    const css = readFileSync(path.join(dir, "index.css"), "utf8");
+    const css = readFileSync(path.join(dir, sheet), "utf8");
     return css
       .split(/(?=\/\* )/)
-      .filter((block) => /-latin(-ext)?-wght-normal \*\//.test(block))
+      .filter((block) => /-latin(-ext)?-(wght|soft)-normal \*\//.test(block))
       .map((block) =>
         block.replace(/url\(\.\/files\/([^)]+)\)/g, (_, file) => {
           const data = readFileSync(path.join(dir, "files", file)).toString("base64");

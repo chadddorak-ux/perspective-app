@@ -1,28 +1,26 @@
 import Link from "next/link";
 import { CampaignCard } from "@/components/CampaignCard";
+import { CoverArt } from "@/components/CoverArt";
 import { HeroDemo, type DemoCampaign, type DemoSponsor } from "@/components/HeroDemo";
+import { PitchDemo, type PitchExample } from "@/components/home/PitchDemo";
+import { Radar } from "@/components/home/Radar";
+import { ScrollWords } from "@/components/home/ScrollWords";
 import { CountUp, Reveal } from "@/components/Motion";
-import { Playground, type FloatingShape } from "@/components/Playground";
-import { CauseGlyph, LogoMark, Shape } from "@/components/Shapes";
+import { World } from "@/components/scene/World";
+import type { Placement, SceneKind } from "@/components/scene/engine";
 import { Arrow, Eyebrow } from "@/components/ui";
+import { EXAMPLE_PITCHES } from "@/data/examples";
+import { extractWithRules } from "@/lib/extract";
 import { fundingFor, type Funding } from "@/lib/funding";
 import { money, rankSponsors } from "@/lib/match";
-import { CAUSES, CAUSE_GROUPS, INDUSTRIES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
+import { directPitch } from "@/lib/outreach";
+import { AUDIENCES, CAUSES, CAUSE_GROUPS, INDUSTRIES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
 import { listOpportunities, listPledges, listSponsors } from "@/lib/store";
 import type { MatchResult, Opportunity } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 type Row = { opp: Opportunity; f: Funding };
-
-const HERO_SHAPES: FloatingShape[] = [
-  { kind: "half", color: "coral", top: "6%", left: "2%", size: 64, rotate: 0, depth: 1.4 },
-  { kind: "circle", color: "sun", top: "2%", left: "86%", size: 54, depth: 1, mobile: true },
-  { kind: "quarter", color: "sky", top: "34%", left: "93%", size: 58, rotate: 180, depth: 1.8 },
-  { kind: "square", color: "mint", top: "40%", left: "-1%", size: 40, rotate: 12, depth: 0.8 },
-  { kind: "triangle", color: "blush", top: "64%", left: "7%", size: 34, depth: 2 },
-  { kind: "dot", color: "coral", top: "58%", left: "82%", size: 40, depth: 1.2 },
-];
 
 // Short labels for the reasons a sponsor fits, for the hero's chips.
 const SHORT_REASON: Record<string, (note: string) => string> = {
@@ -42,17 +40,21 @@ function shortReasons(m: MatchResult): string[] {
     .map((d) => SHORT_REASON[d.dimension](d.note));
 }
 
-function dateRange(o: Opportunity): string {
+function dateRange(o: Pick<Opportunity, "startDate" | "endDate">): string {
   if (!o.startDate) return "Ongoing";
   const f = (d: string, opts: Intl.DateTimeFormatOptions) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { ...opts, timeZone: "UTC" });
   if (o.endDate && o.endDate !== o.startDate && o.startDate.slice(0, 7) === o.endDate.slice(0, 7)) {
     return `${f(o.startDate, { month: "short", day: "numeric" })}–${Number(o.endDate.slice(8))}`;
   }
-  return f(o.startDate, { month: "short", day: "numeric" });
+  return f(o.startDate, { month: "short", day: "numeric", year: "numeric" });
 }
 
-function FullBleed({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={`relative left-1/2 w-screen -translate-x-1/2 ${className}`}>{children}</section>;
+function FullBleed({ children, className = "", ...rest }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLElement>) {
+  return (
+    <section className={`relative left-1/2 w-screen -translate-x-1/2 ${className}`} {...rest}>
+      {children}
+    </section>
+  );
 }
 
 function SectionHead({ eyebrow, title, href, linkLabel = "See all" }: { eyebrow: string; title: string; href?: string; linkLabel?: string }) {
@@ -60,7 +62,7 @@ function SectionHead({ eyebrow, title, href, linkLabel = "See all" }: { eyebrow:
     <Reveal className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h2 className="display mt-3 text-4xl font-bold sm:text-5xl">{title}</h2>
+        <h2 className="display mt-3 text-4xl sm:text-5xl">{title}</h2>
       </div>
       {href && (
         <Link href={href} className="btn-secondary group shrink-0">
@@ -70,6 +72,53 @@ function SectionHead({ eyebrow, title, href, linkLabel = "See all" }: { eyebrow:
     </Reveal>
   );
 }
+
+// The color each scene fades to at its bottom edge, so the frame around the card continues it.
+const FRAME: Record<SceneKind, string> = { night: "#b8577f", day: "#e7b3c6", mountains: "#5a4580" };
+
+/** A rounded window onto a 3D environment, with a cream card rising out of its lower edge. */
+function EnvPanel({ kind, gremlin, title, sub, children }: { kind: SceneKind; gremlin?: { desktop: Placement; mobile?: Placement }; title: string; sub?: string; children: React.ReactNode }) {
+  return (
+    <FullBleed className="px-2 sm:px-6">
+      <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]" style={{ background: FRAME[kind] }}>
+        <div className="relative h-[480px] sm:h-[600px]" data-scene-host>
+          <World kind={kind} gremlin={gremlin} />
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-40" style={{ background: `linear-gradient(180deg, transparent, ${FRAME[kind]})` }} />
+          <div className="pointer-events-none relative z-10 px-6 pt-12 sm:px-16 sm:pt-20">
+            <h2 className="display max-w-3xl text-[clamp(2.4rem,5.6vw,4.6rem)] text-white [text-shadow:0_2px_30px_rgba(40,20,70,0.35)]">{title}</h2>
+            {sub && <p className="mt-4 max-w-xl text-lg font-semibold text-white/90 [text-shadow:0_1px_12px_rgba(40,20,70,0.4)]">{sub}</p>}
+          </div>
+        </div>
+        <div className="relative -mt-[150px] px-2 pb-2 sm:-mt-[170px] sm:px-8 sm:pb-8">
+          <div className="relative rounded-[24px] bg-bg px-4 py-10 sm:px-12 sm:py-14">{children}</div>
+        </div>
+      </div>
+    </FullBleed>
+  );
+}
+
+const FAQ = [
+  {
+    q: "What does Perspective do?",
+    a: "It matches nonprofits with the brands, foundations and donors most likely to sponsor them. A nonprofit posts a campaign with a goal and sponsorship tiers; every sponsor in the network gets a fit score with the reasons behind it; sponsors pledge to the tier that fits.",
+  },
+  {
+    q: "How is a match scored?",
+    a: "Six factors out of 100: cause (30), geography (20), budget (15), audience (15), sponsor goals (15) and timing (5). Hard rules come first, so a sponsor that only funds 501(c)(3)s, or an industry a nonprofit has blocked, is marked not eligible instead of ranked.",
+  },
+  {
+    q: "Who is Peep?",
+    a: "Peep is our matchmaking gremlin. It reads pitches, scores fits and cheers when a pledge lands. Click it in the sky up top and see what happens.",
+  },
+  {
+    q: "I already have a sponsorship deck. Do I start over?",
+    a: "No. Paste the pitch email or deck text into Import a pitch. Perspective pulls out the goal, tiers, dates, location and audience, builds the campaign, and drafts outreach to the best-fit sponsors.",
+  },
+  {
+    q: "Is the data real?",
+    a: "EAGLES SOAR, from the Richard P. Hall Eagles Foundation, is a real campaign. Every other organization and sponsor is fictional demo data and labeled Sample.",
+  },
+];
 
 export default async function Home() {
   const [opps, sponsors, pledges] = await Promise.all([listOpportunities(), listSponsors(), listPledges()]);
@@ -91,13 +140,41 @@ export default async function Home() {
     goal: fundingFor(lead, pledges).goal,
     tiers: lead.tiers.map((t) => ({ name: t.name, amount: t.amount })),
   };
+  const sponsorKind = (s: (typeof sponsors)[number]) => (s.industry ? label(INDUSTRIES, s.industry) : label(SPONSOR_TYPES, s.type));
   const demoSponsors: DemoSponsor[] = ranked.slice(0, 3).map(({ item, match }) => ({
     name: item.name,
-    kind: item.industry ? label(INDUSTRIES, item.industry) : label(SPONSOR_TYPES, item.type),
+    kind: sponsorKind(item),
     score: match.score,
     reasons: shortReasons(match),
     ask: match.suggestedTier ? { name: match.suggestedTier.name, amount: match.suggestedTier.amount } : undefined,
   }));
+
+  // Real parser output for the example pitches.
+  const pitches: PitchExample[] = EXAMPLE_PITCHES.map((p) => {
+    const d = extractWithRules(p.text).draft;
+    const opening = p.text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !/^(hi|hello|dear)\b/i.test(l))
+      .join(" ");
+    return {
+      label: p.label,
+      text: opening.length > 210 ? `${opening.slice(0, opening.lastIndexOf(" ", 210))}…` : opening,
+      fields: [
+        { label: "Campaign", value: d.title || "—" },
+        { label: "Organization", value: d.orgName || "—" },
+        { label: "Where", value: [d.location.city, d.location.state].filter(Boolean).join(", ") || "—" },
+        { label: "When", value: dateRange(d) },
+        { label: "Tiers", value: d.tiers.length ? d.tiers.map((t) => money(t.amount)).join(" · ") : "—" },
+        { label: "Causes", value: d.causes.slice(0, 2).map((c) => label(CAUSES, c)).join(", ") || "—" },
+        { label: "Audience", value: d.audiences.slice(0, 2).map((a) => label(AUDIENCES, a)).join(", ") },
+        { label: "Goal", value: d.tiers.length ? money(d.tiers.reduce((s, t) => s + t.amount, 0)) + "+" : "—" },
+      ],
+    };
+  });
+
+  // Drafted pitches to the top three sponsors.
+  const proposals = ranked.slice(0, 3).map(({ item, match }) => ({ sponsor: item.name, kind: sponsorKind(item), draft: directPitch(lead, item, match), tier: match.suggestedTier }));
 
   const featured = rows.filter((r) => r.opp.featured).slice(0, 3);
   const taken = new Set(featured.map((r) => r.opp.id));
@@ -105,180 +182,152 @@ export default async function Home() {
     .filter((r) => !taken.has(r.opp.id) && r.f.percent >= 50 && r.f.percent < 100)
     .sort((a, b) => b.f.percent - a.f.percent)
     .slice(0, 3);
+  const radar = recent.slice(0, 6).map((p) => `${p.sponsorName} pledged ${money(p.amount)} to ${titleOf(p.opportunityId)}`);
+  const barRows = [...rows].sort((a, b) => b.f.percent - a.f.percent).slice(0, 3);
+
+  // A real blocked pair: a campaign that turns down an industry, a sponsor it turned down, and its best eligible fit.
+  const rule = rows
+    .map(({ opp }) => {
+      const r = rankSponsors(opp, sponsors);
+      const blocked = r.find((x) => x.match.blockers.some((b) => b.includes("doesn't accept")));
+      return blocked && { opp, blocked, best: r.find((x) => x.match.grade !== "Not eligible") };
+    })
+    .find(Boolean);
 
   return (
-    <div className="-mt-10">
-      {/* Hero: the whole product in one picture */}
-      <Playground shapes={HERO_SHAPES} className="pb-14 pt-8 sm:pt-10">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 font-display text-xs font-semibold text-muted">
-            <span className="h-2 w-2 animate-blink rounded-full bg-mint" />
-            {rows.length} live campaigns · {sponsors.length} sponsors
-          </p>
-          <h1 className="display animate-rise mt-5 text-[clamp(2.5rem,6.6vw,5.1rem)] font-bold [animation-delay:60ms]">
-            Match your cause with <br className="hidden sm:inline" />
-            sp
-            <span aria-hidden className="group relative mx-[0.02em] inline-block h-[0.6em] w-[0.6em] cursor-pointer align-baseline">
-              <LogoMark className="absolute inset-[-0.06em] h-[calc(100%+0.12em)] w-[calc(100%+0.12em)]" />
-            </span>
-            <span className="sr-only">o</span>nsors who say{" "}
-            <span className="relative inline-block">
-              yes.
-              <span aria-hidden className="absolute -bottom-1 left-0 -z-10 h-[0.16em] w-full rounded-full bg-accent-2" />
-            </span>
-          </h1>
-          <p className="animate-rise mx-auto mt-5 max-w-2xl text-lg text-muted sm:text-xl [animation-delay:120ms]">
-            Nonprofits post a campaign. Perspective finds the brands, foundations and donors that fit, shows exactly why, and they pledge.
-          </p>
-          <div className="animate-rise mt-7 flex flex-wrap justify-center gap-3 [animation-delay:180ms]">
-            <Link href="/find" className="btn-primary group px-6 py-3 text-base">
-              I&apos;m a nonprofit <Arrow />
-            </Link>
-            <Link href="/give" className="btn-secondary group px-6 py-3 text-base">
-              I&apos;m a sponsor <Arrow />
-            </Link>
+    <div>
+      {/* Hero: a night sky, the product in one picture, and Peep in the clouds */}
+      <FullBleed className="-mt-28 overflow-hidden sm:-mt-32" data-nav-dark data-scene-host>
+        <World
+          kind="night"
+          listen
+          gremlin={{ desktop: { x: 0.9, y: 0.955, size: 250 }, mobile: { x: 0.74, y: 0.975, size: 150 } }}
+        />
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-[230px] pt-36 sm:pb-[230px] sm:pt-44">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="glass-dark animate-rise inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold text-white/85">
+              <span className="h-2 w-2 animate-blink rounded-full bg-mint" />
+              {rows.length} live campaigns · {sponsors.length} sponsors
+            </p>
+            <h1 className="display animate-rise mt-6 text-[clamp(2.6rem,6.8vw,5.4rem)] text-[#fdf8f2] [animation-delay:60ms]">
+              Match your cause with sponsors who say yes.
+            </h1>
+            <p className="animate-rise mx-auto mt-5 max-w-2xl text-lg text-white/75 sm:text-xl [animation-delay:120ms]">
+              Nonprofits post a campaign. Perspective finds the brands, foundations and donors that fit, shows exactly why, and they pledge.
+            </p>
+            <div className="animate-rise mt-8 flex flex-wrap justify-center gap-3 [animation-delay:180ms]">
+              <Link href="/find" className="btn-bright group min-w-[200px] px-7 py-3.5 text-base">
+                I&apos;m a nonprofit <Arrow />
+              </Link>
+              <Link href="/give" className="btn-glass group min-w-[200px] px-7 py-3.5 text-base">
+                I&apos;m a sponsor <Arrow />
+              </Link>
+            </div>
           </div>
-        </div>
-        <div className="animate-rise mx-auto mt-10 max-w-5xl [animation-delay:240ms]">
-          <HeroDemo campaign={demoCampaign} sponsors={demoSponsors} />
-        </div>
-      </Playground>
-
-      {/* Pledge ticker */}
-      <FullBleed className="overflow-hidden border-y border-line bg-card py-3.5">
-        <div className="animate-marquee flex w-max gap-10 whitespace-nowrap font-display text-sm">
-          {[...recent, ...recent].map((p, i) => {
-            const shapes = ["half", "circle", "square", "quarter"] as const;
-            const colors = ["coral", "sky", "sun", "mint"] as const;
-            return (
-              <span key={i} className="flex items-center gap-2.5">
-                <Shape kind={shapes[i % 4]} color={colors[i % 4]} className="h-4 w-4" />
-                <span className="font-bold">{money(p.amount)}</span>
-                <span className="text-muted">from</span>
-                <span className="font-semibold">{p.sponsorName}</span>
-                <span className="text-muted">to</span>
-                <span>{titleOf(p.opportunityId)}</span>
-              </span>
-            );
-          })}
+          <div className="animate-rise mx-auto mt-14 max-w-5xl [animation-delay:240ms]">
+            <HeroDemo campaign={demoCampaign} sponsors={demoSponsors} />
+          </div>
         </div>
       </FullBleed>
 
-      {/* Two doors */}
-      <section className="grid gap-5 py-20 md:grid-cols-2">
-        {[
-          {
-            who: "For nonprofits",
-            title: "Raise sponsorship without the cold emails.",
-            bg: "bg-brand-soft",
-            points: ["Post a campaign in five steps, or paste a pitch you already have", "See which sponsors fit, why, and what to ask each for", "Collect pledges on a page you can share"],
-            href: "/find",
-            cta: "Start a campaign",
-            art: (
-              <div className="grid grid-cols-3 gap-1.5">
-                <Shape kind="half" color="coral" className="h-12 w-12" />
-                <Shape kind="square" color="sun" className="h-12 w-12" />
-                <Shape kind="quarter" color="ink" rotate={90} className="h-12 w-12" />
-              </div>
-            ),
-          },
-          {
-            who: "For sponsors",
-            title: "Back causes that fit your goals and your market.",
-            bg: "bg-sky-soft",
-            points: ["Tell us your causes, area, budget and goals", "Get ranked campaigns, with your rules respected", "Pledge to a tier that delivers what you need"],
-            href: "/give",
-            cta: "Find campaigns to back",
-            art: (
-              <div className="grid grid-cols-3 gap-1.5">
-                <Shape kind="circle" color="sky" className="h-12 w-12" />
-                <Shape kind="triangle" color="mint" className="h-12 w-12" />
-                <Shape kind="half" color="blush" rotate={180} className="h-12 w-12" />
-              </div>
-            ),
-          },
-        ].map((d, i) => (
-          <Reveal key={d.who} delay={i * 100} className={`group flex flex-col rounded-[28px] p-7 sm:p-9 ${d.bg}`}>
-            <div className="flex items-start justify-between gap-4">
-              <p className="eyebrow text-muted">{d.who}</p>
-              <div className="transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105">{d.art}</div>
-            </div>
-            <h3 className="display mt-6 text-3xl font-bold sm:text-4xl">{d.title}</h3>
-            <ul className="mt-6 flex-1 space-y-3">
-              {d.points.map((p) => (
-                <li key={p} className="flex gap-3">
-                  <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-ink" />
-                  {p}
-                </li>
-              ))}
-            </ul>
-            <Link href={d.href} className="btn-primary group mt-8 self-start">
-              {d.cta} <Arrow />
-            </Link>
-          </Reveal>
-        ))}
+      {/* Pledge ticker */}
+      <FullBleed className="overflow-hidden border-b border-line bg-card py-4">
+        <div className="animate-marquee flex w-max gap-10 whitespace-nowrap text-sm">
+          {[...recent, ...recent].map((p, i) => (
+            <span key={i} className="flex items-center gap-2.5">
+              <span className="text-accent">♥</span>
+              <span className="font-extrabold">{money(p.amount)}</span>
+              <span className="text-muted">from</span>
+              <span className="font-bold">{p.sponsorName}</span>
+              <span className="text-muted">to</span>
+              <span>{titleOf(p.opportunityId)}</span>
+            </span>
+          ))}
+        </div>
+      </FullBleed>
+
+      {/* The why, in one sentence */}
+      <section className="mx-auto max-w-4xl py-24 text-center sm:py-32">
+        <ScrollWords
+          className="display text-[clamp(1.9rem,4.4vw,3.4rem)] leading-[1.12]"
+          accent="Perspective"
+          text="“Sponsorship requests arrive every week. Most aren't a fit, and the few that are perfect get lost in the inbox.” So we built Perspective, to put the right people in the room when it matters most."
+        />
       </section>
 
-      {/* What makes it work, shown rather than told */}
-      <section className="pb-20">
-        <SectionHead eyebrow="Why it works" title="Built for the yes." />
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <Reveal className="card flex flex-col p-6">
-            <div className="flex items-center gap-3">
-              <span className="grid h-14 w-14 place-items-center rounded-full border-[6px] border-mint font-display text-lg font-bold">98</span>
-              <div className="flex-1 space-y-1.5">
-                {[30, 20, 15, 15, 15, 5].map((w, i) => (
-                  <div key={i} className="h-1.5 rounded-full bg-line">
-                    <div className="h-full rounded-full bg-accent" style={{ width: `${[97, 100, 100, 100, 100, 100][i] * (w / 30)}%` }} />
+      {/* Meet Peep: from a pitch to matches to a drafted ask */}
+      <EnvPanel
+        kind="day"
+        title="Meet Peep. Sponsorship, finally simple."
+        sub="Our matchmaking gremlin reads the pitch, scores every sponsor and drafts the ask."
+        gremlin={{ desktop: { x: 0.8, y: 0.72, size: 230 }, mobile: { x: 0.74, y: 0.74, size: 130 } }}
+      >
+        <Reveal className="text-center">
+          <h3 className="display mx-auto max-w-2xl text-3xl sm:text-[2.6rem]">From a pitch email to a live campaign, in one paste</h3>
+          <p className="mx-auto mt-3 max-w-xl text-muted">Paste any sponsorship ask. Peep pulls out the goal, tiers, dates and audience, then builds the campaign page.</p>
+        </Reveal>
+        <div className="mt-8">
+          <PitchDemo examples={pitches} />
+        </div>
+
+        <div className="mt-14 grid border-t border-line pt-12 md:grid-cols-2 md:divide-x md:divide-line">
+          <Reveal className="md:pr-10">
+            <h3 className="display text-2xl sm:text-3xl">Find sponsors who already fund your cause</h3>
+            <p className="mt-3 text-muted">Every sponsor in the network is scored on cause, place, budget, audience, goals and timing. Here are the top fits for {lead.title}.</p>
+            <div className="mt-6 space-y-2">
+              {ranked.slice(0, 5).map(({ item, match }, i) => (
+                <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-line" style={{ opacity: 1 - i * 0.12 }}>
+                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-extrabold text-[#2a2826] ${["bg-mint", "bg-sky", "bg-accent-2", "bg-blush", "bg-mint-soft"][i]}`}>{item.name[0]}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold">{item.name}</p>
+                    <p className="truncate text-xs text-muted">{shortReasons(match).join(" · ") || sponsorKind(item)}</p>
                   </div>
-                ))}
-              </div>
+                  <span className="rounded-full bg-mint-soft px-2.5 py-1 text-sm font-extrabold tabular-nums text-good">{match.score}</span>
+                </div>
+              ))}
             </div>
-            <h3 className="mt-6 font-display text-xl font-bold">Every score explained</h3>
-            <p className="mt-2 text-sm text-muted">Cause, location, budget, audience, goals and timing. Six factors, each one visible.</p>
           </Reveal>
-          <Reveal delay={80} className="card flex flex-col p-6">
-            <div className="space-y-2">
-              <p className="rounded-full bg-accent-soft px-3 py-1 text-xs">Youth league: no alcohol or betting sponsors</p>
-              <p className="flex items-center justify-between rounded-full border border-line px-3 py-1 text-xs">
-                <span className="text-muted line-through">Big Easy Brewing</span>
-                <span className="font-semibold text-bad">Not eligible</span>
-              </p>
+          <Reveal delay={100} className="mt-12 md:mt-0 md:pl-10">
+            <h3 className="display text-2xl sm:text-3xl">Pitch with the exact ask</h3>
+            <p className="mt-3 text-muted">Peep drafts a pitch for each sponsor, built from the match: the shared cause, why now, and the tier that fits their budget.</p>
+            <div className="relative mx-3 mt-8 h-[300px] [perspective:1200px] sm:mx-0">
+              {proposals.map((pr, i) => (
+                <div
+                  key={pr.sponsor}
+                  className="absolute inset-x-0 rounded-2xl bg-card p-4 shadow-[0_18px_40px_-20px_rgba(60,30,90,0.45)] ring-1 ring-line transition-transform duration-500 hover:-translate-y-2"
+                  style={{ top: `${i * 46}px`, transform: `rotateX(14deg) rotateZ(${-3 + i * 1.5}deg) translateX(${i * 6}px)`, zIndex: i }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-bold">
+                      {pr.sponsor} <span className="font-normal text-muted">· {pr.kind}</span>
+                    </p>
+                    {pr.tier && <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-warn">{money(pr.tier.amount)}</span>}
+                  </div>
+                  <p className="mt-2 truncate text-xs font-semibold">{pr.draft.subject}</p>
+                  <p className="mt-1 line-clamp-3 whitespace-pre-line text-xs text-muted">{pr.draft.body.split("\n").slice(2, 3).join(" ")}</p>
+                </div>
+              ))}
             </div>
-            <h3 className="mt-6 font-display text-xl font-bold">Rules both ways</h3>
-            <p className="mt-2 text-sm text-muted">Sponsors skip causes they avoid. Nonprofits block industries they won&apos;t take money from.</p>
-          </Reveal>
-          <Reveal delay={160} className="card flex flex-col p-6">
-            <div className="relative h-[58px]">
-              <div className="absolute inset-0 rounded-xl border border-line bg-bg p-2.5">
-                <p className="truncate text-[11px] font-semibold">Intro? Eagles Foundation × Aeronova</p>
-                <div className="mt-1.5 h-1.5 w-4/5 rounded-full bg-line" />
-                <div className="mt-1 h-1.5 w-3/5 rounded-full bg-line" />
-              </div>
-              <Shape kind="triangle" color="sky" rotate={180} className="absolute -right-1 -top-2 h-7 w-7" />
-            </div>
-            <h3 className="mt-6 font-display text-xl font-bold">Warm intros, drafted</h3>
-            <p className="mt-2 text-sm text-muted">A tailored pitch, an opt-in ask, and the intro itself, written from the match.</p>
-          </Reveal>
-          <Reveal delay={240} className="card flex flex-col p-6">
-            <div>
-              <div className="h-3 overflow-hidden rounded-full bg-line">
-                <div className="h-full w-3/4 rounded-full bg-accent" />
-              </div>
-              <div className="mt-2 flex gap-1.5">
-                <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] text-bg">75% funded</span>
-                <span className="rounded-full border border-line px-2 py-0.5 text-[11px]">2 of 3 left</span>
-              </div>
-            </div>
-            <h3 className="mt-6 font-display text-xl font-bold">Progress you can see</h3>
-            <p className="mt-2 text-sm text-muted">Goals, tiers with limited spots, days to go. Sponsors see where their yes matters most.</p>
           </Reveal>
         </div>
-      </section>
+
+        <div className="mt-12 border-t border-line pt-10 text-center">
+          <p className="display text-xl sm:text-2xl">Built for every nonprofit and every brand</p>
+          <div className="relative mt-6 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]">
+            <div className="animate-marquee flex w-max gap-3">
+              {[...Object.values(CAUSES), ...Object.values(CAUSES)].map((c, i) => (
+                <span key={i} className="whitespace-nowrap rounded-full bg-card px-4 py-2 text-sm font-semibold ring-1 ring-line">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </EnvPanel>
 
       {/* Featured campaigns */}
       {featured.length > 0 && (
-        <section className="pb-20">
+        <section className="py-24">
           <SectionHead eyebrow="Featured" title="Featured campaigns" href="/opportunities?sort=featured" />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map(({ opp, f }, i) => (
@@ -290,20 +339,96 @@ export default async function Home() {
         </section>
       )}
 
+      {/* Mountains: pledges, rules and progress */}
+      <EnvPanel
+        kind="mountains"
+        title="Fund campaigns, not spreadsheets."
+        sub="Pledges land on a page everyone can see, with the rules both sides set."
+        gremlin={{ desktop: { x: 0.83, y: 0.62, size: 150 }, mobile: { x: 0.8, y: 0.66, size: 96 } }}
+      >
+        <Reveal className="text-center">
+          <h3 className="display mx-auto max-w-2xl text-3xl sm:text-[2.6rem]">Sponsors back the tiers that fit</h3>
+          <p className="mx-auto mt-3 max-w-xl text-muted">Every pledge fills the bar, claims a tier and starts a warm intro. These are the latest.</p>
+        </Reveal>
+        <Radar messages={radar} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { v: <>{money(totalPledged)}</>, l: "pledged so far" },
+            { v: <CountUp to={rows.length} />, l: "live campaigns" },
+            { v: <CountUp to={sponsors.length} />, l: "sponsors in the network" },
+            { v: <CountUp to={Object.keys(CAUSES).length} />, l: "cause areas" },
+          ].map((s) => (
+            <div key={s.l} className="rounded-2xl bg-card p-5 text-center ring-1 ring-line">
+              <p className="display text-4xl sm:text-5xl">{s.v}</p>
+              <p className="mt-1 text-sm text-muted">{s.l}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 grid border-t border-line pt-12 md:grid-cols-2 md:divide-x md:divide-line">
+          <Reveal className="md:pr-10">
+            <h3 className="display text-2xl sm:text-3xl">Rules both ways</h3>
+            <p className="mt-3 text-muted">Sponsors skip causes they avoid. Nonprofits block industries they won&apos;t take money from. Blocked pairs never show up as matches.</p>
+            {rule && (
+              <div className="mt-6 space-y-2">
+                <p className="rounded-2xl bg-accent-soft px-4 py-3 text-sm font-semibold text-warn">
+                  {rule.opp.title}: no {rule.opp.excludedIndustries.map((i) => label(INDUSTRIES, i).toLowerCase()).join(", ")} sponsors
+                </p>
+                <p className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 text-sm ring-1 ring-line">
+                  <span className="truncate text-muted line-through">{rule.blocked.item.name}</span>
+                  <span className="shrink-0 font-bold text-bad">Not eligible</span>
+                </p>
+                {rule.best && (
+                  <p className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 text-sm ring-1 ring-line">
+                    <span className="truncate">{rule.best.item.name}</span>
+                    <span className="shrink-0 font-bold text-good">Eligible · {rule.best.match.score}</span>
+                  </p>
+                )}
+              </div>
+            )}
+          </Reveal>
+          <Reveal delay={100} className="mt-12 md:mt-0 md:pl-10">
+            <h3 className="display text-2xl sm:text-3xl">Progress you can see</h3>
+            <p className="mt-3 text-muted">Goals, tiers with limited spots, days to go. Sponsors see where their yes matters most.</p>
+            <div className="mt-6 space-y-3">
+              {barRows.map(({ opp, f }) => (
+                <Link key={opp.id} href={`/opportunities/${opp.id}`} className="block rounded-2xl bg-card p-4 ring-1 ring-line transition hover:ring-ink/30">
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="truncate font-bold">{opp.title}</span>
+                    <span className="shrink-0 font-extrabold tabular-nums">{f.percent}%</span>
+                  </div>
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-line">
+                    <div className="bg-warm h-full rounded-full" style={{ width: `${Math.min(100, f.percent)}%` }} />
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted">
+                    {money(f.pledged)} of {money(f.goal)}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </EnvPanel>
+
       {/* Causes */}
-      <section className="pb-20">
-        <SectionHead eyebrow="Explore" title="Every cause has a shape." href="/opportunities" linkLabel="Discover all" />
+      <section className="py-24">
+        <SectionHead eyebrow="Explore" title="Every cause has a home." href="/opportunities" linkLabel="Discover all" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {CAUSE_GROUPS.map((g, i) => {
             const count = rows.filter((r) => r.opp.causes.some((c) => g.ids.includes(c))).length;
             return (
               <Reveal key={g.label} delay={i * 40}>
-                <Link href={`/opportunities?group=${encodeURIComponent(g.label)}`} className="group block rounded-3xl border border-line bg-card p-3 transition-all duration-300 hover:-translate-y-1 hover:border-ink">
-                  <CauseGlyph group={g.label} className="aspect-square w-full overflow-hidden rounded-2xl" />
-                  <p className="mt-3 px-1 font-display text-base font-bold leading-tight">{g.label}</p>
-                  <p className="px-1 pb-1 text-xs text-muted">
-                    {count} live · {g.ids.slice(0, 2).map((c) => CAUSES[c]).join(", ")}…
-                  </p>
+                <Link
+                  href={`/opportunities?group=${encodeURIComponent(g.label)}`}
+                  className="group block overflow-hidden rounded-3xl bg-card ring-1 ring-line transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(60,30,90,0.45)]"
+                >
+                  <CoverArt id={g.label} cause={g.ids[0]} className="aspect-[4/3] w-full" />
+                  <div className="p-4">
+                    <p className="font-display text-lg font-semibold leading-tight">{g.label}</p>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {count} live · {g.ids.slice(0, 2).map((c) => CAUSES[c]).join(", ")}…
+                    </p>
+                  </div>
                 </Link>
               </Reveal>
             );
@@ -313,7 +438,7 @@ export default async function Home() {
 
       {/* Nearly funded */}
       {nearly.length > 0 && (
-        <section className="pb-20">
+        <section className="pb-24">
           <SectionHead eyebrow="Almost there" title="Nearly funded" href="/opportunities?sort=nearly" />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {nearly.map(({ opp, f }, i) => (
@@ -325,41 +450,42 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Numbers */}
-      <section className="grid grid-cols-2 gap-4 pb-20 lg:grid-cols-4">
-        {[
-          { v: <>{money(totalPledged)}</>, l: "pledged so far", shape: "half" as const, color: "coral" as const },
-          { v: <CountUp to={rows.length} />, l: "live campaigns", shape: "circle" as const, color: "sky" as const },
-          { v: <CountUp to={sponsors.length} />, l: "sponsors in the network", shape: "square" as const, color: "sun" as const },
-          { v: <CountUp to={Object.keys(CAUSES).length} />, l: "cause areas", shape: "quarter" as const, color: "mint" as const },
-        ].map((s, i) => (
-          <Reveal key={s.l} delay={i * 60} className="card relative overflow-hidden p-6">
-            <Shape kind={s.shape} color={s.color} className="absolute -bottom-5 -right-5 h-16 w-16" />
-            <p className="display relative text-5xl font-bold">{s.v}</p>
-            <p className="relative mt-2 text-sm text-muted">{s.l}</p>
-          </Reveal>
-        ))}
+      {/* FAQ */}
+      <section className="mx-auto max-w-3xl pb-24">
+        <h2 className="display text-center text-4xl sm:text-5xl">Frequently asked questions</h2>
+        <div className="mt-10 space-y-3">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group rounded-2xl bg-card px-5 ring-1 ring-line open:shadow-[0_14px_30px_-20px_rgba(60,30,90,0.4)]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-base font-bold [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-bg text-lg transition-transform duration-300 group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="pb-5 text-muted">{f.a}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
-      {/* Closing CTA */}
-      <Reveal>
-        <section className="relative overflow-hidden rounded-[32px] bg-sky px-7 py-16 text-[#1f1a17] sm:px-14">
-          <div aria-hidden className="absolute -right-8 bottom-0 flex items-end gap-2 opacity-95">
-            <Shape kind="half" color="sun" className="h-32 w-32 sm:h-44 sm:w-44" />
-            <Shape kind="quarter" color="coral" rotate={90} className="hidden h-28 w-28 sm:block sm:h-36 sm:w-36" />
+      {/* Closing CTA under the stars */}
+      <FullBleed className="px-2 sm:px-6" data-nav-dark>
+        <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]" data-scene-host>
+          <World kind="night" gremlin={{ desktop: { x: 0.8, y: 0.99, size: 240 }, mobile: { x: 0.5, y: 1.0, size: 150 } }} />
+          <div className="pointer-events-none relative z-10 px-6 pb-[190px] pt-16 sm:px-16 sm:py-24">
+            <p className="eyebrow text-white/70">Get the right people in the room</p>
+            <h2 className="display mt-4 max-w-2xl text-[clamp(2.6rem,6vw,4.8rem)] text-white">When it matters most.</h2>
+            <div className="pointer-events-auto mt-8 flex flex-wrap gap-3">
+              <Link href="/find" className="btn-bright group px-7 py-3.5 text-base">
+                Start a campaign <Arrow />
+              </Link>
+              <Link href="/opportunities" className="btn-glass group px-7 py-3.5 text-base">
+                Discover campaigns <Arrow />
+              </Link>
+            </div>
           </div>
-          <p className="eyebrow relative">Get the right people in the room</p>
-          <h2 className="display relative mt-4 max-w-2xl text-4xl font-bold sm:text-6xl">When it matters most.</h2>
-          <div className="relative mt-8 flex flex-wrap gap-3">
-            <Link href="/find" className="btn group bg-[#1f1a17] px-6 py-3 text-white hover:bg-white hover:text-[#1f1a17]">
-              Start a campaign <Arrow />
-            </Link>
-            <Link href="/opportunities" className="btn group border-2 border-[#1f1a17] px-6 py-3 hover:bg-[#1f1a17] hover:text-white">
-              Discover campaigns <Arrow />
-            </Link>
-          </div>
-        </section>
-      </Reveal>
+        </div>
+      </FullBleed>
     </div>
   );
 }

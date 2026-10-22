@@ -6,9 +6,9 @@ export const metadata = { title: "Start a campaign — Perspective" };
 export default function StartCampaignPage() {
   return (
     <>
-      <PageHeader eyebrow="For organizations" title="Start a campaign">
+      <PageHeader art="stem-education" eyebrow="For organizations" title="Start a campaign">
         Five quick steps. Set a goal and sponsorship tiers, see which sponsors fit, then launch. Already have a pitch email or deck?{" "}
-        <a href="/import" className="text-brand hover:underline">Import it instead</a>.
+        <a href="/import" >Import it instead</a>.
       </PageHeader>
       <CampaignWizard />
     </>

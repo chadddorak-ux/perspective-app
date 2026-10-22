@@ -88,14 +88,14 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
       </section>
 
       {/* Section nav */}
-      <nav className="sticky top-16 z-20 mt-12 flex gap-1 overflow-x-auto rounded-full border border-line bg-card/90 p-1 backdrop-blur">
+      <nav className="sticky top-[76px] z-20 mt-12 flex gap-1 overflow-x-auto rounded-full glass p-1.5 sm:top-[92px]">
         {[
           ["#story", "Story"],
           ["#tiers", `Tiers (${opp.tiers.length})`],
           ["#matches", "Best-fit sponsors"],
           ["#sponsors", `Sponsors (${f.sponsors})`],
         ].map(([href, l]) => (
-          <a key={href} href={href} className="whitespace-nowrap rounded-full px-4 py-2 font-display text-sm font-semibold text-muted hover:bg-bg hover:text-ink">
+          <a key={href} href={href} className="whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold text-muted hover:bg-bg hover:text-ink">
             {l}
           </a>
         ))}
@@ -103,7 +103,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
       <div className="mt-10 grid gap-12 lg:grid-cols-12 [&>*]:min-w-0">
         <div className="space-y-16 lg:col-span-8">
-          <section id="story" className="scroll-mt-32">
+          <section id="story" className="scroll-mt-44">
             <h2 className="display text-3xl font-semibold">Story</h2>
             <div className="mt-4 space-y-4 text-lg leading-relaxed">
               {(opp.story ?? opp.summary).split(/\n{2,}/).map((para, i) => (
@@ -127,7 +127,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             </div>
           </section>
 
-          <section id="matches" className="scroll-mt-32 space-y-4">
+          <section id="matches" className="scroll-mt-44 space-y-4">
             <div>
               <h2 className="display text-3xl font-semibold">Best-fit sponsors</h2>
               <p className="mt-1 text-sm text-muted">
@@ -162,7 +162,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             )}
           </section>
 
-          <section id="sponsors" className="scroll-mt-32">
+          <section id="sponsors" className="scroll-mt-44">
             <h2 className="display text-3xl font-semibold">Sponsors</h2>
             {mine.length === 0 ? (
               <p className="mt-3 text-muted">No sponsors yet. Be the first to back this campaign.</p>
@@ -192,7 +192,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
           </section>
         </div>
 
-        <aside id="tiers" className="scroll-mt-32 lg:col-span-4">
+        <aside id="tiers" className="scroll-mt-44 lg:col-span-4">
           <div className="lg:sticky lg:top-32">
             <h2 className="eyebrow mb-3 text-muted">Choose a tier</h2>
             {opp.tiers.length ? (

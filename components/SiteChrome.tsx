@@ -1,68 +1,55 @@
 import Link from "next/link";
-import { LogoMark, Shape } from "./Shapes";
+import { ButtonFX } from "./ButtonFX";
+import { PeepMark } from "./Peep";
+import { Logo, SiteNav } from "./SiteNav";
 
-const NAV = [
-  { href: "/find", label: "Start", mobileOnly: true },
-  { href: "/opportunities", label: "Discover" },
-  { href: "/give", label: "For sponsors" },
-  { href: "/import", label: "Import a pitch" },
-  { href: "/sponsors", label: "Sponsors" },
-  { href: "/intros", label: "Intros" },
+export { Logo };
+
+const FOOTER_LINKS = [
+  { title: "Nonprofits", links: [["/find", "Start a campaign"], ["/import", "Import a pitch"], ["/opportunities", "Discover campaigns"]] },
+  { title: "Sponsors", links: [["/give", "Find your fit"], ["/sponsors", "Sponsor network"], ["/intros", "Warm intros"]] },
 ];
 
-export function Logo() {
-  return (
-    <Link href="/" className="group flex items-center gap-2 font-display text-xl font-bold tracking-tight" aria-label="Perspective home">
-      <LogoMark className="h-8 w-8" />
-      perspective
-    </Link>
-  );
-}
+// Fixed star positions for the footer sky, so server and client agree.
+const STARS = Array.from({ length: 40 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 53) % 70, s: i % 5 === 0 ? 2.5 : 1.5 }));
 
 /** Header, page frame and footer, shared by the Next app and the static build. */
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <header className="site-header sticky top-0 z-30 border-b border-line/70 bg-bg/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-          <Logo />
-          <nav className="-mx-1 flex flex-1 gap-0.5 overflow-x-auto sm:justify-center">
-            {NAV.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 font-display text-sm font-medium text-muted transition-colors hover:bg-card hover:text-ink ${
-                  "mobileOnly" in n ? "text-brand sm:hidden" : ""
-                }`}
-              >
-                {n.label}
-              </Link>
+      <ButtonFX />
+      <SiteNav />
+      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-28 sm:pt-32">{children}</main>
+      <footer className="relative z-10 px-3 pb-3 sm:px-6 sm:pb-6" data-nav-dark>
+        <div className="sky-night relative mx-auto max-w-[1320px] overflow-hidden rounded-[28px] text-white">
+          <div aria-hidden className="absolute inset-0">
+            {STARS.map((s, i) => (
+              <span key={i} className="animate-blink absolute rounded-full bg-white" style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, animationDelay: `${(i % 7) * 0.4}s` }} />
             ))}
-          </nav>
-          <Link href="/find" className="btn-primary hidden py-2 sm:inline-flex">
-            Start a campaign
-          </Link>
-        </div>
-      </header>
-      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-10">{children}</main>
-      <footer className="relative z-10 overflow-hidden border-t border-line bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-12">
-          <div className="flex flex-wrap items-end justify-between gap-8">
-            <div className="max-w-sm">
-              <Logo />
-              <p className="mt-3 text-sm text-muted">Sponsorship matching for every cause. Nonprofits post campaigns; brands, foundations and donors find the ones that fit and pledge.</p>
-            </div>
-            <div aria-hidden className="flex items-end gap-2">
-              <Shape kind="half" color="coral" className="h-14 w-14" />
-              <Shape kind="square" color="sun" className="h-10 w-10" />
-              <Shape kind="circle" color="sky" className="h-16 w-16" />
-              <Shape kind="quarter" color="mint" rotate={90} className="h-12 w-12" />
-              <Shape kind="triangle" color="blush" className="h-14 w-14" />
-            </div>
           </div>
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-xs text-muted">
-            <span>Perspective prototype</span>
+          <div className="relative grid gap-10 px-6 py-12 sm:px-12 md:grid-cols-[1.4fr_1fr_1fr]">
+            <div className="max-w-sm">
+              <Logo onDark />
+              <p className="mt-4 text-sm text-white/75">Sponsorship matching for every cause. Nonprofits post campaigns; brands, foundations and donors find the ones that fit and pledge.</p>
+            </div>
+            {FOOTER_LINKS.map((col) => (
+              <div key={col.title}>
+                <p className="eyebrow text-white/60">{col.title}</p>
+                <ul className="mt-4 space-y-2.5">
+                  {col.links.map(([href, label]) => (
+                    <li key={href}>
+                      <Link href={href} className="text-sm font-semibold text-white/90 hover:text-white">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="relative flex items-end justify-between gap-4 border-t border-white/10 px-6 py-5 text-xs text-white/60 sm:px-12">
             <span>EAGLES SOAR is a real campaign. All other organizations and sponsors are fictional and labeled “Sample”.</span>
+            <PeepMark className="group h-10 w-12 shrink-0" title="Peep says goodnight" />
           </div>
         </div>
       </footer>

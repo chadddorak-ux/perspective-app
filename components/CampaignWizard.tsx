@@ -81,7 +81,7 @@ export function CampaignWizard() {
   const percent = Math.round((Math.min(step, REVIEW) / REVIEW) * 100);
 
   return (
-    <div ref={top} className="scroll-mt-24">
+    <div ref={top} className="scroll-mt-28">
       <div className="grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
         {/* Step rail */}
         <aside className="lg:col-span-4">
@@ -103,8 +103,8 @@ export function CampaignWizard() {
                       }`}
                     >
                       <span
-                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-display text-xs font-bold ${
-                          i === step ? "bg-accent text-[#1f1a17]" : state === "done" ? "bg-ink text-bg" : "border border-line"
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-extrabold ${
+                          i === step ? "bg-accent text-[#2a2826]" : state === "done" ? "bg-ink text-bg" : "border border-line"
                         }`}
                       >
                         {state === "done" && i !== step ? "✓" : i + 1}
@@ -182,7 +182,7 @@ export function CampaignWizard() {
       </div>
 
       {results && (
-        <div ref={resultsRef} className="mt-16 scroll-mt-24 space-y-4">
+        <div ref={resultsRef} className="mt-16 scroll-mt-28 space-y-4">
           <h2 className="display text-3xl font-semibold">
             {eligible.filter((r) => r.match.score >= 70).length} strong matches
             <span className="font-sans text-xl font-normal text-muted"> of {results.length} sponsors</span>
