@@ -21,7 +21,7 @@ export function PdfDropButton({ className = "", tone = "dark", catchDrops = true
   const take = (file: File | undefined) => {
     if (!file) return;
     setPendingUpload(file);
-    peepSay({ text: "Ooh, a PDF! Give me a second to read it.", react: "surprised", hold: 4 });
+    peepSay({ text: "Ooh, a PDF! Gimme one second, I'm a fast reader.", react: "surprised", hold: 4 });
     router.push("/import");
   };
 

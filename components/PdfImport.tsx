@@ -61,7 +61,7 @@ export function PdfImport({ aiEnabled, examples }: { aiEnabled: boolean; example
         if (f.size > MAX_PDF_BYTES) throw new Error("That PDF is over 20 MB. Try exporting a smaller version.");
         const { readPdf } = await import("@/lib/pdf-read");
         setPhase("read");
-        peepSay({ text: "Reading every page… I'll flag anything that's missing.", react: "match", hold: 4 });
+        peepSay({ text: "Reading every page… Every. Single. One. I'll flag what's missing.", react: "match", hold: 4 });
         pdf = await readPdf(f, setProgress);
         setRead(pdf);
       }
@@ -92,15 +92,15 @@ export function PdfImport({ aiEnabled, examples }: { aiEnabled: boolean; example
         const missing = campaignGaps({ ...result.draft, coverImage: pdf.images[0] }).filter((g) => g.level === "required").length;
         peepSay(
           missing
-            ? { text: `I filled in what I could. ${missing} thing${missing === 1 ? "" : "s"} to fix, and then we post!`, react: "mischief", hold: 6 }
-            : { text: "Everything's here! Take a look, then post it.", react: "cheer", hold: 5 },
+            ? { text: `Okay, I filled in what I could. ${missing} thing${missing === 1 ? "" : "s"} to fix, and then we post. Easy.`, react: "mischief", hold: 6 }
+            : { text: "Mmm, everything's here! Literally perfect. Take a look, then post it.", react: "cheer", hold: 5 },
         );
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       console.error(e);
       setError((e as Error).message || "Peep couldn't read that file");
-      peepSay({ text: "Hmph. I couldn't read that one. Try another PDF?", react: "angry", hold: 4 });
+      peepSay({ text: "Mmmwhat is this? I couldn't read that one. Try another PDF?", react: "angry", hold: 4 });
       setStage("drop");
     }
   }
@@ -343,7 +343,7 @@ function Review({
   // Peep celebrates the moment the last required flag is fixed.
   const wasBlocked = useRef(required.length > 0);
   useEffect(() => {
-    if (wasBlocked.current && required.length === 0) peepSay({ text: "That's everything! Post it when you're ready.", react: "cheer", hold: 5 });
+    if (wasBlocked.current && required.length === 0) peepSay({ text: "That's everything! Post it whenever yous are ready.", react: "cheer", hold: 5 });
     wasBlocked.current = required.length > 0;
   }, [required.length]);
   const photosRef = useRef<HTMLDivElement>(null);
@@ -362,7 +362,7 @@ function Review({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Couldn't post the campaign");
       peepReact("cheer");
-      peepSay({ text: "We did it! Your campaign is live, and I'm already lining up sponsors.", hold: 6 });
+      peepSay({ text: "We did it! Your campaign is live, and I'm already lining up sponsors. Iconic.", hold: 6 });
       router.push(`/opportunities/${json.id}?new=1`);
     } catch (e) {
       setError((e as Error).message);

@@ -429,6 +429,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
         else mat?.dispose();
       });
       renderer.dispose();
+      renderer.forceContextLoss();
     },
   };
 }

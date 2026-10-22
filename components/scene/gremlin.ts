@@ -9,7 +9,7 @@
 import * as THREE from "three";
 import { withRim } from "./materials";
 
-export type Mood = "idle" | "happy" | "love" | "mischief" | "angry" | "attention" | "surprised" | "sleepy";
+export type Mood = "idle" | "happy" | "love" | "mischief" | "angry" | "attention" | "surprised" | "sleepy" | "sass";
 export type Reaction =
   | "post"
   | "match"
@@ -23,12 +23,16 @@ export type Reaction =
   | "surprised"
   | "sleepy"
   | "love"
-  | "wave";
+  | "wave"
+  | "pop"
+  | "sass"
+  | "leap";
 
 type MouthKind = "smile" | "grin" | "smirk" | "sly" | "snarl" | "o" | "small";
-type Face = { lid: number; lower: number; tilt: number; brow: number; browY: number; ears: number; blush: number; flush: number; mouth: MouthKind; eye: number };
+type Face = { lid: number; lower: number; tilt: number; brow: number; browY: number; browSkew: number; ears: number; blush: number; flush: number; mouth: MouthKind; eye: number };
+type FaceDef = Omit<Face, "browSkew"> & { browSkew?: number };
 
-const FACES: Record<Mood, Face> = {
+const FACES: Record<Mood, FaceDef> = {
   idle: { lid: 0.08, lower: 0, tilt: 0, brow: 0, browY: 0, ears: 0, blush: 0.35, flush: 0, mouth: "smile", eye: 1 },
   happy: { lid: 0.18, lower: 0.62, tilt: -0.12, brow: -0.15, browY: 0.04, ears: 0.3, blush: 0.9, flush: 0, mouth: "grin", eye: 1 },
   love: { lid: 0.26, lower: 0.72, tilt: -0.15, brow: -0.2, browY: 0.05, ears: 0.15, blush: 1, flush: 0, mouth: "grin", eye: 1 },
@@ -36,6 +40,8 @@ const FACES: Record<Mood, Face> = {
   angry: { lid: 0.48, lower: 0.18, tilt: 0.6, brow: 0.6, browY: -0.05, ears: -0.75, blush: 0, flush: 0.65, mouth: "snarl", eye: 0.96 },
   attention: { lid: 0, lower: 0, tilt: -0.1, brow: -0.25, browY: 0.07, ears: 0.35, blush: 0.4, flush: 0, mouth: "o", eye: 1.08 },
   surprised: { lid: 0, lower: 0, tilt: 0, brow: -0.22, browY: 0.1, ears: 0.45, blush: 0.3, flush: 0, mouth: "o", eye: 1.14 },
+  // One brow up, lids low, a smirk: "mmm, what?"
+  sass: { lid: 0.36, lower: 0.12, tilt: 0.06, brow: 0.04, browY: -0.01, browSkew: 0.15, ears: 0.15, blush: 0.45, flush: 0, mouth: "smirk", eye: 1 },
   sleepy: { lid: 0.74, lower: 0.12, tilt: -0.15, brow: -0.05, browY: -0.02, ears: -0.45, blush: 0.2, flush: 0, mouth: "small", eye: 1 },
 };
 
@@ -45,6 +51,15 @@ export type Gremlin = {
   setLook(x: number, y: number): void;
   setMood(mood: Mood, holdSeconds?: number): void;
   react(kind: Reaction): void;
+  /** Put the lantern down beside her, or pick it back up. `rate` is trips per second. */
+  setLantern(down: boolean, rate?: number): void;
+  lanternDown(): boolean;
+  /** Night: the lantern glows brighter. */
+  setNight(on: boolean): void;
+  /** Being carried by the scruff: little arms flail. */
+  setDangle(on: boolean): void;
+  /** How fast her stage is moving across the screen (px/s), so the lantern swings. */
+  setMotion(vx: number): void;
   /** Call every frame while someone is petting her. */
   pet(dt: number): void;
   update(dt: number): void;
@@ -369,6 +384,59 @@ export function makeGremlin(): Gremlin {
     }
   }
 
+  // Her oil lantern. It hangs from her right claw and swings as she moves,
+  // and goes down on the ground beside her when things get quiet. The group's
+  // origin is the top of the handle.
+  const brass = new THREE.MeshStandardMaterial({ color: "#c9933f", roughness: 0.35, metalness: 0.7 });
+  const lantern = new THREE.Group();
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.014, 8, 24, Math.PI), brass);
+  handle.position.y = -0.1;
+  const lanternBody = new THREE.Group();
+  lanternBody.position.y = -0.1;
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.1, 20), brass);
+  cap.position.y = -0.05;
+  const capRim = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.025, 20), brass);
+  capRim.position.y = -0.11;
+  const glassMat = new THREE.MeshStandardMaterial({ color: "#ffe2a8", emissive: "#ffb347", emissiveIntensity: 0.6, transparent: true, opacity: 0.55, roughness: 0.1, depthWrite: false });
+  const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.24, 20, 1, true), glassMat);
+  glass.position.y = -0.24;
+  const lanternBase = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.16, 0.06, 20), brass);
+  lanternBase.position.y = -0.39;
+  const flame = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10), new THREE.MeshBasicMaterial({ color: "#ffd77a" }));
+  flame.scale.set(0.035, 0.07, 0.035);
+  flame.position.y = -0.25;
+  const glow = new THREE.PointLight("#ffae57", 1.4, 5, 2);
+  glow.position.y = -0.25;
+  lanternBody.add(cap, capRim, glass, lanternBase, flame, glow);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.25, 6), brass);
+    bar.position.set(Math.cos(a) * 0.125, -0.24, Math.sin(a) * 0.125);
+    lanternBody.add(bar);
+  }
+  // A soft halo, mostly for night.
+  const haloTex = (() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const g = c.getContext("2d")!;
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, "rgba(255,200,120,1)");
+    grad.addColorStop(0.35, "rgba(255,170,90,0.45)");
+    grad.addColorStop(1, "rgba(255,150,80,0)");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.2 }));
+  halo.position.y = -0.25;
+  halo.scale.setScalar(0.9);
+  lanternBody.add(halo);
+  lantern.add(handle, lanternBody);
+  lantern.scale.setScalar(1.4);
+  root.add(lantern);
+  const LANTERN_H = 0.52 * 1.4; // handle top to the bottom of the base
+  const LANTERN_GROUND = new THREE.Vector3(1.22, LANTERN_H, 0.32);
+
   // Hearts for happy moments, and little puffs of steam for cross ones.
   const heartGeo = new THREE.ExtrudeGeometry(heartShape(), { depth: 0.06, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 3, curveSegments: 16 });
   heartGeo.center();
@@ -399,7 +467,7 @@ export function makeGremlin(): Gremlin {
   // ---- state ----
   let t = 0;
   const look = { x: 0, y: 0, tx: 0, ty: 0 };
-  const face: Face = { ...FACES.idle };
+  const face: Face = { browSkew: 0, ...FACES.idle };
   let mood: Mood = "idle";
   let moodUntil = 0;
   let blinkAt = 1.2;
@@ -410,9 +478,25 @@ export function makeGremlin(): Gremlin {
   let nextEar = 2.5;
   let nextFidget = 9;
   let petting = 0; // seconds of recent petting, decays
+  let petAmt = 0; // petting, smoothed, 0..1, so wiggles ease in and out
+  const lookS = { x: 0, y: 0 };
+  let earPop = 0;
+  let earPopV = 0;
+  let dangle = 0;
+  let dangleWant = 0;
+  let lanternD = 0; // 0 in her claw, 1 on the ground
+  let lanternWant = 0;
+  let lanternRate = 1;
+  let swing = 0;
+  let swingV = 0;
+  let motionVX = 0;
+  let night = false;
+  const handAt = new THREE.Vector3();
+  const handPrev = new THREE.Vector3();
+  let handPrimed = false;
   let petHearts = 0;
-  type Action = "jump" | "giggle" | "spin" | "wave" | "knock" | "stomp" | "rub" | "think" | "yawn";
-  const DUR: Record<Action, number> = { jump: 0.8, giggle: 1.1, spin: 0.9, wave: 2.2, knock: 1.5, stomp: 1.3, rub: 1.8, think: 1.7, yawn: 1.8 };
+  type Action = "jump" | "giggle" | "spin" | "wave" | "knock" | "stomp" | "rub" | "think" | "yawn" | "leap" | "sass";
+  const DUR: Record<Action, number> = { jump: 0.8, giggle: 1.1, spin: 0.9, wave: 2.2, knock: 1.5, stomp: 1.3, rub: 1.8, think: 1.7, yawn: 1.8, leap: 0.8, sass: 1.4 };
   let action: Action | null = "wave";
   let actionT = -0.6; // wave hello shortly after she appears
 
@@ -428,10 +512,12 @@ export function makeGremlin(): Gremlin {
   function update(dt: number) {
     t += dt;
     if (mood !== "idle" && t > moodUntil && petting < 0.05) mood = "idle";
-    const target = petting > 0.15 ? (petting > 2.5 ? FACES.love : FACES.happy) : FACES[mood];
+    petAmt = damp(petAmt, Math.min(1, petting / 1.2), 5, dt);
+    dangle = damp(dangle, dangleWant, 8, dt);
+    const target = petAmt > 0.12 ? (petting > 2.5 ? FACES.love : FACES.happy) : FACES[mood];
 
     // Blend the face toward the mood.
-    for (const k of ["lid", "lower", "tilt", "brow", "browY", "ears", "blush", "flush", "eye"] as const) face[k] = damp(face[k], target[k], 9, dt);
+    for (const k of ["lid", "lower", "tilt", "brow", "browY", "browSkew", "ears", "blush", "flush", "eye"] as const) face[k] = damp(face[k], target[k] ?? 0, 9, dt);
     face.mouth = target.mouth;
 
     // Breathing, plus whatever action is running.
@@ -496,11 +582,37 @@ export function makeGremlin(): Gremlin {
           case "yawn":
             yawn = ease(p);
             break;
+          case "leap":
+            // Pose only: the page moves her stage along the arc.
+            if (p < 0.14) sy = 1 - 0.16 * ease(p / 0.14);
+            else if (p > 0.86) sy = 1 - 0.14 * ease((p - 0.86) / 0.14);
+            else {
+              const q = (p - 0.14) / 0.72;
+              armsUp = ease(q);
+              sy = 1 + 0.07 * ease(q);
+            }
+            sxz = 2 - sy;
+            break;
+          case "sass":
+            headTilt = 0.2 * ease(Math.min(1, p * 1.6));
+            shake = Math.sin(p * Math.PI * 6) * 0.05 * ease(p);
+            y = Math.abs(Math.sin(p * Math.PI * 3)) * 0.04;
+            break;
         }
       }
     }
+    // Setting the lantern down (or grabbing it again) is a little squat.
+    if (lanternD !== lanternWant) {
+      const step = dt * lanternRate;
+      lanternD = lanternWant > lanternD ? Math.min(lanternWant, lanternD + step) : Math.max(lanternWant, lanternD - step);
+    }
+    const squat = lanternD > 0 && lanternD < 1 ? Math.sin(Math.PI * lanternD) : 0;
+    y -= 0.14 * squat;
+    sy *= 1 - 0.07 * squat;
+    sy += Math.sin(t * 13) * 0.012 * petAmt;
     hop.position.y = y;
     squash.scale.set(sxz, sy, sxz);
+    turn.rotation.x = 0.22 * squat;
 
     // Looking: eyes lead, the head follows, the body barely turns.
     let lx = look.tx;
@@ -515,10 +627,13 @@ export function makeGremlin(): Gremlin {
       lx *= 0.3;
       ly = 0;
     }
-    look.x = damp(look.x, lx, 7, dt);
-    look.y = damp(look.y, ly, 7, dt);
+    // Two stages of smoothing, so her gaze eases in and out instead of snapping.
+    lookS.x = damp(lookS.x, lx, 9, dt);
+    lookS.y = damp(lookS.y, ly, 9, dt);
+    look.x = damp(look.x, lookS.x, 6, dt);
+    look.y = damp(look.y, lookS.y, 6, dt);
     turn.rotation.y = look.x * 0.14 + spin + shake;
-    turn.rotation.z = Math.sin(t * 1.3) * 0.03 + (petting > 0.15 ? Math.sin(t * 5) * 0.06 : 0);
+    turn.rotation.z = Math.sin(t * 1.3) * 0.03 + Math.sin(t * 6) * 0.06 * petAmt - 0.12 * squat;
     head.rotation.y = look.x * 0.3;
     head.rotation.x = look.y * 0.15 - yawn * 0.25;
     head.rotation.z = headTilt;
@@ -549,12 +664,12 @@ export function makeGremlin(): Gremlin {
       e.lid.rotation.x = -Math.PI / 2 + lid * Math.PI;
       e.lidPivot.rotation.z = e.side * face.tilt;
       e.lower.rotation.x = Math.PI / 2 - face.lower * Math.PI * 0.55;
-      e.group.scale.setScalar(face.eye);
+      e.group.scale.setScalar(face.eye + earPop * 0.22);
     }
     brows.forEach((b, i) => {
       const side = i === 0 ? -1 : 1;
-      b.rotation.z = side * face.brow;
-      b.position.y = face.browY;
+      b.rotation.z = side * face.brow + (side < 0 ? -face.browSkew * 0.8 : 0);
+      b.position.y = face.browY + (side < 0 ? face.browSkew : -face.browSkew * 0.3);
     });
 
     // Mouth crossfade.
@@ -577,6 +692,9 @@ export function makeGremlin(): Gremlin {
       earSide = Math.random() < 0.5 ? 0 : 1;
       nextEar = t + 2.5 + Math.random() * 4;
     }
+    // A "pop": ears spring up and wobble back down.
+    earPopV += (-140 * earPop - 9 * earPopV) * dt;
+    earPop += earPopV * dt;
     let flick = 0;
     if (earT >= 0) {
       earT += dt;
@@ -585,8 +703,8 @@ export function makeGremlin(): Gremlin {
     }
     ears.forEach((ear, i) => {
       const side = i === 0 ? -1 : 1;
-      const wiggle = Math.sin(t * 2.2 + i) * 0.03 + (petting > 0.15 ? Math.sin(t * 12 + i * 2) * 0.12 : 0);
-      ear.rotation.z = side * (0.5 + face.ears * 0.45 + wiggle + (i === earSide ? flick : 0) + armsUp * 0.2);
+      const wiggle = Math.sin(t * 2.2 + i) * 0.03 + Math.sin(t * 11 + i * 2) * 0.13 * petAmt + Math.sin(t * 15 + i) * 0.1 * dangle;
+      ear.rotation.z = side * (0.5 + face.ears * 0.45 + wiggle + (i === earSide ? flick : 0) + armsUp * 0.2 + earPop * 0.7);
       ear.rotation.y = side * (-0.3 - Math.max(0, -face.ears) * 0.7);
     });
     tuft.rotation.z = Math.sin(t * 3) * 0.06 - (action === "jump" ? Math.cos((actionT / 0.8) * Math.PI * 2) * 0.25 : 0);
@@ -594,14 +712,28 @@ export function makeGremlin(): Gremlin {
     // Arms.
     const [left, right] = arms;
     const rest = 0.4 + Math.sin(t * 2.2) * 0.04;
-    let rz = rest;
-    let rx = 0;
+    // While she holds the lantern, her right arm carries it and the left one waves and knocks.
+    const held = 1 - lanternD;
+    const holding = held > 0.5;
+    let rz = lerp(rest, 0.62, held);
+    let rx = lerp(0, -0.9, held); // held out in front of her
     let lz = -rest;
     let lx2 = 0;
-    if (wave) rz = lerp(rest, 2.5 + Math.sin(t * 9) * 0.35, wave);
+    if (wave) {
+      const w = lerp(rest, 2.5 + Math.sin(t * 9) * 0.35, wave);
+      if (holding) lz = -w;
+      else rz = w;
+    }
     if (knock) {
-      rx = lerp(0, -1.5 + Math.abs(Math.sin(actionT * 11)) * 0.35, knock);
-      rz = lerp(rest, 0.15, knock);
+      const kx = lerp(0, -1.5 + Math.abs(Math.sin(actionT * 11)) * 0.35, knock);
+      const kz = lerp(rest, 0.15, knock);
+      if (holding) {
+        lx2 = kx;
+        lz = -kz;
+      } else {
+        rx = kx;
+        rz = kz;
+      }
     }
     if (rub) {
       const w = Math.sin(actionT * 14) * 0.12;
@@ -613,8 +745,36 @@ export function makeGremlin(): Gremlin {
       rz = lerp(rz, 2.6, armsUp);
       lz = lerp(lz, -2.6, armsUp);
     }
+    if (dangle > 0.01) {
+      rz = lerp(rz, 1.1 + Math.sin(t * 13) * 0.5, dangle);
+      lz = lerp(lz, -1.1 - Math.sin(t * 13 + 1.3) * 0.5, dangle);
+    }
+    rz = lerp(rz, 0.8, squat);
     right.rotation.set(rx, 0, rz);
     left.rotation.set(lx2, 0, lz);
+
+    // The lantern follows her claw and swings like a pendulum; on the ground it sits still.
+    root.updateMatrixWorld(true);
+    right.localToWorld(handAt.set(0, -0.5, 0.04));
+    root.worldToLocal(handAt);
+    const handVX = handPrimed && dt > 0 ? (handAt.x - handPrev.x) / dt : 0;
+    handPrev.copy(handAt);
+    handPrimed = true;
+    const swingTo = Math.max(-0.9, Math.min(0.9, -(handVX + motionVX / 90) * 0.22));
+    swingV += ((swingTo - swing) * 38 - swingV * 4.2) * dt;
+    swing += swingV * dt;
+    // It reaches the ground at the bottom of the squat (halfway through the trip).
+    const gx = Math.min(1, lanternD * 2);
+    const grounded = gx * gx * (3 - 2 * gx);
+    lantern.position.lerpVectors(handAt, LANTERN_GROUND, grounded);
+    lantern.rotation.z = swing * (1 - grounded);
+    const flick2 = 1 + Math.sin(t * 23) * 0.08 + Math.sin(t * 37) * 0.05;
+    flame.scale.y = 0.07 * flick2;
+    const fl = 1 + Math.sin(t * 17) * 0.06 + Math.sin(t * 29) * 0.04;
+    glow.intensity = (night ? 9 : 1.6) * fl;
+    halo.material.opacity = (night ? 0.95 : 0.25) * fl;
+    halo.scale.setScalar((night ? 1.6 : 0.8) * fl);
+    glassMat.emissiveIntensity = night ? 1.5 : 0.6;
 
     // Petting builds into hearts; it fades when the hand moves away.
     if (petting > 0) {
@@ -669,6 +829,20 @@ export function makeGremlin(): Gremlin {
       look.ty = Math.max(-1, Math.min(1, y));
     },
     setMood,
+    setLantern(down, rate = 1) {
+      lanternWant = down ? 1 : 0;
+      lanternRate = rate;
+    },
+    lanternDown: () => lanternWant === 1,
+    setNight(on) {
+      night = on;
+    },
+    setDangle(on) {
+      dangleWant = on ? 1 : 0;
+    },
+    setMotion(vx) {
+      motionVX = vx;
+    },
     pet(dt) {
       petting = Math.min(4, petting + dt * 1.8);
     },
@@ -719,6 +893,17 @@ export function makeGremlin(): Gremlin {
         case "wave":
           play("wave");
           setMood("happy", 1.5);
+          break;
+        case "pop":
+          earPopV = 9;
+          setMood("surprised", 1.2);
+          break;
+        case "sass":
+          play("sass");
+          setMood("sass", 2.6);
+          break;
+        case "leap":
+          play("leap");
           break;
       }
     },

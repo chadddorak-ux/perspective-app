@@ -220,7 +220,7 @@ export default async function Home() {
         {/* An arched window onto Peep's sky. Peep (PeepCompanion) stands in it while it's on screen; the proof floats above her and hangs below the arch, never over her. */}
         <div className="animate-rise relative mx-auto mb-16 w-full max-w-[500px] px-6 [animation-delay:120ms] sm:px-10 lg:mb-20">
           <div data-peep-anchor className="relative aspect-[5/6] overflow-hidden rounded-b-[40px] rounded-t-[999px] shadow-[0_40px_80px_-40px_rgba(60,30,90,0.6)] ring-1 ring-line">
-            <World kind="day" />
+            <World kind="day" nightKind="night" />
           </div>
           <div className="glass animate-float absolute left-0 top-[5%] w-[56%] rounded-2xl p-2.5 sm:p-3">
             <span className="rounded-full bg-mint-soft px-2 py-0.5 text-[10px] font-bold text-good">✓ Funds verified</span>

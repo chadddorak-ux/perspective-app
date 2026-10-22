@@ -575,10 +575,14 @@ textarea {
   transform: none;
 }
 
-/* Peep is clickable wherever it shows through. */
+/* Peep can be grabbed wherever she shows through. */
 [data-peep-hover="1"],
 [data-peep-hover="1"] * {
-  cursor: pointer;
+  cursor: grab;
+}
+[data-peep-hover="drag"],
+[data-peep-hover="drag"] * {
+  cursor: grabbing;
 }
 
 @media (prefers-reduced-motion: reduce) {

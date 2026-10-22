@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PeepMark } from "./Peep";
+import { setTheme, useTheme } from "@/lib/theme";
 
 // Visitors are nonprofits first; everything for sponsors lives in one menu.
 const LEFT = [
@@ -22,6 +23,32 @@ export function Logo({ onDark = false }: { onDark?: boolean }) {
       <PeepMark className="h-8 w-10" />
       peep
     </Link>
+  );
+}
+
+/** Day or night. Peep has opinions about both. */
+function ThemeToggle({ onDark }: { onDark: boolean }) {
+  const theme = useTheme();
+  const night = theme === "dark";
+  return (
+    <button
+      type="button"
+      className={`grid h-9 w-9 place-items-center rounded-xl transition-colors ${onDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+      aria-label={night ? "Switch to light mode" : "Switch to dark mode"}
+      title={night ? "Light mode" : "Dark mode"}
+      onClick={() => setTheme(night ? "light" : "dark")}
+    >
+      <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden>
+        {night ? (
+          <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" fill="none">
+            <circle cx="10" cy="10" r="3.6" />
+            <path d="M10 2.2v1.6M10 16.2v1.6M2.2 10h1.6M16.2 10h1.6M4.5 4.5l1.1 1.1M14.4 14.4l1.1 1.1M4.5 15.5l1.1-1.1M14.4 5.6l1.1-1.1" />
+          </g>
+        ) : (
+          <path d="M15.8 12.6A6.6 6.6 0 0 1 7.4 4.2a6.6 6.6 0 1 0 8.4 8.4Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        )}
+      </svg>
+    </button>
   );
 }
 
@@ -121,6 +148,7 @@ export function SiteNav() {
           </div>
         </nav>
         <nav className="flex items-center gap-1" aria-label="Get started">
+          <ThemeToggle onDark={dark} />
           <Link href="/find" className={`${dark ? "btn-bright" : "btn-primary"} group hidden px-4 py-2 sm:inline-flex`}>
             Start a campaign
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>

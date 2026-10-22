@@ -106,17 +106,20 @@ The visual language is a storybook at dusk, inspired by [Passionfroot](https://w
   - The hero is an arched window onto a daytime cloudscape.
   - The PDF section is a starry night over drifting sunset clouds; the pledges band is a mountain forest at dusk.
   - Scenes load three.js on demand, pause off screen, render a single still frame under `prefers-reduced-motion`, and fall back to a painted CSS sky without WebGL.
-- **Peep, your campaign manager:** an evil-cute gremlin built from primitives (`components/scene/gremlin.ts`). She lives on her own transparent stage (`components/scene/stage.ts`, `components/PeepCompanion.tsx`) that floats over every page: she stands in the hero's arch, then hops into the corner as you scroll and follows you around the site.
-  - **Moods:** idle, happy, love, mischief, angry, attention, surprised and sleepy, each a set of lid, brow, ear, mouth and blush targets she blends between. She blinks, flicks her ears, follows the pointer, and fidgets.
-  - **Touch:** hover over her to pet her (she purrs, wiggles her ears and floats hearts). Click for a giggle, spin, cheer or a mischievous grin; poke her too many times and she gets cross.
-  - **Guide:** she greets you on each page and, if you go idle, knocks on the glass and points to the next step (`lib/peep-guide.ts`). Head for the browser's close button and she gets angry. She narrates the PDF import, cheers when you post a campaign or pledge, and dozes off if you leave her long enough.
-  - **Sounds:** little grunts, giggles, purrs and grumbles, synthesized with Web Audio (`lib/peep-sound.ts`). They start after your first click or key press and can be muted from the corner.
+- **Peep, your campaign manager:** a sassy, evil-cute gremlin built from primitives (`components/scene/gremlin.ts`). She lives on her own transparent stage (`components/scene/stage.ts`, `components/PeepCompanion.tsx`) that floats over every page. She stands in the hero's arch and rides along with the page as you scroll, then hops along an arc into the corner and follows you around the site.
+  - **Voice:** warm, dramatic, a little extra, with Miami flair, all in English (`lib/peep-lines.ts`). She says "literally" and "mmmwhat?", and pluralizes things to be cute: "good mornings", "thank yous", "I goes to sleeps".
+  - **Moods:** idle, happy, love, mischief, sass (one brow up, a smirk), angry, attention, surprised and sleepy. She blends between them, blinks, flicks her ears, follows the pointer with eased-in eyes, and fidgets.
+  - **Touch:** hover to tickle her (she purrs, giggles, squirms and floats hearts). Click for a giggle, spin, sass or ear-pop; poke too much and she gets cross. Grab her and she dangles and flails; let go gently and she hops home; fling her and she tumbles off the page.
+  - **After a throw:** she sulks off screen, then pops up her ears and eyes from the bottom edge to peek at you ("Ok, well... I'll just be here..."). Click her while she peeks to bring her back, or she sneaks back on her own after a few peeks. Now and then she plays peekaboo from the corner too.
+  - **Her lantern:** she carries a little oil lantern. Stop scrolling and she sets it down beside her; scroll and she grabs it again. In dark mode it glows and lights her up.
+  - **Guide:** she greets you on each page and, if you go idle, knocks on the glass and points to the next step. Then she waits, then she naps. Head for the browser's close button and she gets angry. She narrates the PDF import and cheers when you post a campaign or pledge.
+  - **Sounds:** grunts, giggles, purrs, a "mmm-what?", a "wheee" and a lantern clink, synthesized with Web Audio (`lib/peep-sound.ts`). They start after your first click or key press and can be muted from the corner.
   - Any page can talk to her through window events (`lib/peep-events.ts`).
   - A 2D version is the logo mark and favicon.
 - **Glass bubble buttons:** every button is a frosted glass pill with a curved specular shine, a glint that follows the pointer, a soap-film rim that swirls on hover, a jelly squish on press and a pop ring on click (`app/globals.css`, `components/ButtonFX.tsx`).
 - **Real data everywhere:** the hero card, the PDF demo and the matching walkthrough all use the EAGLES SOAR campaign and its actual top match.
 - **Campaign covers:** painted landscapes generated per cause group (sunrise hills, a calm sea, a village, a mountain forest, a night sky, dunes, a city, a planet), varied per campaign.
-- **Themes and motion:** tokens live in `app/globals.css`, with light and dark themes. All motion respects `prefers-reduced-motion`.
+- **Themes and motion:** tokens live in `app/globals.css`, with light and dark themes. Dark mode follows the OS until you flip the sun/moon toggle in the header (saved per browser, `lib/theme.ts`); the hero's arch turns to a starry night. All motion respects `prefers-reduced-motion`.
 
 ![Home, dark](docs/screenshots/home-dark.png)
 

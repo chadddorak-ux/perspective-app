@@ -14,6 +14,12 @@ export type StageAPI = {
   /** Is this screen point on Peep? */
   hit(clientX: number, clientY: number): boolean;
   pet(dt: number): void;
+  setLantern(down: boolean, rate?: number): void;
+  lanternDown(): boolean;
+  /** Night lighting: moonlight, with her lantern doing the rest. */
+  setNight(on: boolean): void;
+  setDangle(on: boolean): void;
+  setMotion(vx: number): void;
   dispose(): void;
 };
 
@@ -32,7 +38,8 @@ export function createStage(canvas: HTMLCanvasElement, opts: { reduced: boolean 
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 100);
   camera.position.set(0, TARGET_Y, CAM_Z);
   camera.lookAt(0, TARGET_Y, 0);
-  scene.add(new THREE.HemisphereLight("#f3efff", "#d6b3dc", 1.6));
+  const hemi = new THREE.HemisphereLight("#f3efff", "#d6b3dc", 1.6);
+  scene.add(hemi);
   const key = new THREE.DirectionalLight("#fff2e8", 2.2);
   key.position.set(-3, 4, 6);
   const rim = new THREE.DirectionalLight("#ffb8d4", 1.5);
@@ -119,6 +126,23 @@ export function createStage(canvas: HTMLCanvasElement, opts: { reduced: boolean 
     pet(dt) {
       peep.pet(dt);
     },
+    setLantern(down, rate) {
+      peep.setLantern(down, rate);
+      if (opts.reduced) still();
+    },
+    lanternDown: () => peep.lanternDown(),
+    setNight(on) {
+      peep.setNight(on);
+      hemi.color.set(on ? "#a8a4e0" : "#f3efff");
+      hemi.groundColor.set(on ? "#3a2c55" : "#d6b3dc");
+      hemi.intensity = on ? 1.05 : 1.6;
+      key.color.set(on ? "#b4c2ff" : "#fff2e8");
+      key.intensity = on ? 1.2 : 2.2;
+      rim.color.set(on ? "#9d8cff" : "#ffb8d4");
+      if (opts.reduced) still();
+    },
+    setDangle: (on) => peep.setDangle(on),
+    setMotion: (vx) => peep.setMotion(vx),
     dispose() {
       cancelAnimationFrame(raf);
       ro.disconnect();

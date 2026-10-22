@@ -2,7 +2,7 @@
 // there are no sound files to ship. Browsers only allow audio after the
 // visitor interacts, so the context starts on the first click or key press.
 
-export type PeepSound = "giggle" | "grunt" | "purr" | "squeal" | "grumble" | "chuckle" | "psst" | "eep" | "yawn";
+export type PeepSound = "giggle" | "grunt" | "purr" | "squeal" | "grumble" | "chuckle" | "psst" | "eep" | "yawn" | "mmwhat" | "whee" | "boing" | "hmph" | "clink";
 
 const KEY = "peep-sound";
 let ctx: AudioContext | null = null;
@@ -133,6 +133,25 @@ export function playPeep(kind: PeepSound): void {
       break;
     case "yawn":
       syllable(t, 0.7, 420 * r(), 180, { type: "triangle", formant: 800, gain: 0.35 });
+      break;
+    case "mmwhat":
+      // A closed-mouth "mmm" that bends up, then a sharp little "what?"
+      syllable(t, 0.42, 260 * r(), 330, { type: "sine", formant: 380, vibrato: 6, gain: 0.5 });
+      syllable(t + 0.47, 0.17, 420 * r(), 760, { type: "triangle", formant: 1300, gain: 0.5 });
+      break;
+    case "whee":
+      syllable(t, 0.75, 560 * r(), 1700, { type: "triangle", formant: 1800, vibrato: 55, gain: 0.45 });
+      break;
+    case "boing":
+      syllable(t, 0.22, 240 * r(), 720, { type: "sine", formant: 900, vibrato: 70, gain: 0.5 });
+      break;
+    case "hmph":
+      noise(t, 0.09, 1400, 0.22);
+      syllable(t + 0.05, 0.12, 230 * r(), 170, { formant: 600, gain: 0.45 });
+      break;
+    case "clink":
+      syllable(t, 0.35, 2400 * r(), 2300, { type: "sine", formant: 2400, gain: 0.25 });
+      syllable(t + 0.06, 0.25, 3100 * r(), 3000, { type: "sine", formant: 3100, gain: 0.15 });
       break;
   }
 }

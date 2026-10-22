@@ -71,7 +71,7 @@ export function CampaignWizard() {
     try {
       const { id } = await post("/api/opportunities", { opportunity: cleanOpportunity(draft), source: "intake" });
       peepReact("cheer");
-      peepSay({ text: "Launched! Your campaign is live, and I'm already lining up sponsors.", hold: 6 });
+      peepSay({ text: "Launched! Your campaign is live, and I'm already lining up sponsors. We love to see it.", hold: 6 });
       router.push(`/opportunities/${id}`);
     } catch (e) {
       setError((e as Error).message);

@@ -105,7 +105,7 @@ function PledgeModal({
     if (!res.ok) return setError(json.error ?? "Couldn't record the pledge");
     setDone(true);
     peepReact("pledge");
-    peepSay({ text: "Thank you! I'll take it from here: the transfer, the confirmation and your tax receipt.", hold: 6 });
+    peepSay({ text: "Thank yous! Literally obsessed with you. I'll handle the transfer, the confirmation and your tax receipt.", hold: 6 });
     router.refresh();
   };
 

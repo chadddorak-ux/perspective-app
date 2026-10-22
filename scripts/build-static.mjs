@@ -87,13 +87,15 @@ const style = `${inlineFonts()}\n${css}`;
 const title = "Peep";
 const noscript = `<noscript><p style="padding:24px;font-family:system-ui">Peep needs JavaScript to run.</p></noscript>`;
 
-const body = `<div id="root"></div>\n${noscript}\n<script>${js}</script>`;
+// Same as lib/theme.ts THEME_INIT: apply a saved light/dark choice before paint.
+const themeInit = `<script>try{var t=localStorage.getItem("peep-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>`;
+const body = `${themeInit}\n<div id="root"></div>\n${noscript}\n<script>${js}</script>`;
 const full = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Sponsorship matching for every cause: campaigns, pledges and best-fit sponsors.">
+<meta name="description" content="Peep turns any pitch into a polished campaign and pairs it with brands and donors whose giving funds are verified.">
 <title>${title}</title>
 <style>${style}</style>
 </head>

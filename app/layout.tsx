@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@fontsource-variable/fraunces/soft.css";
 import "@fontsource-variable/nunito-sans";
 import { SiteChrome } from "@/components/SiteChrome";
+import { THEME_INIT } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
       <body className="min-h-screen">
         <SiteChrome>{children}</SiteChrome>
       </body>
