@@ -5,6 +5,7 @@ import { HeroDemo, type DemoCampaign, type DemoSponsor } from "@/components/Hero
 import { PitchDemo, type PitchExample } from "@/components/home/PitchDemo";
 import { Radar } from "@/components/home/Radar";
 import { ScrollWords } from "@/components/home/ScrollWords";
+import { Marquee } from "@/components/Marquee";
 import { CountUp, Reveal } from "@/components/Motion";
 import { World } from "@/components/scene/World";
 import type { Placement, SceneKind } from "@/components/scene/engine";
@@ -232,7 +233,7 @@ export default async function Home() {
 
       {/* Pledge ticker */}
       <FullBleed className="overflow-hidden border-b border-line bg-card py-4">
-        <div className="animate-marquee flex w-max gap-10 whitespace-nowrap text-sm">
+        <Marquee className="gap-10 whitespace-nowrap text-sm">
           {[...recent, ...recent].map((p, i) => (
             <span key={i} className="flex items-center gap-2.5">
               <span className="text-accent">♥</span>
@@ -243,7 +244,7 @@ export default async function Home() {
               <span>{titleOf(p.opportunityId)}</span>
             </span>
           ))}
-        </div>
+        </Marquee>
       </FullBleed>
 
       {/* The why, in one sentence */}
@@ -314,13 +315,13 @@ export default async function Home() {
         <div className="mt-12 border-t border-line pt-10 text-center">
           <p className="display text-xl sm:text-2xl">Built for every nonprofit and every brand</p>
           <div className="relative mt-6 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]">
-            <div className="animate-marquee flex w-max gap-3">
+            <Marquee speed={28} className="gap-3">
               {[...Object.values(CAUSES), ...Object.values(CAUSES)].map((c, i) => (
                 <span key={i} className="whitespace-nowrap rounded-full bg-card px-4 py-2 text-sm font-semibold ring-1 ring-line">
                   {c}
                 </span>
               ))}
-            </div>
+            </Marquee>
           </div>
         </div>
       </EnvPanel>
