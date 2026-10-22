@@ -7,7 +7,7 @@ import { listSponsors } from "@/lib/store";
 import type { SponsorProfile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Sponsors — Perspective" };
+export const metadata = { title: "Sponsors — Peep" };
 
 type Search = { q?: string; cause?: string; industry?: string; type?: string; state?: string };
 

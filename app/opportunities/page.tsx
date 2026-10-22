@@ -8,7 +8,7 @@ import { listOpportunities, listPledges } from "@/lib/store";
 import type { Opportunity } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Discover campaigns — Perspective" };
+export const metadata = { title: "Discover campaigns — Peep" };
 
 const KINDS = { event: "Events", program: "Programs", campaign: "Campaigns", general: "General support" };
 

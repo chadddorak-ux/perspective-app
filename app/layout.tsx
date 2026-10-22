@@ -5,8 +5,8 @@ import { SiteChrome } from "@/components/SiteChrome";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Perspective — sponsorship matching",
-  description: "Match nonprofits and events with the brands and donors most likely to say yes.",
+  title: "Peep — your sponsorship campaign manager",
+  description: "Peep turns any pitch into a polished campaign and pairs it with brands and donors whose giving funds are verified and ready.",
   icons: { icon: "/icon.svg" },
 };
 

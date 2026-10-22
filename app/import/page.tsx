@@ -4,7 +4,7 @@ import { EXAMPLE_PITCHES } from "@/data/examples";
 import { aiConfigured } from "@/lib/ai-extract";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Upload your pitch PDF — Perspective" };
+export const metadata = { title: "Upload your pitch PDF — Peep" };
 
 export default function ImportPage() {
   return (

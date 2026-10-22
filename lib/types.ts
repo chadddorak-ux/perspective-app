@@ -122,6 +122,8 @@ export type Pledge = {
   tierName: string;
   amount: number;
   message?: string;
+  /** What the sponsor wants after giving: to stay in touch, or just the confirmation and tax receipt. */
+  contact?: "connect" | "essentials";
   status: "pledged" | "confirmed";
   createdAt: string;
 };

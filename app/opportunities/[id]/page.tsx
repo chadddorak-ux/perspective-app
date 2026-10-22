@@ -209,6 +209,7 @@ export default async function CampaignPage({ params, searchParams }: { params: P
                       <p className="text-xs text-muted">
                         {p.tierName}
                         {p.status === "pledged" && " · awaiting confirmation"}
+                        {p.contact === "essentials" && " · essentials only"}
                       </p>
                     </div>
                     <span className="font-mono text-sm font-semibold">{money(p.amount)}</span>

@@ -18,9 +18,9 @@ const SPONSOR_LINKS = [
 
 export function Logo({ onDark = false }: { onDark?: boolean }) {
   return (
-    <Link href="/" className={`group flex items-center gap-1.5 font-display text-[1.35rem] font-semibold tracking-tight ${onDark ? "text-white" : "text-ink"}`} aria-label="Perspective home">
+    <Link href="/" className={`group flex items-center gap-1.5 font-display text-[1.35rem] font-semibold tracking-tight ${onDark ? "text-white" : "text-ink"}`} aria-label="Peep home">
       <PeepMark className="h-8 w-10" />
-      perspective
+      peep
     </Link>
   );
 }

@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { getOpportunity, getSponsor, listIntros } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Intros — Perspective" };
+export const metadata = { title: "Intros — Peep" };
 
 export default async function IntrosPage() {
   const intros = await listIntros();

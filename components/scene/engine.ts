@@ -1,23 +1,15 @@
-// The 3D environments Peep lives in: a starry night over sunset clouds, a
+// The 3D environments behind the page: a starry night over sunset clouds, a
 // daytime cloudscape, and a mountain forest at dusk. Everything is laid out
 // relative to the canvas so the scene reframes itself at any size, and the
-// loop only runs while the canvas is on screen.
+// loop only runs while the canvas is on screen. Peep herself lives on her own
+// stage (stage.ts) so she can move between scenes.
 
 import * as THREE from "three";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { makeGremlin, type Reaction } from "./gremlin";
 import { rng, withRim } from "./materials";
 
 export type SceneKind = "night" | "day" | "mountains";
-/** x and y are fractions of the canvas (y is where the feet go, from the top); size is Peep's height in px, or a fraction of the canvas height when 1 or less. */
-export type Placement = { x: number; y: number; size: number };
-export type WorldOptions = {
-  kind: SceneKind;
-  gremlin?: { desktop: Placement; mobile?: Placement };
-  /** React to `peep` events on window (the hero demo sends them). */
-  listen?: boolean;
-  reduced: boolean;
-};
+export type WorldOptions = { kind: SceneKind; reduced: boolean };
 export type WorldAPI = { setActive(on: boolean): void; dispose(): void };
 
 const CAM_Z = 14;
@@ -231,9 +223,8 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
 
   // Clouds.
   const puffs = puffsFor(opts.kind);
-  const seat: Puff[] = []; // puffs gathered around Peep's feet
   const cloudMat = withRim(new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 1 }), opts.kind === "night" ? "#ffc4b4" : "#ffffff", opts.kind === "night" ? 0.6 : 0.4, 2.2);
-  const maxPuffs = puffs.length + 12;
+  const maxPuffs = puffs.length;
   const clouds = new THREE.InstancedMesh(puffGeometry(), cloudMat, maxPuffs);
   clouds.frustumCulled = false;
   scene.add(clouds);
@@ -317,24 +308,11 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     (treeMesh.userData as { trees: typeof trees }).trees = trees;
   }
 
-  // Peep.
-  const peep = opts.gremlin ? makeGremlin() : null;
-  let rock: THREE.Mesh | null = null;
-  if (peep) {
-    scene.add(peep.root);
-    if (opts.kind === "mountains") {
-      rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), withRim(new THREE.MeshStandardMaterial({ color: "#5b4a86", roughness: 0.9, flatShading: true }), "#ffb7a8", 0.35));
-      scene.add(rock);
-    }
-  }
-
   // Layout: everything is positioned from the canvas size.
   let W = 1;
   let H = 1;
   let pxH = 1;
   let pxW = 1;
-  const peepScreen = new THREE.Vector2(0.5, 0.8);
-  let peepRadiusPx = 100;
   const extents = (z: number) => {
     const h = 2 * (CAM_Z - z) * Math.tan(THREE.MathUtils.degToRad(FOV / 2));
     return { h, w: h * camera.aspect, U: Math.min(h, h * camera.aspect * 1.6) };
@@ -345,8 +323,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
   const sv = new THREE.Vector3();
   const pv = new THREE.Vector3();
   function placePuffs(time: number) {
-    const all = puffs.concat(seat);
-    all.forEach((p, i) => {
+    puffs.forEach((p, i) => {
       const e = extents(p.z);
       pv.set((p.u * e.w) / 2, -e.h / 2 + p.v * e.U + Math.sin(time * 0.4 + p.bob) * 0.02 * e.U * p.r * 4, p.z);
       sv.setScalar(Math.max(p.r * e.U, 0.001));
@@ -355,7 +332,7 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
       clouds.setMatrixAt(i, m4);
       clouds.setColorAt(i, p.color);
     });
-    clouds.count = all.length;
+    clouds.count = puffs.length;
     clouds.instanceMatrix.needsUpdate = true;
     if (clouds.instanceColor) clouds.instanceColor.needsUpdate = true;
   }
@@ -393,73 +370,8 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
       p.obj.scale.set(s * (p.sx ?? 1), s * (p.sy ?? 1), s * (p.sz ?? 1));
     }
 
-    seat.length = 0;
-    if (peep && opts.gremlin) {
-      const mobile = pxW < 768;
-      const at = (mobile && opts.gremlin.mobile) || opts.gremlin.desktop;
-      const x = (at.x - 0.5) * W;
-      const y = (0.5 - at.y) * H;
-      const sizePx = at.size <= 1 ? at.size * pxH : at.size;
-      const s = ((sizePx / pxH) * H) / 2.3;
-      peep.root.position.set(x, y, 0);
-      peep.root.scale.setScalar(s);
-      peepScreen.set(at.x * pxW, (at.y - (sizePx / pxH) * 0.5) * pxH);
-      peepRadiusPx = sizePx * 0.55;
-      if (rock) {
-        rock.position.set(x, y - 0.3 * s, -0.2 * s);
-        rock.scale.set(1.15 * s, 0.42 * s, 0.8 * s);
-      }
-      if (opts.kind !== "mountains") {
-        // A soft seat of cloud hides Peep's feet, so it looks like it's standing in the clouds.
-        const r = rng(3);
-        const e = extents(0.8);
-        for (let i = 0; i < 11; i++) {
-          const rr = 0.3 + r() * 0.2;
-          seat.push({
-            u: (x + (i - 5) * 0.26 * s) / (e.w / 2),
-            v: (y + e.h / 2 + (r() - 0.7) * 0.2 * s) / e.U,
-            z: 0.5 + r() * 0.8,
-            r: (rr * s) / e.U,
-            color: new THREE.Color(opts.kind === "night" ? "#ffc4b4" : "#fff1ea").lerp(new THREE.Color("#ff9fb0"), r() * 0.4),
-            speed: 0,
-            bob: r() * 6.28,
-          });
-        }
-      }
-    }
     placePuffs(elapsed);
   }
-
-  // Input.
-  let pointerSeen = false;
-  let wander = 0;
-  const onPointer = (e: PointerEvent) => {
-    if (!peep) return;
-    const rect = canvas.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
-    if (py < -400 || py > rect.height + 400) return;
-    pointerSeen = e.pointerType === "mouse";
-    peep.setLook((px - peepScreen.x) / (rect.width * 0.45), (py - peepScreen.y) / (rect.height * 0.45));
-    const host = canvas.closest<HTMLElement>("[data-scene-host]");
-    if (host) host.dataset.peepHover = Math.hypot(px - peepScreen.x, py - peepScreen.y) < peepRadiusPx ? "1" : "";
-  };
-  const onDown = (e: PointerEvent) => {
-    if (!peep) return;
-    if ((e.target as Element).closest?.("a,button,input,textarea,select,label")) return;
-    const rect = canvas.getBoundingClientRect();
-    if (Math.hypot(e.clientX - rect.left - peepScreen.x, e.clientY - rect.top - peepScreen.y) < peepRadiusPx) {
-      peep.react("cheer");
-      kick();
-    }
-  };
-  const onPeep = (e: Event) => {
-    peep?.react((e as CustomEvent<Reaction>).detail);
-    kick();
-  };
-  window.addEventListener("pointermove", onPointer, { passive: true });
-  window.addEventListener("pointerdown", onDown, { passive: true });
-  if (opts.listen) window.addEventListener("peep", onPeep);
 
   // Loop.
   let elapsed = 0;
@@ -474,16 +386,6 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
       if (p.u > 1.35) p.u -= 2.7;
     }
     placePuffs(elapsed);
-    if (peep) {
-      if (!pointerSeen) {
-        wander -= dt;
-        if (wander <= 0) {
-          wander = 2 + Math.random() * 2.5;
-          peep.setLook((Math.random() - 0.5) * 1.4, (Math.random() - 0.6) * 0.8);
-        }
-      }
-      peep.update(dt);
-    }
   }
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
@@ -501,13 +403,6 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     cancelAnimationFrame(raf);
     raf = 0;
   }
-  // With reduced motion there's no loop; reactions still show as a single pose.
-  function kick() {
-    if (opts.reduced) {
-      peep?.update(0.4);
-      renderer.render(scene, camera);
-    }
-  }
 
   const ro = new ResizeObserver(() => {
     layout();
@@ -515,7 +410,6 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
   });
   ro.observe(canvas.parentElement!);
   layout();
-  if (peep) peep.update(0.016);
   renderer.render(scene, camera);
 
   return {
@@ -527,9 +421,6 @@ export function createWorld(canvas: HTMLCanvasElement, opts: WorldOptions): Worl
     dispose() {
       stop();
       ro.disconnect();
-      window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("peep", onPeep);
       scene.traverse((o) => {
         const mesh = o as THREE.Mesh;
         mesh.geometry?.dispose();

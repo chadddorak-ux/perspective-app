@@ -60,11 +60,11 @@ function App() {
         const props = { params: Promise.resolve(found.m!.groups ?? {}), searchParams: Promise.resolve(route.query) };
         el = await found.mod.default(props as never);
         const title = found.mod.metadata?.title;
-        document.title = title ? title.replace(" — Perspective", "") + " · Perspective" : "Perspective";
+        document.title = title ? title.replace(" — Peep", "") + " · Peep" : "Peep";
       } catch (e) {
         if (!(e instanceof NotFoundError)) console.error(e);
         el = <NotFound />;
-        document.title = "Not found · Perspective";
+        document.title = "Not found · Peep";
       }
       if (!cancelled) setView({ key: pageKey, el });
     })();

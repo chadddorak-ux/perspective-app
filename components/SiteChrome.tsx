@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ButtonFX } from "./ButtonFX";
-import { PeepMark } from "./Peep";
+import { PeepCompanion } from "./PeepCompanion";
 import { Logo, SiteNav } from "./SiteNav";
 
 export { Logo };
@@ -19,6 +19,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
     <>
       <ButtonFX />
       <SiteNav />
+      <PeepCompanion />
       <main className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-28 sm:pt-32">{children}</main>
       <footer className="relative z-10 px-3 pb-3 sm:px-6 sm:pb-6" data-nav-dark>
         <div className="sky-night relative mx-auto max-w-[1320px] overflow-hidden rounded-[28px] text-white">
@@ -30,7 +31,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           <div className="relative grid gap-10 px-6 py-12 sm:px-12 md:grid-cols-[1.4fr_1fr_1fr]">
             <div className="max-w-sm">
               <Logo onDark />
-              <p className="mt-4 text-sm text-white/75">Sponsorship matching for every cause. Nonprofits post campaigns; brands, foundations and donors find the ones that fit and pledge.</p>
+              <p className="mt-4 text-sm text-white/75">Peep is your sponsorship campaign manager. Nonprofits post polished campaigns free; brands and donors with verified funds back the ones that fit, and get their tax paperwork without the back-and-forth.</p>
             </div>
             {FOOTER_LINKS.map((col) => (
               <div key={col.title}>
@@ -47,9 +48,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               </div>
             ))}
           </div>
-          <div className="relative flex items-end justify-between gap-4 border-t border-white/10 px-6 py-5 text-xs text-white/60 sm:px-12">
-            <span>EAGLES SOAR is a real campaign. All other organizations and sponsors are fictional and labeled “Sample”.</span>
-            <PeepMark className="group h-10 w-12 shrink-0" title="Peep says goodnight" />
+          <div className="relative border-t border-white/10 px-6 py-5 text-xs text-white/60 sm:px-12">
+            EAGLES SOAR is a real campaign. All other organizations and sponsors are fictional and labeled “Sample”.
           </div>
         </div>
       </footer>

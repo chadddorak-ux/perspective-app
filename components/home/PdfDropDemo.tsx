@@ -89,12 +89,12 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
     return () => clearInterval(id);
   }, [started]);
 
-  // Tell Peep (in the sky behind) what's happening.
+  // Peep acts along with the demo (silently; real actions get sound).
   useEffect(() => {
     const fire = (key: string, kind: Reaction) => {
       if (fired.current.has(key) || !started) return;
       fired.current.add(key);
-      window.dispatchEvent(new CustomEvent<Reaction>("peep", { detail: kind }));
+      window.dispatchEvent(new CustomEvent<Reaction>("peep:demo", { detail: kind }));
     };
     if (t >= T.drop) fire("drop", "post");
     if (t >= T.read + 300) fire("read", "match");

@@ -67,7 +67,7 @@ export function MatchStory({ data }: { data: MatchStoryData }) {
 
         {/* 1. What the sponsor wants */}
         <Reveal className="relative flex flex-col gap-5">
-          <Step n={1} title="Sponsors tell us what they fund" body="Budget, causes, places, people and goals, with funds verified." />
+          <Step n={1} title="Brands set a budget and pick what matters" body="Causes, places, people and goals, with funds verified up front." />
           <div className="flex-1 rounded-3xl bg-card p-5 ring-1 ring-line">
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky text-lg font-extrabold text-white">{sponsor.name[0]}</span>

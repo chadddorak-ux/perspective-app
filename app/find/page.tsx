@@ -1,7 +1,7 @@
 import { CampaignWizard } from "@/components/CampaignWizard";
 import { PageHeader } from "@/components/ui";
 
-export const metadata = { title: "Start a campaign — Perspective" };
+export const metadata = { title: "Start a campaign — Peep" };
 
 export default function StartCampaignPage() {
   return (

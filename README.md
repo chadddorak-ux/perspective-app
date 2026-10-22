@@ -1,6 +1,12 @@
-# Perspective
+# Peep
 
-**Turn a nonprofit's pitch deck into a funded campaign.** Drop in a sponsorship PDF; Perspective builds the campaign, flags anything missing, then pairs it with brands and donors whose funds are verified and whose giving goals it meets.
+**Turn a nonprofit's pitch deck into a funded campaign.** Drop in a sponsorship PDF; Peep builds the campaign, flags anything missing, then pairs it with brands and donors whose funds are verified and whose giving goals it meets.
+
+**Why it exists, for each side:**
+- **Nonprofits get a level playing field.** Most pitch decks can't compete on design with the brands they're sent to. Peep turns any deck, PDF or written pitch into the same polished campaign format, so every cause starts out looking its best. Organizations can add their own story, photos and copy on top.
+- **Brands get giving without the busywork.** A brand sets its giving budget, picks the causes and places it cares about, and Peep matches it with campaigns that fit. Peep moves the funds, confirms they reached the nonprofit, and hands over the tax receipt once the transfer clears. Brands can say thanks, set up calls, or keep contact to the essentials.
+
+> In this prototype, funds transfer, verification and tax receipts are described in the product copy but not built. Pledges are recorded commitments; no money moves.
 
 Think grant finder, but for sponsorships and corporate giving, across every cause and every kind of sponsor. It's two-sided, every match comes with its reasons, and every match ends in a drafted pitch or a double opt-in introduction.
 
@@ -8,7 +14,7 @@ Think grant finder, but for sponsorships and corporate giving, across every caus
 
 ## What's in the prototype
 
-Perspective borrows the crowdfunding model from Kickstarter and GoFundMe:
+Peep borrows the crowdfunding model from Kickstarter and GoFundMe:
 - **Campaigns** have a goal, a progress bar and reward-style tiers.
 - **Sponsors** pledge to a tier.
 - **Discovery** works by category, with sorts like "Nearly funded".
@@ -40,7 +46,7 @@ The site speaks to nonprofits first, and everything for sponsors sits in one "Fo
 | Sponsor profile | `/sponsors/[id]` | What a sponsor funds, the campaigns it has backed, and its best-fit campaigns. |
 | Intros | `/intros` | Double opt-in intro pipeline: requested → opted in → introduced → won/passed. |
 
-**Pledges are commitments, not payments.** The organizer confirms them and sends an agreement.
+**Pledges are commitments, not payments.** The organizer confirms them and sends an agreement. Each pledge also records whether the sponsor wants to keep in touch or keep it to the essentials.
 
 **Pledges follow the matching rules.** A sponsor in the network can't pledge to a campaign it's blocked from (a cause it excludes, or an industry the organization declines). Tiers also stop accepting pledges once their slots fill.
 
@@ -74,7 +80,7 @@ npm run build
 ## Standalone HTML build
 
 ```bash
-npm run build:static   # → out-static/perspective.html (one file, ~1 MB)
+npm run build:static   # → out-static/peep.html (one file)
 ```
 
 This produces the whole site as a single self-contained HTML file you can open by double-clicking. No server or install needed.
@@ -100,9 +106,12 @@ The visual language is a storybook at dusk, inspired by [Passionfroot](https://w
   - The hero is an arched window onto a daytime cloudscape.
   - The PDF section is a starry night over drifting sunset clouds; the pledges band is a mountain forest at dusk.
   - Scenes load three.js on demand, pause off screen, render a single still frame under `prefers-reduced-motion`, and fall back to a painted CSS sky without WebGL.
-- **Peep, the matchmaking gremlin:** a character built from primitives (`components/scene/gremlin.ts`).
-  - It blinks, flicks its ears, follows the pointer, and waves.
-  - In the PDF section it reacts to the demo: a wave when the PDF drops, a look around while reading, and a jump with hearts when the campaign posts. Click it for a cheer.
+- **Peep, your campaign manager:** an evil-cute gremlin built from primitives (`components/scene/gremlin.ts`). She lives on her own transparent stage (`components/scene/stage.ts`, `components/PeepCompanion.tsx`) that floats over every page: she stands in the hero's arch, then hops into the corner as you scroll and follows you around the site.
+  - **Moods:** idle, happy, love, mischief, angry, attention, surprised and sleepy, each a set of lid, brow, ear, mouth and blush targets she blends between. She blinks, flicks her ears, follows the pointer, and fidgets.
+  - **Touch:** hover over her to pet her (she purrs, wiggles her ears and floats hearts). Click for a giggle, spin, cheer or a mischievous grin; poke her too many times and she gets cross.
+  - **Guide:** she greets you on each page and, if you go idle, knocks on the glass and points to the next step (`lib/peep-guide.ts`). Head for the browser's close button and she gets angry. She narrates the PDF import, cheers when you post a campaign or pledge, and dozes off if you leave her long enough.
+  - **Sounds:** little grunts, giggles, purrs and grumbles, synthesized with Web Audio (`lib/peep-sound.ts`). They start after your first click or key press and can be muted from the corner.
+  - Any page can talk to her through window events (`lib/peep-events.ts`).
   - A 2D version is the logo mark and favicon.
 - **Glass bubble buttons:** every button is a frosted glass pill with a curved specular shine, a glint that follows the pointer, a soap-film rim that swirls on hover, a jelly squish on press and a pop ring on click (`app/globals.css`, `components/ButtonFX.tsx`).
 - **Real data everywhere:** the hero card, the PDF demo and the matching walkthrough all use the EAGLES SOAR campaign and its actual top match.

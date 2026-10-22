@@ -12,13 +12,14 @@ const PledgeInput = z
     sponsorId: z.string().min(1).optional(),
     sponsorName: z.string().trim().min(2).max(160).optional(),
     message: z.string().trim().max(500).optional(),
+    contact: z.enum(["connect", "essentials"]).optional(),
   })
   .refine((p) => p.sponsorId || p.sponsorName, { message: "Choose a sponsor or enter a name", path: ["sponsorName"] });
 
 export async function POST(req: Request) {
   const parsed = PledgeInput.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: firstError(parsed.error) }, { status: 400 });
-  const { opportunityId, tierName, sponsorId, sponsorName, message } = parsed.data;
+  const { opportunityId, tierName, sponsorId, sponsorName, message, contact } = parsed.data;
 
   const opp = await getOpportunity(opportunityId);
   if (!opp) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
@@ -37,6 +38,6 @@ export async function POST(req: Request) {
   }
 
   const tier = opp.tiers.find((t) => t.name === tierName)!;
-  const pledge = await createPledge({ opportunityId, tierName, amount: tier.amount, sponsorId, sponsorName: name, message });
+  const pledge = await createPledge({ opportunityId, tierName, amount: tier.amount, sponsorId, sponsorName: name, message, contact });
   return NextResponse.json({ pledge }, { status: 201 });
 }

@@ -1,7 +1,6 @@
 import type { CauseId } from "@/lib/taxonomy";
 import type { MatchResult } from "@/lib/types";
 import { CoverArt } from "./CoverArt";
-import { PeepMark } from "./Peep";
 
 const GRADE_STYLE: Record<MatchResult["grade"], string> = {
   Excellent: "bg-mint text-[#2a2826]",
@@ -67,7 +66,7 @@ export function Eyebrow({ index, children, className = "" }: { index?: string; c
   );
 }
 
-/** A page title on a painted landscape, with Peep peeking in from the corner. */
+/** A page title on a painted landscape. */
 export function PageHeader({ eyebrow, title, art = "environment", children }: { eyebrow?: string; title: string; art?: CauseId; children?: React.ReactNode }) {
   return (
     <div className="group relative mb-10 animate-rise overflow-hidden rounded-[28px]" data-nav-dark>
@@ -80,7 +79,6 @@ export function PageHeader({ eyebrow, title, art = "environment", children }: { 
           {children && <div className="mt-4 max-w-2xl text-lg text-white/85">{children}</div>}
         </div>
       </div>
-      <PeepMark className="animate-float absolute -bottom-3 right-6 hidden h-24 w-28 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)] md:block" />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { peepSay } from "@/lib/peep-events";
 import { setPendingUpload } from "@/lib/pending-upload";
 import { PdfIcon } from "../PdfImport";
 import { PeepMark } from "../Peep";
@@ -20,6 +21,7 @@ export function PdfDropButton({ className = "", tone = "dark", catchDrops = true
   const take = (file: File | undefined) => {
     if (!file) return;
     setPendingUpload(file);
+    peepSay({ text: "Ooh, a PDF! Give me a second to read it.", react: "surprised", hold: 4 });
     router.push("/import");
   };
 

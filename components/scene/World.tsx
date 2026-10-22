@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Placement, SceneKind, WorldAPI } from "./engine";
+import type { SceneKind, WorldAPI } from "./engine";
 
 const FALLBACK: Record<SceneKind, string> = { night: "sky-night", day: "sky-day", mountains: "sky-dusk" };
 
@@ -10,17 +10,7 @@ const FALLBACK: Record<SceneKind, string> = { night: "sky-night", day: "sky-day"
  * time the scene comes near the viewport, and the loop pauses off screen. If
  * WebGL isn't available the painted CSS sky underneath stays visible.
  */
-export function World({
-  kind,
-  gremlin,
-  listen = false,
-  className = "",
-}: {
-  kind: SceneKind;
-  gremlin?: { desktop: Placement; mobile?: Placement };
-  listen?: boolean;
-  className?: string;
-}) {
+export function World({ kind, className = "" }: { kind: SceneKind; className?: string }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -37,7 +27,7 @@ export function World({
       try {
         const { createWorld } = await import("./engine");
         if (disposed) return;
-        api = createWorld(canvas.current!, { kind, gremlin, listen, reduced });
+        api = createWorld(canvas.current!, { kind, reduced });
         canvas.current!.style.opacity = "1";
         api.setActive(visible);
       } catch (e) {

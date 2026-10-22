@@ -66,8 +66,16 @@ function givingArea(s: SponsorProfile): string {
 
 const FAQ = [
   {
-    q: "What does Perspective do?",
-    a: "It turns your sponsorship pitch into a campaign page, then pairs it with brands and donors whose funds are verified and whose giving goals your campaign meets. Upload your pitch PDF or start from scratch, fix anything Peep flags, post it free, and sponsors pledge to the tiers that fit them.",
+    q: "What does Peep do?",
+    a: "Peep turns your sponsorship pitch into a polished campaign page and pairs it with brands and donors whose funds are verified and whose giving goals your campaign meets. Upload your pitch PDF or start from scratch, fix anything Peep flags, post it free, and sponsors pledge to the tiers that fit them.",
+  },
+  {
+    q: "What do brands get?",
+    a: "A simple way to give. Set a giving budget, choose the causes and places that matter to your brand, and Peep matches you with campaigns that fit. Peep handles the transfer, confirms the funds reached the nonprofit, and sends your tax documentation as soon as they land. Stay in touch with the teams you fund, or keep it to the essentials.",
+  },
+  {
+    q: "Why do all campaigns start with the same look?",
+    a: "On purpose. Every campaign starts from the same polished layout, so a small team with a scrappy PDF gets the same shot as a big one with an agency deck. You can still add your own story, photos and details to make it yours.",
   },
   {
     q: "What does Peep do with my PDF?",
@@ -82,8 +90,8 @@ const FAQ = [
     a: "Six factors out of 100: cause (30), geography (20), budget (15), audience (15), sponsor goals (15) and timing (5). Hard rules come first, so a sponsor that only funds 501(c)(3)s, or an industry you've turned down, is marked not eligible instead of ranked.",
   },
   {
-    q: "Who is Peep?",
-    a: "Peep is our matchmaking gremlin. It reads pitches, scores fits and cheers when a pledge lands. Click it and see what happens.",
+    q: "Who's the gremlin?",
+    a: "That's Peep, your campaign manager. She reads your pitch, flags what's missing, finds your sponsors and cheers when a pledge lands. She loves being petted. She does not love being left.",
   },
   {
     q: "Is the data real?",
@@ -209,10 +217,10 @@ export default async function Home() {
           </ul>
         </div>
 
-        {/* An arched window onto Peep's sky. The proof floats in the sky above Peep and hangs below the arch, never over Peep. */}
+        {/* An arched window onto Peep's sky. Peep (PeepCompanion) stands in it while it's on screen; the proof floats above her and hangs below the arch, never over her. */}
         <div className="animate-rise relative mx-auto mb-16 w-full max-w-[500px] px-6 [animation-delay:120ms] sm:px-10 lg:mb-20">
-          <div className="relative aspect-[5/6] overflow-hidden rounded-b-[40px] rounded-t-[999px] shadow-[0_40px_80px_-40px_rgba(60,30,90,0.6)] ring-1 ring-line" data-scene-host>
-            <World kind="day" gremlin={{ desktop: { x: 0.5, y: 0.93, size: 0.4 }, mobile: { x: 0.5, y: 0.93, size: 0.4 } }} />
+          <div data-peep-anchor className="relative aspect-[5/6] overflow-hidden rounded-b-[40px] rounded-t-[999px] shadow-[0_40px_80px_-40px_rgba(60,30,90,0.6)] ring-1 ring-line">
+            <World kind="day" />
           </div>
           <div className="glass animate-float absolute left-0 top-[5%] w-[56%] rounded-2xl p-2.5 sm:p-3">
             <span className="rounded-full bg-mint-soft px-2 py-0.5 text-[10px] font-bold text-good">✓ Funds verified</span>
@@ -221,7 +229,7 @@ export default async function Home() {
               Ready to give <b className="text-ink">{budget}</b>
             </p>
           </div>
-          <div className="glass animate-float absolute right-0 top-[27%] w-[50%] rounded-2xl p-2.5 [animation-delay:1.4s] sm:p-3">
+          <div className="glass animate-float absolute right-0 top-[24%] w-[50%] rounded-2xl p-2.5 [animation-delay:1.4s] sm:p-3">
             <p className="eyebrow text-[10px] text-muted">Wants to support</p>
             <div className="mt-2 flex flex-wrap gap-1">
               {[label(CAUSES, sp.causes[0]), sp.geography.metros[0], label(OBJECTIVES, sp.objectives[0]).split(" & ")[0]].filter(Boolean).map((w) => (
@@ -266,8 +274,8 @@ export default async function Home() {
 
       {/* Step one: the PDF → campaign tool */}
       <FullBleed className="mt-16 px-2 sm:mt-24 sm:px-6" data-nav-dark>
-        <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]" data-scene-host>
-          <World kind="night" listen gremlin={{ desktop: { x: 0.92, y: 0.965, size: 220 }, mobile: { x: 0.76, y: 0.985, size: 140 } }} />
+        <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]">
+          <World kind="night" />
           <div className="relative z-10 mx-auto max-w-6xl px-4 pb-[210px] pt-14 sm:px-8 sm:pt-20">
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow text-white/70">Start in a minute</p>
@@ -293,6 +301,54 @@ export default async function Home() {
       {/* Step two: how a match is made, on one real example */}
       <MatchStory data={story} />
 
+      {/* Both sides of the table */}
+      <section className="pb-24" aria-labelledby="both-sides">
+        <Reveal className="max-w-3xl">
+          <p className="eyebrow text-brand">Why Peep</p>
+          <h2 id="both-sides" className="display mt-3 text-4xl sm:text-5xl">
+            A fair shot for every cause. Simple giving for every brand.
+          </h2>
+        </Reveal>
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+          <Reveal className="flex flex-col rounded-[28px] bg-mint-soft p-7 sm:p-9">
+            <p className="eyebrow text-good">For nonprofits</p>
+            <h3 className="display mt-3 text-3xl sm:text-4xl">A level playing field</h3>
+            <p className="mt-4 text-lg text-muted">
+              Most nonprofits don&apos;t have a design team, and the brands they pitch are used to immaculate decks. Peep turns any pitch deck, PDF or email into the same polished campaign page, so every cause is judged on its idea, not its design budget.
+            </p>
+            <ul className="mt-6 flex-1 space-y-3">
+              {["Any PDF, deck or email in", "The same polished layout for every campaign", "Room to add your own story and photos"].map((x) => (
+                <li key={x} className="flex gap-3 font-semibold">
+                  <span aria-hidden className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-mint text-xs text-[#2a2826]">
+                    ✓
+                  </span>
+                  {x}
+                </li>
+              ))}
+            </ul>
+            <Link href="/import" className="btn-primary group mt-8 self-start">
+              Upload your pitch PDF <Arrow />
+            </Link>
+          </Reveal>
+          <Reveal delay={100} className="flex flex-col rounded-[28px] bg-sky-soft p-7 sm:p-9">
+            <p className="eyebrow text-sky">For brands and donors</p>
+            <h3 className="display mt-3 text-3xl sm:text-4xl">Giving, without the busywork</h3>
+            <p className="mt-4 text-lg text-muted">
+              Set aside your giving budget, pick what your brand actually cares about, and Peep matches you with campaigns that fit. Peep moves the funds, confirms they reached the nonprofit, and hands you the tax receipt the moment they land.
+            </p>
+            <ol className="mt-6 grid flex-1 gap-3 sm:grid-cols-2">
+              {["Set a giving budget", "Pick what matters", "Peep matches and transfers", "Tax receipt, right away"].map((x, i) => (
+                <li key={x} className="flex items-center gap-3 rounded-2xl bg-card/70 p-3 font-semibold">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink text-xs font-extrabold text-bg">{i + 1}</span>
+                  {x}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-5 text-sm text-muted">Want to meet the team you funded? Say thanks, set up a call, or keep it to the essentials. Your call.</p>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Featured campaigns */}
       {featured.length > 0 && (
         <section className="pb-24">
@@ -309,8 +365,8 @@ export default async function Home() {
 
       {/* Pledges, in the open */}
       <FullBleed className="px-2 sm:px-6">
-        <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]" data-scene-host>
-          <World kind="mountains" gremlin={{ desktop: { x: 0.84, y: 0.58, size: 140 }, mobile: { x: 0.5, y: 0.6, size: 100 } }} />
+        <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]">
+          <World kind="mountains" />
           <div className="pointer-events-none relative z-10 flex min-h-[640px] flex-col justify-between gap-10 p-6 sm:min-h-[540px] sm:p-12">
             <div className="max-w-xl text-white [text-shadow:0_2px_24px_rgba(40,20,70,0.45)]">
               <p className="eyebrow text-white/80">Pledges</p>

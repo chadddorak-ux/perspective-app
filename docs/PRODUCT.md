@@ -1,4 +1,4 @@
-# Perspective: product brief
+# Peep: product brief
 
 > Get the right people in the room when it matters most.
 
@@ -12,11 +12,27 @@ Sponsorship and corporate giving is a matching problem that's mostly run on hope
 
 **Connectors** (board members, executives, community leaders) sit in the middle. They want to help, but each pitch forces them to work out who in their network fits, then write a careful intro. That work doesn't scale, so good opportunities go unmatched.
 
-## What Perspective does
+## Why Peep
+
+**For brands.** Most corporate giving is planned around a budget and a tax year. Brands do care about causes, but the process around a gift (vetting, back-and-forth, chasing paperwork) is a headache, and it pushes them to perform interest they don't have time for. Peep keeps it simple:
+1. Set the amount you plan to give.
+2. Pick the causes, places and goals your brand actually cares about.
+3. Peep matches you with campaigns that fit, moves the funds, and confirms they reached the organization.
+4. The tax receipt arrives as soon as the transfer clears.
+
+Afterwards, a brand can thank the team, schedule calls and stay in touch, or keep contact to what's strictly necessary. Peep is the intermediary either way.
+
+**For nonprofits.** A small foundation's deck rarely matches the design polish of the enterprise brands it pitches. A great STEM program shouldn't lose a sponsor because its PDF looks homemade. Peep turns any deck, PDF or written pitch into the same standardized campaign, so every cause starts on a level playing field. Organizations can customize it and add copy and photos to make it more compelling, but nobody starts behind.
+
+**Peep, the campaign manager.** A gremlin character guides organizations through the whole process: reading their PDF, flagging what's missing, nudging them toward posting, and celebrating pledges.
+
+> Prototype status: transfers, fund verification and tax receipts are product direction, not built. Pledges are recorded commitments and record each sponsor's contact preference ("keep in touch" or "just the essentials").
+
+## What Peep does
 
 A grant finder for sponsorships, but two-sided and built around warm intros.
 
-| | Grant finders (e.g. BrightHarbor, Instrumentl) | Perspective |
+| | Grant finders (e.g. BrightHarbor, Instrumentl) | Peep |
 |---|---|---|
 | Who's matched | Applicant → public grant programs | Organization ↔ brands, foundations, individual donors |
 | Source of supply | Published RFPs and grant databases | Sponsor profiles, imported pitches, connectors' networks |
@@ -27,14 +43,14 @@ A grant finder for sponsorships, but two-sided and built around warm intros.
 
 1. **Find sponsors**: an organization describes its event or program (causes, audience, location, date, tiers, asks). It gets a ranked list of sponsors, each with the reasons it fits, what could get in the way, the suggested tier to ask for, and a drafted pitch.
 2. **Find causes**: a brand or donor sets causes (in priority order), objectives, audience, giving area, typical gift size and lead time. It gets ranked opportunities.
-3. **Import a pitch**: a connector pastes a pitch email and attaches the package PDF. Perspective turns it into a structured listing, using Claude when an API key is set and a rule-based parser otherwise. It then shows who in the network should hear about it.
+3. **Import a pitch**: a connector pastes a pitch email and attaches the package PDF. Peep turns it into a structured listing, using Claude when an API key is set and a rule-based parser otherwise. It then shows who in the network should hear about it.
 4. **Warm intro pipeline**: double opt-in. Ask the sponsor first, introduce once they say yes, then track the outcome: requested → opted in → introduced → won/passed.
 
 ## The campaign model (borrowed from crowdfunding)
 
-Kickstarter and GoFundMe made raising money legible: a goal, a progress bar, clear rewards, and a single action. Sponsorship has none of that. It lives in PDFs and email threads. Perspective uses the same structure:
+Kickstarter and GoFundMe made raising money legible: a goal, a progress bar, clear rewards, and a single action. Sponsorship has none of that. It lives in PDFs and email threads. Peep uses the same structure:
 
-| Crowdfunding | Perspective |
+| Crowdfunding | Peep |
 |---|---|
 | Project / fundraiser | Campaign: an event, program or appeal with a sponsorship goal |
 | Rewards with limited quantities | Sponsorship tiers with slots (exclusive = 1, limited = 3, multiple = 10) |
@@ -44,7 +60,7 @@ Kickstarter and GoFundMe made raising money legible: a goal, a progress bar, cle
 | Start a fundraiser in a few steps | Five-step "start a campaign" flow, or import an existing pitch |
 | Recent donations as social proof | Recent pledges feed and ticker, plus each campaign's list of sponsors |
 
-**What crowdfunding doesn't have, and Perspective adds:**
+**What crowdfunding doesn't have, and Peep adds:**
 - Every campaign lists its best-fit sponsors, the reasons, and the right tier to ask each one for.
 - Pledges obey both sides' rules, so a sportsbook can't pledge to a youth league.
 
@@ -80,7 +96,7 @@ This is the hardest part, and it's the moat.
 
 1. **Self-serve profiles.** Brands and donors fill out "Find causes". Free, and they get curated deal flow instead of cold email.
 2. **Connector networks.** A connector (you) adds the brands and people they know as private profiles. Matches surface "who in my network fits"; the sponsor never sees anything until they opt in.
-3. **Every registered nonprofit.** The IRS Exempt Organizations Business Master File lists 1.5M+ tax-exempt organizations with EIN, location and NTEE code. Perspective's causes map to NTEE groups, so a nonprofit can claim a pre-filled profile by EIN, and its 501(c)(3) status can be verified automatically.
+3. **Every registered nonprofit.** The IRS Exempt Organizations Business Master File lists 1.5M+ tax-exempt organizations with EIN, location and NTEE code. Peep's causes map to NTEE groups, so a nonprofit can claim a pre-filled profile by EIN, and its 501(c)(3) status can be verified automatically.
 4. **Public signals.** Past sponsor lists on event pages, CSR and community-giving pages, foundation 990-PF filings (grant amounts, geographies, causes), and corporate volunteer programs.
 5. **The import loop.** Every pitch imported is a new listing. Every sponsor named on a package ("current partners include…") is a signal about who funds what.
 

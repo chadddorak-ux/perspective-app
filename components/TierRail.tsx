@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { money } from "@/lib/match";
 import type { TierFunding } from "@/lib/funding";
 import { Arrow } from "./ui";
+import { peepReact, peepSay } from "@/lib/peep-events";
 
 export type SponsorOption = { id: string; name: string; blocked?: string };
 
@@ -73,6 +74,7 @@ function PledgeModal({
   const [who, setWho] = useState<string>("new");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [contact, setContact] = useState<"connect" | "essentials">("connect");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -95,12 +97,15 @@ function PledgeModal({
         tierName: tier.tier.name,
         ...(who === "new" ? { sponsorName: name } : { sponsorId: who }),
         message: message || undefined,
+        contact,
       }),
     });
     const json = await res.json();
     setBusy(false);
     if (!res.ok) return setError(json.error ?? "Couldn't record the pledge");
     setDone(true);
+    peepReact("pledge");
+    peepSay({ text: "Thank you! I'll take it from here: the transfer, the confirmation and your tax receipt.", hold: 6 });
     router.refresh();
   };
 
@@ -113,10 +118,12 @@ function PledgeModal({
         </div>
         {done ? (
           <div className="space-y-4 p-6">
-            <p className="font-display text-xl font-semibold">Pledge recorded.</p>
+            <p className="font-display text-xl font-semibold">Thank you. Pledge recorded.</p>
             <p className="text-sm text-muted">
-              The organizer will confirm details and send an agreement. Nothing is charged here: pledges are commitments, not payments.
+              Peep confirms the pledge with the organizer, moves the funds, checks they reached the nonprofit, and sends your tax receipt.{" "}
+              {contact === "essentials" ? "You chose essentials only, so that's all you'll hear." : "The team may reach out to say thanks."}
             </p>
+            <p className="hint">This prototype doesn&apos;t move money yet: pledges are commitments.</p>
             <button className="btn-primary w-full" onClick={onClose}>Done</button>
           </div>
         ) : (
@@ -142,11 +149,28 @@ function PledgeModal({
               </label>
             )}
             {chosen?.blocked && <p className="text-sm text-bad">{chosen.blocked}</p>}
+            <fieldset>
+              <legend className="label">After you give</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["connect", "Keep in touch", "Thank-yous, updates, a call if you'd like"],
+                    ["essentials", "Just the essentials", "Confirmation and your tax receipt"],
+                  ] as const
+                ).map(([v, l, d]) => (
+                  <label key={v} className={`cursor-pointer rounded-xl p-3 text-sm ring-1 transition ${contact === v ? "bg-mint-soft ring-mint" : "ring-line hover:ring-ink/30"}`}>
+                    <input type="radio" name="contact" value={v} checked={contact === v} onChange={() => setContact(v)} className="sr-only" />
+                    <span className="block font-bold">{l}</span>
+                    <span className="block text-xs text-muted">{d}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <label className="block">
               <span className="label">Note to the organizer (optional)</span>
               <textarea className="field min-h-20" value={message} onChange={(e) => setMessage(e.target.value)} />
             </label>
-            <p className="hint">Pledges are commitments, not payments. The organizer confirms and sends an agreement.</p>
+            <p className="hint">Peep handles the transfer and the tax paperwork once the organizer confirms.</p>
             {error && <p className="text-sm text-bad">{error}</p>}
             <div className="flex gap-2">
               <button className="btn-secondary flex-1" onClick={onClose}>Cancel</button>

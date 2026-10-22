@@ -1,9 +1,9 @@
-// Builds Perspective as one self-contained HTML file: the real pages,
+// Builds Peep as one self-contained HTML file: the real pages,
 // components and API handlers bundled to run in the browser, with all CSS,
 // fonts and JS inlined. Usage: npm run build:static
 //
 // Writes two files to out-static/:
-//   perspective.html  a complete document to open directly in a browser
+//   peep.html         a complete document to open directly in a browser
 //   artifact.html     the same page without <html>/<head>/<body>, for hosts
 //                     that supply their own document skeleton
 
@@ -84,8 +84,8 @@ function inlineFonts() {
 
 const [js, css] = await Promise.all([bundleJs(), compileCss()]);
 const style = `${inlineFonts()}\n${css}`;
-const title = "Perspective";
-const noscript = `<noscript><p style="padding:24px;font-family:system-ui">Perspective needs JavaScript to run.</p></noscript>`;
+const title = "Peep";
+const noscript = `<noscript><p style="padding:24px;font-family:system-ui">Peep needs JavaScript to run.</p></noscript>`;
 
 const body = `<div id="root"></div>\n${noscript}\n<script>${js}</script>`;
 const full = `<!doctype html>
@@ -105,8 +105,8 @@ ${body}
 const fragment = `<title>${title}</title>\n<style>${style}</style>\n${body}\n`;
 
 mkdirSync(OUT, { recursive: true });
-writeFileSync(path.join(OUT, "perspective.html"), full);
+writeFileSync(path.join(OUT, "peep.html"), full);
 writeFileSync(path.join(OUT, "artifact.html"), fragment);
 const kb = (s) => `${Math.round(Buffer.byteLength(s) / 1024)} KB`;
-console.log(`out-static/perspective.html  ${kb(full)}  (js ${kb(js)}, css+fonts ${kb(style)})`);
+console.log(`out-static/peep.html         ${kb(full)}  (js ${kb(js)}, css+fonts ${kb(style)})`);
 console.log(`out-static/artifact.html     ${kb(fragment)}`);

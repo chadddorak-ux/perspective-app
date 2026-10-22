@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { campaignGaps, readiness, type Gap, type GapField } from "@/lib/campaign-check";
 import type { ExtractResult, OpportunityDraft } from "@/lib/extract";
 import { money } from "@/lib/match";
+import { peepReact, peepSay } from "@/lib/peep-events";
 import { takePendingUpload } from "@/lib/pending-upload";
 import type { PdfProgress, PdfRead } from "@/lib/pdf-read";
 import { US_STATES } from "@/lib/taxonomy";
@@ -60,6 +61,7 @@ export function PdfImport({ aiEnabled, examples }: { aiEnabled: boolean; example
         if (f.size > MAX_PDF_BYTES) throw new Error("That PDF is over 20 MB. Try exporting a smaller version.");
         const { readPdf } = await import("@/lib/pdf-read");
         setPhase("read");
+        peepSay({ text: "Reading every page… I'll flag anything that's missing.", react: "match", hold: 4 });
         pdf = await readPdf(f, setProgress);
         setRead(pdf);
       }
@@ -86,10 +88,19 @@ export function PdfImport({ aiEnabled, examples }: { aiEnabled: boolean; example
       setDraft({ ...result.draft, coverImage: pdf.images[0], gallery: pdf.images.slice(1, 4) });
       setMeta({ fileName: source.file?.name, pages: pdf.pages, method: result.method, warnings: result.warnings });
       setStage("review");
+      {
+        const missing = campaignGaps({ ...result.draft, coverImage: pdf.images[0] }).filter((g) => g.level === "required").length;
+        peepSay(
+          missing
+            ? { text: `I filled in what I could. ${missing} thing${missing === 1 ? "" : "s"} to fix, and then we post!`, react: "mischief", hold: 6 }
+            : { text: "Everything's here! Take a look, then post it.", react: "cheer", hold: 5 },
+        );
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       console.error(e);
       setError((e as Error).message || "Peep couldn't read that file");
+      peepSay({ text: "Hmph. I couldn't read that one. Try another PDF?", react: "angry", hold: 4 });
       setStage("drop");
     }
   }
@@ -329,6 +340,12 @@ function Review({
   const flagList = (level: Gap["level"]) =>
     [...raised, ...fresh].filter((g) => g.level === level).map((g) => gaps.find((x) => x.field === g.field) ?? g);
   const ready = readiness(draft);
+  // Peep celebrates the moment the last required flag is fixed.
+  const wasBlocked = useRef(required.length > 0);
+  useEffect(() => {
+    if (wasBlocked.current && required.length === 0) peepSay({ text: "That's everything! Post it when you're ready.", react: "cheer", hold: 5 });
+    wasBlocked.current = required.length > 0;
+  }, [required.length]);
   const photosRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const filled = [draft.orgName, draft.title, draft.summary, draft.location.city || draft.location.virtual, draft.startDate, draft.tiers.length, draft.causes.length, draft.contact.email || draft.contact.website].filter(Boolean).length;
@@ -344,6 +361,8 @@ function Review({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Couldn't post the campaign");
+      peepReact("cheer");
+      peepSay({ text: "We did it! Your campaign is live, and I'm already lining up sponsors.", hold: 6 });
       router.push(`/opportunities/${json.id}?new=1`);
     } catch (e) {
       setError((e as Error).message);
