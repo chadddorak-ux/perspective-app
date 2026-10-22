@@ -178,18 +178,18 @@ export default async function Home() {
 
   return (
     <div>
-      {/* Hero: the promise. Sponsors with verified funds, matched to what you do. */}
-      <section className="grid items-center gap-14 pb-20 pt-2 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10 lg:pb-24 lg:pt-6">
+      {/* Hero: the promise. Sponsors with verified funds are already looking for campaigns like yours. */}
+      <section className="grid items-center gap-14 pb-20 pt-2 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10 lg:pb-24 lg:pt-6">
         <div className="animate-rise">
           <p className="inline-flex items-center gap-2 rounded-full bg-mint-soft px-3.5 py-1.5 text-xs font-bold text-good">
             <span className="h-2 w-2 animate-blink rounded-full bg-mint" />
             Free for nonprofits · {sponsors.length} sponsors ready to give
           </p>
-          <h1 className="display mt-6 text-[clamp(2.7rem,6vw,5.2rem)]">
-            Sponsors who are <span className="text-brand">ready to give</span>, matched to your cause.
+          <h1 className="display mt-6 text-[clamp(2.7rem,5.6vw,4.7rem)]">
+            Sponsors&nbsp;are <span className="text-brand">already looking for&nbsp;you.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted sm:text-xl">
-            Every brand and donor on Perspective has verified funds and tells us exactly what they want to support. Post your campaign free, and Peep pairs you with the ones whose goals you meet.
+            Find verified brands and donors ready to back your campaign with real capital, today. Post it free, and Peep pairs you with the ones whose goals you meet.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <PdfDropButton tone="light" className="px-7 py-3.5 text-base" />
@@ -436,7 +436,7 @@ export default async function Home() {
       <Reveal>
         <section className="group relative overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#ffd9c2_0%,#f7b9cf_45%,#b9a6f0_100%)] px-6 py-16 text-center text-[#2a2826] sm:px-16 sm:py-20">
           <PeepMark className="animate-float mx-auto h-24 w-28" />
-          <h2 className="display mx-auto mt-6 max-w-3xl text-[clamp(2.4rem,5.5vw,4.4rem)]">Your sponsors are already looking for you.</h2>
+          <h2 className="display mx-auto mt-6 max-w-3xl text-[clamp(2.4rem,5.5vw,4.4rem)]">Get the right people in the room, when it matters most.</h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-[#2a2826]/75">Post your campaign free, and let Peep make the introductions.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/import" className="btn-primary group px-7 py-3.5 text-base">
