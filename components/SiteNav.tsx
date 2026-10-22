@@ -86,8 +86,8 @@ export function SiteNav() {
 
   return (
     <header className="site-header fixed inset-x-0 z-40 px-3 pt-3 sm:px-6 sm:pt-5">
-      <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-3">
-        <nav className={`flex items-center gap-1 rounded-2xl py-1.5 pl-3 pr-1.5 ${pill}`} aria-label="Main">
+      <div className={`mx-auto flex max-w-[1320px] items-center justify-between gap-3 rounded-2xl py-1.5 pl-3 pr-1.5 ${pill}`}>
+        <nav className="flex items-center gap-1" aria-label="Main">
           <Logo onDark={dark} />
           <span aria-hidden className={`mx-2 hidden h-5 w-px lg:block ${dark ? "bg-white/20" : "bg-black/10"}`} />
           {LEFT.map((n) => (
@@ -120,7 +120,7 @@ export function SiteNav() {
             )}
           </div>
         </nav>
-        <nav className={`flex items-center gap-1 rounded-2xl p-1.5 ${pill}`} aria-label="Get started">
+        <nav className="flex items-center gap-1" aria-label="Get started">
           <Link href="/find" className={`${dark ? "btn-bright" : "btn-primary"} group hidden px-4 py-2 sm:inline-flex`}>
             Start a campaign
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>

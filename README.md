@@ -15,7 +15,11 @@ Perspective borrows the crowdfunding model from Kickstarter and GoFundMe:
 
 The difference is that every campaign also shows which sponsors fit it and why.
 
-The site speaks to nonprofits first: the hero is the PDF upload, and everything for sponsors sits in one "For sponsors" menu.
+The site speaks to nonprofits first, and everything for sponsors sits in one "For sponsors" menu. The home page tells the story in order:
+1. **Hero:** the promise. Sponsors with verified funds, matched to your cause, with a live example (a sponsor's budget, what it wants to fund, and its fit score) floating around Peep.
+2. **Start in a minute:** the PDF upload, with a demo of a pitch deck becoming a posted campaign.
+3. **How matching works:** one real match walked through in three steps (what the sponsor funds, the six checks with their notes and points, the drafted ask), plus how misfits are filtered out both ways.
+4. Featured campaigns, pledges, causes, nearly funded, FAQ.
 
 ### PDF → campaign
 
@@ -92,16 +96,16 @@ The build also writes `out-static/artifact.html`, the same page without the `<ht
 
 The visual language is a storybook at dusk, inspired by [Passionfroot](https://www.passionfroot.me):
 - **Pages and type:** cream paper pages, Fraunces with its soft-corner axis for headlines and Nunito Sans for UI, self-hosted through `@fontsource`.
-- **Environments:** big rounded windows onto live 3D scenes built with three.js (`components/scene/`), each with a cream card rising out of its lower edge.
-  - The hero is a starry night over drifting sunset clouds.
-  - "Meet Peep" is a daytime cloudscape; the pledges section is a mountain forest at dusk.
+- **Environments:** windows onto live 3D scenes built with three.js (`components/scene/`), in different shapes: an arch in the hero, a wide panel for the PDF demo, and a band behind the pledge stats.
+  - The hero is an arched window onto a daytime cloudscape.
+  - The PDF section is a starry night over drifting sunset clouds; the pledges band is a mountain forest at dusk.
   - Scenes load three.js on demand, pause off screen, render a single still frame under `prefers-reduced-motion`, and fall back to a painted CSS sky without WebGL.
 - **Peep, the matchmaking gremlin:** a character built from primitives (`components/scene/gremlin.ts`).
   - It blinks, flicks its ears, follows the pointer, and waves.
-  - In the hero it reacts to the demo: a wave when a campaign is posted, a look around while matching, and a jump with hearts when a pledge lands. Click it for a cheer.
+  - In the PDF section it reacts to the demo: a wave when the PDF drops, a look around while reading, and a jump with hearts when the campaign posts. Click it for a cheer.
   - A 2D version is the logo mark and favicon.
 - **Glass bubble buttons:** every button is a frosted glass pill with a curved specular shine, a glint that follows the pointer, a soap-film rim that swirls on hover, a jelly squish on press and a pop ring on click (`app/globals.css`, `components/ButtonFX.tsx`).
-- **Hero:** an animated three-step demo on real data. A nonprofit posts a campaign, Perspective scores the best-fit sponsors with reasons, and a sponsor pledges while the progress bar fills. It plays on its own, pauses on hover, and each step is clickable.
+- **Real data everywhere:** the hero card, the PDF demo and the matching walkthrough all use the EAGLES SOAR campaign and its actual top match.
 - **Campaign covers:** painted landscapes generated per cause group (sunrise hills, a calm sea, a village, a mountain forest, a night sky, dunes, a city, a planet), varied per campaign.
 - **Themes and motion:** tokens live in `app/globals.css`, with light and dark themes. All motion respects `prefers-reduced-motion`.
 

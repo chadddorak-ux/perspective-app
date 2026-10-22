@@ -581,11 +581,6 @@ textarea {
   cursor: pointer;
 }
 
-/* Words light up as the statement scrolls past (components/Motion.tsx ScrollWords). */
-.scroll-word {
-  transition: color 0.4s ease;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

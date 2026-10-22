@@ -11,7 +11,8 @@ import { PeepMark } from "../Peep";
  * over the page can be dropped too. Either way the file goes straight to the
  * import tool, which starts reading it.
  */
-export function PdfDropButton({ className = "" }: { className?: string }) {
+/** Only one button per page should `catchDrops`, so a dropped file is handled once. */
+export function PdfDropButton({ className = "", tone = "dark", catchDrops = true }: { className?: string; tone?: "dark" | "light"; catchDrops?: boolean }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -23,6 +24,7 @@ export function PdfDropButton({ className = "" }: { className?: string }) {
   };
 
   useEffect(() => {
+    if (!catchDrops) return;
     let depth = 0;
     const hasFile = (e: DragEvent) => [...(e.dataTransfer?.types ?? [])].includes("Files");
     const enter = (e: DragEvent) => {
@@ -52,11 +54,11 @@ export function PdfDropButton({ className = "" }: { className?: string }) {
       window.removeEventListener("dragover", over);
       window.removeEventListener("drop", drop);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [catchDrops]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
-      <button type="button" className={`btn-bright group ${className}`} onClick={() => input.current?.click()}>
+      <button type="button" className={`${tone === "light" ? "btn-primary" : "btn-bright"} group ${className}`} onClick={() => input.current?.click()}>
         <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5 transition-transform group-hover:-translate-y-0.5">
           <path d="M10 13V3m0 0L6 7m4-4 4 4M4 13v2a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
