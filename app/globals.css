@@ -41,11 +41,6 @@
   --bubble-1: rgb(255 255 255 / 0.78);
   --bubble-2: rgb(255 255 255 / 0.36);
   --bubble-glint: rgb(255 255 255 / 0.95);
-  /* Main buttons: ink glass by day, milk glass by night. */
-  --btn-fg: #fffaf3;
-  --btn-1: rgb(70 60 84 / 0.92);
-  --btn-2: rgb(30 26 38 / 0.96);
-  --btn-glow: rgb(160 130 255 / 0.18);
   --btn-shine: 0.85;
   --bubble-inner: rgb(255 255 255 / 0.35);
 }
@@ -75,15 +70,11 @@
     --glass-shadow: 0 0 0;
     --frost-1: rgb(36 30 50 / 0.82);
     --frost-2: rgb(36 30 50 / 0.62);
-    --frost-edge: rgb(255 255 255 / 0.1);
+    --frost-edge: rgb(255 255 255 / 0.16);
     --bubble-1: rgb(255 255 255 / 0.11);
     --bubble-2: rgb(255 255 255 / 0.05);
     --bubble-inner: rgb(255 255 255 / 0.04);
     --bubble-glint: rgb(255 255 255 / 0.3);
-    --btn-fg: #221d2c;
-    --btn-1: rgb(255 252 247 / 0.96);
-    --btn-2: rgb(232 222 246 / 0.86);
-    --btn-glow: rgb(255 190 220 / 0.4);
     --btn-shine: 0.4;
     color-scheme: dark;
   }
@@ -111,15 +102,11 @@
   --glass-shadow: 0 0 0;
   --frost-1: rgb(36 30 50 / 0.82);
   --frost-2: rgb(36 30 50 / 0.62);
-  --frost-edge: rgb(255 255 255 / 0.1);
+  --frost-edge: rgb(255 255 255 / 0.16);
   --bubble-1: rgb(255 255 255 / 0.11);
   --bubble-2: rgb(255 255 255 / 0.05);
   --bubble-inner: rgb(255 255 255 / 0.04);
   --bubble-glint: rgb(255 255 255 / 0.3);
-  --btn-fg: #221d2c;
-  --btn-1: rgb(255 252 247 / 0.96);
-  --btn-2: rgb(232 222 246 / 0.86);
-  --btn-glow: rgb(255 190 220 / 0.4);
   --btn-shine: 0.4;
   color-scheme: dark;
 }
@@ -297,24 +284,36 @@ textarea {
     opacity: 0.5;
   }
 
-  /* Ink glass: the main call to action on cream (milk glass at night). */
+  /* Candy glass: the main call to action. A warm glowing pill, with a glint
+     that sweeps across now and then to invite a tap. Same in both themes. */
   .btn-primary {
-    color: var(--btn-fg);
+    color: #2b1309;
     background:
-      radial-gradient(90px circle at var(--mx, 50%) var(--my, 0%), rgb(255 255 255 / 0.32), transparent 70%),
-      linear-gradient(180deg, var(--btn-1), var(--btn-2));
+      linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.55) 50%, transparent 62%) var(--sweep, 160%) 0 / 260% 100% no-repeat,
+      radial-gradient(90px circle at var(--mx, 50%) var(--my, 0%), rgb(255 255 255 / 0.5), transparent 70%),
+      linear-gradient(180deg, #ffc08a, #ff8a4c 52%, #ff6a6a);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.35),
-      inset 0 -6px 14px var(--btn-glow),
-      0 1px 2px rgb(0 0 0 / 0.2),
-      0 10px 24px -10px rgb(var(--glass-shadow) / 0.55);
+      inset 0 1px 0 rgb(255 255 255 / 0.7),
+      inset 0 -7px 14px rgb(200 50 70 / 0.28),
+      0 0 0 1px rgb(255 150 100 / 0.35),
+      0 12px 28px -10px rgb(255 100 70 / 0.65);
+    animation: btn-sweep 5.5s ease-in-out infinite;
   }
   .btn-primary:hover:not(:disabled) {
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      inset 0 -6px 16px rgb(255 160 200 / 0.25),
-      0 2px 4px rgb(0 0 0 / 0.18),
-      0 18px 34px -12px rgb(var(--glass-shadow) / 0.6);
+      inset 0 1px 0 rgb(255 255 255 / 0.8),
+      inset 0 -7px 16px rgb(200 50 70 / 0.3),
+      0 0 0 1px rgb(255 170 120 / 0.55),
+      0 18px 40px -10px rgb(255 100 70 / 0.8),
+      0 0 34px -4px rgb(255 140 90 / 0.55);
+  }
+  .btn-primary:disabled {
+    animation: none;
+    filter: saturate(0.4);
+  }
+  /* The arrow nudges forward on hover. */
+  :is(.btn-primary, .btn-bright):hover:not(:disabled) svg[viewBox="0 0 16 16"] {
+    animation: btn-nudge 0.7s ease-in-out infinite alternate;
   }
 
   /* Clear glass: secondary actions, readable on cream and on scenes. */
@@ -390,6 +389,27 @@ textarea {
     border: 2px solid rgb(255 255 255 / 0.9);
     pointer-events: none;
     animation: bubble-pop 0.55s ease-out forwards;
+  }
+}
+
+@property --sweep {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 160%;
+}
+@keyframes btn-sweep {
+  0%,
+  62% {
+    --sweep: 160%;
+  }
+  85%,
+  100% {
+    --sweep: -60%;
+  }
+}
+@keyframes btn-nudge {
+  to {
+    transform: translate(2px, -2px);
   }
 }
 

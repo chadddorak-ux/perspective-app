@@ -7,11 +7,12 @@ import { artTheme } from "@/components/CauseArt";
 import { More } from "@/components/More";
 import { PdfDropDemo, type DropDemoData } from "@/components/home/PdfDropDemo";
 import { WatchFrame } from "@/components/home/WatchFrame";
+import { WhyPeep, type WhyData } from "@/components/home/WhyPeep";
 import { Marquee } from "@/components/Marquee";
 import { CountUp, Reveal } from "@/components/Motion";
 import { PeepMark } from "@/components/Peep";
 import { World } from "@/components/scene/World";
-import { Arrow, Eyebrow, Scribble } from "@/components/ui";
+import { Arrow, Eyebrow } from "@/components/ui";
 import { fundingFor, type Funding } from "@/lib/funding";
 import { money, rankSponsors } from "@/lib/match";
 import { directPitch, optInAsk } from "@/lib/outreach";
@@ -147,6 +148,16 @@ export default async function Home() {
     </li>
   );
 
+  const giftTier = lead.tiers[1] ?? lead.tiers[0];
+  const why: WhyData = {
+    campaign: { title: lead.title, org: lead.orgName, when: dateRange(lead), where: place, theme: artTheme(lead) },
+    receipt: {
+      sponsor: ranked[0]?.item.name ?? "Your brand",
+      org: lead.orgName,
+      amount: giftTier ? money(giftTier.amount) : "$25K",
+      tier: giftTier ? `${giftTier.name.replace(/\s*[—-].*$/, "")} · ${lead.title}` : lead.title,
+    },
+  };
   const dropDemo: DropDemoData = {
     fileName: `${lead.title.split(" ").slice(0, 2).join("-")}-Sponsorship.pdf`,
     pages: 6,
@@ -335,45 +346,8 @@ export default async function Home() {
       {/* Step two: how a match is made, on one real example */}
       <MatchStory data={story} />
 
-      {/* Both sides of the table: two statements to actually read */}
-      <section className="pb-24" aria-label="Why Peep">
-        <WhyRow
-          eyebrow="For nonprofits"
-          tone="mint"
-          title={
-            <>
-              Level the <Scribble color="var(--mint)">playing field.</Scribble>
-            </>
-          }
-          lede="The brands you pitch are used to immaculate decks. You shouldn't need a design team to get a yes."
-          points={[
-            ["Any pitch in", "Drop in a deck, a PDF or a plain email. Peep reads every page."],
-            ["One polished page", "Every campaign gets the same clean one-pager, so ideas compete, not design budgets."],
-            ["Make it yours", "Add your story and photos on top. Put in more, stand out more, from the same starting line."],
-            ["Posted free", "No fees to list. Peep flags anything missing before it goes live."],
-          ]}
-          cta={{ href: "/import", label: "Upload your pitch PDF" }}
-        />
-        <WhyRow
-          flip
-          eyebrow="For brands and donors"
-          tone="sky"
-          title={
-            <>
-              No busywork. <Scribble color="var(--sky)">Just giving.</Scribble>
-            </>
-          }
-          lede="Set it once, pick what your brand actually cares about, and let Peep handle the rest."
-          points={[
-            ["Set a giving budget", "One amount for the year, with your funds verified up front."],
-            ["Pick what matters", "Causes, places and goals your brand genuinely stands behind."],
-            ["Peep matches and transfers", "We move the funds and confirm they reached the nonprofit."],
-            ["Tax receipt, right away", "Your paperwork lands the moment the transfer clears."],
-          ]}
-          note="Want to meet the team you funded? Say thanks, set up a call, or keep it to the essentials. Your call."
-          cta={{ href: "/give", label: "Find campaigns to back" }}
-        />
-      </section>
+      {/* Both sides of the table */}
+      <WhyPeep data={why} />
 
       {/* Featured campaigns */}
       {featured.length > 0 && (
@@ -509,55 +483,6 @@ export default async function Home() {
             </Link>
           </div>
         </section>
-      </Reveal>
-    </div>
-  );
-}
-
-/** One big statement beside the points that back it up. `flip` swaps the sides. */
-function WhyRow({
-  eyebrow,
-  title,
-  lede,
-  points,
-  cta,
-  note,
-  tone,
-  flip = false,
-}: {
-  eyebrow: string;
-  title: React.ReactNode;
-  lede: string;
-  points: [string, string][];
-  cta: { href: string; label: string };
-  note?: string;
-  tone: "mint" | "sky";
-  flip?: boolean;
-}) {
-  const dot = tone === "mint" ? "bg-mint" : "bg-sky";
-  return (
-    <div className="grid items-center gap-10 border-t border-line py-16 sm:py-24 lg:grid-cols-2 lg:gap-20">
-      <Reveal className={flip ? "lg:order-2" : ""}>
-        <p className={`eyebrow ${tone === "mint" ? "text-good" : "text-sky"}`}>{eyebrow}</p>
-        <h2 className="display mt-4 text-[clamp(2.8rem,6vw,5.6rem)] leading-[0.95]">{title}</h2>
-        <p className="mt-7 max-w-md text-xl text-muted">{lede}</p>
-      </Reveal>
-      <Reveal delay={120} className={flip ? "lg:order-1" : ""}>
-        <ol className="divide-y divide-line">
-          {points.map(([head, body], i) => (
-            <li key={head} className="flex gap-5 py-5 first:pt-0">
-              <span className={`mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full font-display text-lg font-semibold text-[#2a2826] ${dot}`}>{i + 1}</span>
-              <div>
-                <p className="text-2xl font-bold leading-tight">{head}</p>
-                <p className="mt-1.5 text-lg text-muted">{body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        {note && <p className="mt-4 rounded-2xl bg-card px-5 py-4 text-base text-muted ring-1 ring-line">{note}</p>}
-        <Link href={cta.href} className="btn-primary group mt-8">
-          {cta.label} <Arrow />
-        </Link>
       </Reveal>
     </div>
   );
