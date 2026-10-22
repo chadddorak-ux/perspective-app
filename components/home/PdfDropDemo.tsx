@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { CauseArt, LOOKS, type ArtTheme } from "../CauseArt";
 import { CoverArt } from "../CoverArt";
 import { PdfIcon } from "../PdfImport";
 import { PeepMark } from "../Peep";
@@ -15,8 +16,10 @@ export type DropDemoData = {
   org: string;
   when: string;
   where: string;
+  kind: string;
+  theme: ArtTheme;
   causes: string[];
-  tiers: number[];
+  tiers: { name: string; amount: number }[];
   story: string;
   goal: number;
   sponsors: { name: string; score: number }[];
@@ -136,14 +139,9 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
   const step = STEPS.reduce((acc, s, i) => (t >= s.at ? i : acc), 0);
 
   // Plain render helpers (not components), so rows don't remount on every tick.
-  const skel = (w = "60%") => <span className="inline-block h-3 rounded-full bg-line align-middle" style={{ width: w }} />;
-  const row = (i: number, label: string, value: React.ReactNode) => (
-    <div className={`flex items-center gap-3 rounded-xl px-3 py-2 transition-colors duration-500 ${field(i) && t < T.fields + i * FIELD_MS + 700 ? "bg-mint-soft" : ""}`}>
-      <span className="eyebrow w-[86px] shrink-0 text-[10px] text-muted">{label}</span>
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{field(i) ? <span className="animate-pop inline-block max-w-full truncate align-middle">{value}</span> : skel()}</span>
-      <span className={`text-xs transition-opacity ${field(i) ? "text-good opacity-100" : "opacity-0"}`}>✓</span>
-    </div>
-  );
+  const skel = (w = "60%", h = "h-3") => <span className={`inline-block ${h} rounded-full bg-line align-middle`} style={{ width: w }} />;
+  // A field glows mint for a moment as Peep fills it in.
+  const flash = (i: number) => (field(i) && t < T.fields + i * FIELD_MS + 700 ? "bg-mint-soft" : "");
 
   return (
     <div>
@@ -226,58 +224,97 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
             </div>
           </div>
 
-          {/* Right: the campaign being built */}
-          <div className="rounded-2xl bg-card p-3 ring-1 ring-line sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="eyebrow text-[10px] text-brand">Your campaign</p>
-              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-all duration-500 ${live ? "bg-mint text-[#2a2826]" : "bg-bg text-muted ring-1 ring-line"}`}>
-                {live ? "● Live" : flagsOn ? `${ready}% ready` : dropped ? "Building…" : "Waiting for a PDF"}
-              </span>
-            </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
-              <div className={`relative overflow-hidden rounded-xl transition-all duration-700 ${field(6) ? "" : "bg-line"}`}>
+          {/* Right: the campaign, building itself into a finished one-pager */}
+          <div className="relative overflow-hidden rounded-2xl bg-card ring-1 ring-line">
+            <div aria-hidden className="absolute inset-0 opacity-50 [background-image:radial-gradient(var(--line)_1.2px,transparent_1.2px)] [background-size:18px_18px]" />
+            <div className="relative grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_150px] sm:p-4">
+              <div className="min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="flex min-w-0 items-center gap-1.5">
+                    <PeepMark className="h-4 w-5 shrink-0" />
+                    <span className="eyebrow truncate text-[9px] text-muted">{field(4) ? <>A Peep one-pager · <span className="text-brand">{data.kind}</span></> : "A Peep one-pager"}</span>
+                  </p>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all duration-500 ${live ? "bg-mint text-[#2a2826]" : "bg-bg text-muted ring-1 ring-line"}`}>
+                    {live ? "● Live" : flagsOn ? `${ready}% ready` : dropped ? "Building…" : "Waiting for a PDF"}
+                  </span>
+                </div>
+                <div className={`mt-3 rounded-lg transition-colors duration-500 ${flash(0)}`}>
+                  {field(0) ? <h3 className="animate-pop display text-[1.45rem] font-semibold leading-[1.05] sm:text-[1.7rem]">{data.title}</h3> : <>{skel("90%", "h-5")}<div className="mt-2">{skel("60%", "h-5")}</div></>}
+                </div>
+                <p className={`mt-2 truncate rounded-lg text-xs transition-colors duration-500 ${flash(1)}`}>{field(1) ? <span className="animate-pop inline-block"><span className="text-muted">by </span><b>{data.org}</b></span> : skel("50%")}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {[
+                    [2, "📅", data.when],
+                    [3, "📍", data.where],
+                  ].map(([i, icon, v]) => (
+                    <span key={i as number} className={`flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-line transition-colors duration-500 ${field(i as number) ? `animate-pop ${flash(i as number) || "bg-bg"}` : "bg-bg"}`}>
+                      {field(i as number) ? <><span aria-hidden>{icon}</span><span className="truncate">{v}</span></> : skel("70px")}
+                    </span>
+                  ))}
+                </div>
+                <p className={`mt-3 line-clamp-2 rounded-lg text-xs leading-relaxed text-muted transition-colors duration-500 ${flash(7)}`}>{field(7) ? <span className="animate-pop">{data.story}</span> : <>{skel("95%")}<span className="mt-1.5 block">{skel("70%")}</span></>}</p>
+              </div>
+              {/* The cause art, from page one */}
+              <div className="relative order-first h-24 sm:order-none sm:h-auto sm:min-h-[180px]">
                 {field(6) ? (
-                  <CoverArt id={data.id} cause={data.cause} className="animate-pop h-24 rounded-xl sm:h-full sm:min-h-[150px]" />
+                  <CauseArt theme={data.theme} crop="center" className="animate-pop h-full w-full rounded-b-xl rounded-t-[999px] ring-1 ring-line" />
                 ) : (
-                  <div className="grid h-24 place-items-center text-[11px] text-muted sm:h-full sm:min-h-[150px]">Cover photo</div>
+                  <div className="absolute inset-0 grid place-items-center rounded-b-xl rounded-t-[999px] bg-line text-[11px] text-muted">Cover art</div>
                 )}
-                {field(6) && <span className="absolute bottom-1.5 left-1.5 rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-bold text-[#2a2826]">From page 1</span>}
-              </div>
-              <div className="min-w-0 space-y-0.5">
-                {row(0, "Campaign", data.title)}
-                {row(1, "Organization", data.org)}
-                {row(2, "When", data.when)}
-                {row(3, "Where", data.where)}
-              </div>
-            </div>
-            <div className="mt-1 space-y-0.5">
-              {row(4, "Causes", data.causes.join(" · "))}
-              {row(5, "Tiers", data.tiers.map(money).join(" · "))}
-              {row(7, "Story", data.story)}
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2">
-                <span className="eyebrow w-[86px] shrink-0 text-[10px] text-muted">Goal</span>
-                <span className="flex-1 text-sm font-semibold">{goalFixed ? <span className="animate-pop inline-block">{money(data.goal)}</span> : flagsOn ? <span className="text-brand">Missing</span> : skel("30%")}</span>
+                {live && (
+                  <span className="animate-pop absolute -right-1 -top-1 grid h-12 w-12 rotate-[10deg] place-items-center rounded-full text-center text-[#2a2826] shadow-lg" style={{ background: LOOKS[data.theme].accent }}>
+                    <span className="text-[9px] font-extrabold leading-tight">POSTED<br />FREE</span>
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3">
-              <span
-                ref={postBtn}
-                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 ${
-                  live ? "bg-mint text-[#2a2826]" : ready === 100 ? "bg-ink text-bg shadow-[0_10px_24px_-10px_rgba(0,0,0,0.6)]" : "bg-line text-muted"
-                }`}
-                style={pressing ? { transform: "scale(1.06, 0.9)" } : undefined}
-              >
-                {live ? "✓ Posted, free" : "Post campaign · free"}
-              </span>
-              <div className={`flex min-w-0 flex-1 flex-wrap items-center gap-1.5 transition-all duration-500 ${matched ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}>
-                <span className="text-xs font-bold">Matched with</span>
-                {data.sponsors.map((s, i) => (
-                  <span key={s.name} className="inline-flex items-center gap-1.5 rounded-full bg-mint-soft px-2.5 py-1 text-[11px] font-semibold text-good" style={{ transitionDelay: `${i * 120}ms` }}>
-                    {s.name} <b className="text-ink">{s.score}</b>
+            {/* Tiers and funding, like the real page */}
+            <div className="relative border-t border-line px-3 pb-3 pt-3 sm:px-4">
+              <div className={`flex gap-1.5 overflow-hidden rounded-lg transition-colors duration-500 ${flash(5)}`}>
+                {data.tiers.slice(0, 4).map((tier, i) => (
+                  <span key={tier.name} className={`min-w-0 flex-1 rounded-xl bg-bg px-2 py-1.5 ring-1 ring-line ${i > 1 ? "hidden sm:block" : ""}`}>
+                    {field(5) ? (
+                      <span className="animate-pop block" style={{ animationDelay: `${i * 80}ms` }}>
+                        <span className="block font-display text-sm font-semibold">{money(tier.amount)}</span>
+                        <span className="block truncate text-[10px] text-muted">{tier.name}</span>
+                      </span>
+                    ) : (
+                      <>{skel("50%")}<span className="mt-1 block">{skel("80%", "h-2")}</span></>
+                    )}
                   </span>
                 ))}
-                <span className="text-[11px] text-muted">· funds verified</span>
+              </div>
+              <div className="mt-3 flex items-end justify-between gap-3 text-xs">
+                <p>
+                  <b className="font-display text-lg">$0</b>
+                  <span className="text-muted"> pledged of </span>
+                  {goalFixed ? <b className="animate-pop inline-block">{money(data.goal)}</b> : flagsOn ? <b className="text-brand">goal missing</b> : skel("40px")}
+                </p>
+                <span className="text-muted">{field(2) ? "50 days to go" : ""}</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-bg ring-1 ring-line">
+                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: goalFixed ? "3%" : "0%", background: `linear-gradient(90deg, ${LOOKS[data.theme].sky[1]}, ${LOOKS[data.theme].accent})` }} />
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <span
+                  ref={postBtn}
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 ${
+                    live ? "bg-mint text-[#2a2826]" : ready === 100 ? "bg-ink text-bg shadow-[0_10px_24px_-10px_rgba(0,0,0,0.6)]" : "bg-line text-muted"
+                  }`}
+                  style={pressing ? { transform: "scale(1.06, 0.9)" } : undefined}
+                >
+                  {live ? "✓ Posted, free" : "Post campaign · free"}
+                </span>
+                <div className={`flex min-w-0 flex-1 flex-wrap items-center gap-1.5 transition-all duration-500 ${matched ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}>
+                  <span className="text-xs font-bold">Matched with</span>
+                  {data.sponsors.map((sp, i) => (
+                    <span key={sp.name} className="inline-flex items-center gap-1.5 rounded-full bg-mint-soft px-2.5 py-1 text-[11px] font-semibold text-good" style={{ transitionDelay: `${i * 120}ms` }}>
+                      {sp.name} <b className="text-ink">{sp.score}</b>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

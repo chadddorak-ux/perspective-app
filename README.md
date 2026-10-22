@@ -23,7 +23,7 @@ The difference is that every campaign also shows which sponsors fit it and why.
 
 The site speaks to nonprofits first, and everything for sponsors sits in one "For sponsors" menu. The home page tells the story in order:
 1. **Hero:** the promise. Sponsors with verified funds, matched to your cause, with a live example (a sponsor's budget, what it wants to fund, and its fit score) floating around Peep.
-2. **Start in a minute:** the PDF upload, with a demo of a pitch deck becoming a posted campaign.
+2. **Start in a minute:** the PDF upload, with a demo of a pitch deck building itself into a finished campaign one-pager (cause art, title, date and place, tiers, funding) and posting.
 3. **How matching works:** one real match walked through in three steps (what the sponsor funds, the six checks with their notes and points, the drafted ask), plus how misfits are filtered out both ways.
 4. Featured campaigns, pledges, causes, nearly funded, FAQ.
 
@@ -117,6 +117,7 @@ The visual language is a storybook at dusk, inspired by [Passionfroot](https://w
   - Any page can talk to her through window events (`lib/peep-events.ts`).
   - A 2D version is the logo mark and favicon.
 - **Glass bubble buttons:** every button is a frosted glass pill with a curved specular shine, a glint that follows the pointer, a soap-film rim that swirls on hover, a jelly squish on press and a pop ring on click (`app/globals.css`, `components/ButtonFX.tsx`).
+- **Less to read at once:** long lists and secondary detail (the rest of a story, extra facts, more matches, a sponsor's reasons, extra tier benefits, older pledges) sit behind small "show more" toggles (`components/More.tsx`).
 - **Demos that fit:** the PDF demo and the matching walkthrough scale to fit one window (`components/home/WatchFrame.tsx`), and grow slightly with a soft glow as they scroll into view, a nudge to watch.
 - **Real data everywhere:** the hero card, the PDF demo and the matching walkthrough all use the EAGLES SOAR campaign and its actual top match.
 - **Campaign covers:** painted landscapes generated per cause group (sunrise hills, a calm sea, a village, a mountain forest, a night sky, dunes, a city, a planet), varied per campaign.

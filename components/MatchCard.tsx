@@ -9,6 +9,7 @@ import type { MatchResult, Opportunity, SponsorProfile } from "@/lib/types";
 import { ProgressBar, daysLabel } from "./Funding";
 import { OutreachModal } from "./OutreachModal";
 import { Breakdown, GradeBadge, Pill, SampleTag, ScoreRing } from "./ui";
+import { More } from "./More";
 
 type Props = {
   opp: Opportunity;
@@ -75,7 +76,8 @@ export function MatchCard({ opp, sponsor, match, viewer, rank, funding }: Props)
           {match.blockers.map((b) => <li key={b}>⨯ {b}</li>)}
         </ul>
       ) : (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <More label={`Why it fits · ${match.reasons.length} reason${match.reasons.length === 1 ? "" : "s"}${match.gaps.length ? `, ${match.gaps.length} to watch` : ""}`} openLabel="Hide the reasons" className="mt-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <h4 className="eyebrow mb-2 text-[10px] text-muted">Why it fits</h4>
             <ul className="space-y-1 text-sm">
@@ -91,6 +93,7 @@ export function MatchCard({ opp, sponsor, match, viewer, rank, funding }: Props)
             </ul>
           </div>
         </div>
+        </More>
       )}
 
       {funding && !isOrg && (

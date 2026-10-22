@@ -4,6 +4,7 @@ import { placeLabel } from "@/components/CampaignCard";
 import { CauseArt, LOOKS, artTheme } from "@/components/CauseArt";
 import { FundingStats } from "@/components/Funding";
 import { MatchCard } from "@/components/MatchCard";
+import { More } from "@/components/More";
 import { PeepMark } from "@/components/Peep";
 import { ShareButton } from "@/components/ShareButton";
 import { TierRail, type SponsorOption } from "@/components/TierRail";
@@ -53,6 +54,17 @@ export default async function CampaignPage({ params, searchParams }: { params: P
   const look = LOOKS[theme];
   const paras = (opp.story ?? opp.summary).split(/\n{2,}/);
   const verified = opp.orgType !== "other" && !!opp.ein;
+  const fact = ([icon, k, v]: [Icon, string, string]) => (
+    <div key={k} className="flex gap-3 rounded-2xl bg-card p-4 ring-1 ring-line">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#2a2826]" style={{ background: icon === "ban" ? "var(--line)" : look.sky[2] }}>
+        <Glyph name={icon} className="h-5 w-5" />
+      </span>
+      <div className="min-w-0">
+        <dt className="eyebrow text-[10px] text-muted">{k}</dt>
+        <dd className="mt-0.5 text-sm font-semibold">{v}</dd>
+      </div>
+    </div>
+  );
 
   return (
     <div className="-mt-2">
@@ -165,11 +177,16 @@ export default async function CampaignPage({ params, searchParams }: { params: P
           <section id="story" className="scroll-mt-44">
             <Chapter n="01" title="The story" color={look.accent} />
             <p className="mt-6 font-display text-2xl leading-snug sm:text-[1.7rem]">{paras[0]}</p>
-            <div className="mt-5 space-y-4 text-lg leading-relaxed text-muted">
-              {paras.slice(1).map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-            </div>
+            {paras[1] && <p className="mt-5 text-lg leading-relaxed text-muted">{paras[1]}</p>}
+            {paras.length > 2 && (
+              <More label="Read the full story" className="mt-3">
+                <div className="space-y-4 text-lg leading-relaxed text-muted">
+                  {paras.slice(2).map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
+                </div>
+              </More>
+            )}
             {opp.gallery && opp.gallery.length > 0 && (
               <div className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3">
                 {opp.gallery.map((src, i) => (
@@ -184,19 +201,12 @@ export default async function CampaignPage({ params, searchParams }: { params: P
 
           <section id="glance" className="scroll-mt-44">
             <Chapter n="02" title="At a glance" color={look.accent} />
-            <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-              {details.map(([icon, k, v]) => (
-                <div key={k} className="flex gap-3 rounded-2xl bg-card p-4 ring-1 ring-line">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#2a2826]" style={{ background: icon === "ban" ? "var(--line)" : look.sky[2] }}>
-                    <Glyph name={icon} className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0">
-                    <dt className="eyebrow text-[10px] text-muted">{k}</dt>
-                    <dd className="mt-0.5 text-sm font-semibold">{v}</dd>
-                  </div>
-                </div>
-              ))}
-            </dl>
+            <dl className="mt-6 grid gap-3 sm:grid-cols-2">{details.slice(0, 4).map(fact)}</dl>
+            {details.length > 4 && (
+              <More label={`${details.length - 4} more detail${details.length - 4 === 1 ? "" : "s"}`} className="mt-3">
+                <dl className="grid gap-3 sm:grid-cols-2">{details.slice(4).map(fact)}</dl>
+              </More>
+            )}
             <div className="mt-5 flex flex-wrap gap-1.5">
               {opp.causes.map((c) => (
                 <Link key={c} href={`/opportunities?cause=${c}`}>
@@ -214,18 +224,17 @@ export default async function CampaignPage({ params, searchParams }: { params: P
                 <Link href="/intros" className="text-brand hover:underline">Intros</Link> board.
               </p>
             </div>
-            {eligible.slice(0, 5).map((r, i) => (
+            {eligible.slice(0, 3).map((r, i) => (
               <MatchCard key={r.item.id} opp={opp} sponsor={r.item} match={r.match} viewer="organization" rank={i + 1} />
             ))}
-            {eligible.length > 5 && (
-              <details className="group">
-                <summary className="btn-secondary w-full cursor-pointer list-none">Show {eligible.length - 5} more matches</summary>
-                <div className="mt-4 space-y-4">
-                  {eligible.slice(5).map((r, i) => (
-                    <MatchCard key={r.item.id} opp={opp} sponsor={r.item} match={r.match} viewer="organization" rank={i + 6} />
+            {eligible.length > 3 && (
+              <More label={`Show ${eligible.length - 3} more matches`} openLabel="Show fewer matches">
+                <div className="space-y-4">
+                  {eligible.slice(3).map((r, i) => (
+                    <MatchCard key={r.item.id} opp={opp} sponsor={r.item} match={r.match} viewer="organization" rank={i + 4} />
                   ))}
                 </div>
-              </details>
+              </More>
             )}
             {ineligible.length > 0 && (
               <details className="card p-5 text-sm">

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { money } from "@/lib/match";
 import type { TierFunding } from "@/lib/funding";
+import { More } from "./More";
 import { Overlay } from "./Overlay";
 import { Arrow } from "./ui";
 import { peepReact, peepSay } from "@/lib/peep-events";
@@ -23,6 +24,12 @@ export function TierRail({
   closed: boolean;
 }) {
   const [open, setOpen] = useState<TierFunding | null>(null);
+  const benefit = (b: string) => (
+    <li key={b} className="flex gap-2">
+      <span aria-hidden className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" />
+      {b}
+    </li>
+  );
   return (
     <div className="space-y-3">
       {tiers.map((t) => {
@@ -35,14 +42,14 @@ export function TierRail({
             <p className="eyebrow text-[10px] text-muted">Pledge {money(t.tier.amount)}</p>
             <h3 className="mt-1 font-display text-xl font-semibold tracking-tight">{t.tier.name}</h3>
             {t.tier.benefits.length > 0 && (
-              <ul className="mt-3 space-y-1.5 text-sm text-muted">
-                {t.tier.benefits.map((b) => (
-                  <li key={b} className="flex gap-2">
-                    <span aria-hidden className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" />
-                    {b}
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="mt-3 space-y-1.5 text-sm text-muted">{t.tier.benefits.slice(0, 3).map(benefit)}</ul>
+                {t.tier.benefits.length > 3 && (
+                  <More label={`+${t.tier.benefits.length - 3} more benefits`} className="mt-1.5">
+                    <ul className="space-y-1.5 text-sm text-muted">{t.tier.benefits.slice(3).map(benefit)}</ul>
+                  </More>
+                )}
+              </>
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
               <span className="eyebrow text-[10px] text-muted">

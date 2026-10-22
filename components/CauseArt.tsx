@@ -472,11 +472,11 @@ function produce(kind: string) {
  * The scene itself. It fills its box; give the box a shape (the campaign page
  * uses an arch window).
  */
-export function CauseArt({ theme, className = "" }: { theme: ArtTheme; className?: string }) {
+export function CauseArt({ theme, className = "", crop = "bottom" }: { theme: ArtTheme; className?: string; /** What stays in a short box. */ crop?: "bottom" | "center" }) {
   const look = LOOKS[theme];
   return (
     <div aria-hidden className={`cause-art relative overflow-hidden ${className}`} style={{ background: `linear-gradient(180deg, ${look.sky[0]}, ${look.sky[1]} 55%, ${look.sky[2]})` }}>
-      <svg viewBox="0 0 400 480" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 h-full w-full">
+      <svg viewBox="0 0 400 480" preserveAspectRatio={crop === "center" ? "xMidYMid slice" : "xMidYMax slice"} className="absolute inset-0 h-full w-full">
         {scene(theme, look)}
       </svg>
     </div>

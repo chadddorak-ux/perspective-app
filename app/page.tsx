@@ -3,6 +3,8 @@ import { CampaignCard } from "@/components/CampaignCard";
 import { CoverArt } from "@/components/CoverArt";
 import { MatchStory, type MatchStoryData } from "@/components/home/MatchStory";
 import { PdfDropButton } from "@/components/home/PdfDropButton";
+import { artTheme } from "@/components/CauseArt";
+import { More } from "@/components/More";
 import { PdfDropDemo, type DropDemoData } from "@/components/home/PdfDropDemo";
 import { WatchFrame } from "@/components/home/WatchFrame";
 import { Marquee } from "@/components/Marquee";
@@ -116,6 +118,35 @@ export default async function Home() {
   const place = lead.location.virtual ? "Virtual" : [lead.location.city, lead.location.state].filter(Boolean).join(", ");
   const budget = `${money(sp.budget.min)}–${money(sp.budget.max)}`;
 
+  const goalRow = ({ opp, f }: (typeof barRows)[number]) => (
+    <Link key={opp.id} href={`/opportunities/${opp.id}`} className="block rounded-2xl bg-bg p-4 transition hover:ring-1 hover:ring-ink/20">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="truncate font-bold">{opp.title}</span>
+        <span className="shrink-0 font-extrabold tabular-nums">{f.percent}%</span>
+      </div>
+      <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-line">
+        <div className="bg-warm h-full rounded-full" style={{ width: `${Math.min(100, f.percent)}%` }} />
+      </div>
+      <p className="mt-1.5 text-xs text-muted">
+        {money(f.pledged)} of {money(f.goal)}
+      </p>
+    </Link>
+  );
+  const pledgeRow = (p: (typeof recent)[number]) => (
+    <li key={p.id} className="flex items-center gap-3 py-3">
+      <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-soft text-accent">
+        ♥
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm">
+          <b>{p.sponsorName}</b> backed <b>{titleOf(p.opportunityId)}</b>
+        </p>
+        <p className="truncate text-xs text-muted">{p.tierName}</p>
+      </div>
+      <span className="shrink-0 font-extrabold tabular-nums">{money(p.amount)}</span>
+    </li>
+  );
+
   const dropDemo: DropDemoData = {
     fileName: `${lead.title.split(" ").slice(0, 2).join("-")}-Sponsorship.pdf`,
     pages: 6,
@@ -125,8 +156,10 @@ export default async function Home() {
     org: lead.orgName,
     when: dateRange(lead),
     where: place,
+    kind: `${lead.kind === "event" ? "Event" : lead.kind === "program" ? "Program" : "Campaign"} · ${lead.causes[0] ? label(CAUSES, lead.causes[0]) : "Community"}`,
+    theme: artTheme(lead),
     causes: lead.causes.slice(0, 3).map((c) => label(CAUSES, c)),
-    tiers: lead.tiers.map((t) => t.amount),
+    tiers: lead.tiers.map((t) => ({ name: t.name.replace(/\s*[—-].*$/, ""), amount: t.amount })),
     story: lead.summary,
     goal: fundingFor(lead, pledges).goal,
     sponsors: ranked.slice(0, 3).map(({ item, match }) => ({ name: item.name, score: match.score })),
@@ -382,44 +415,24 @@ export default async function Home() {
           </div>
         </div>
       </FullBleed>
-      <section className="grid gap-6 pb-24 pt-8 md:grid-cols-2">
+      <section className="grid gap-6 pb-24 pt-8 md:grid-cols-2 [&>*]:min-w-0">
         <Reveal className="rounded-3xl bg-card p-6 ring-1 ring-line">
           <h3 className="text-2xl font-semibold">Closest to their goal</h3>
-          <div className="mt-5 space-y-3">
-            {barRows.map(({ opp, f }) => (
-              <Link key={opp.id} href={`/opportunities/${opp.id}`} className="block rounded-2xl bg-bg p-4 transition hover:ring-1 hover:ring-ink/20">
-                <div className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="truncate font-bold">{opp.title}</span>
-                  <span className="shrink-0 font-extrabold tabular-nums">{f.percent}%</span>
-                </div>
-                <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-line">
-                  <div className="bg-warm h-full rounded-full" style={{ width: `${Math.min(100, f.percent)}%` }} />
-                </div>
-                <p className="mt-1.5 text-xs text-muted">
-                  {money(f.pledged)} of {money(f.goal)}
-                </p>
-              </Link>
-            ))}
-          </div>
+          <div className="mt-5 space-y-3">{barRows.slice(0, 3).map(goalRow)}</div>
+          {barRows.length > 3 && (
+            <More label={`Show ${barRows.length - 3} more`} className="mt-3">
+              <div className="space-y-3">{barRows.slice(3).map(goalRow)}</div>
+            </More>
+          )}
         </Reveal>
         <Reveal delay={100} className="rounded-3xl bg-card p-6 ring-1 ring-line">
           <h3 className="text-2xl font-semibold">Latest pledges</h3>
-          <ul className="mt-5 divide-y divide-line">
-            {recent.slice(0, 6).map((p) => (
-              <li key={p.id} className="flex items-center gap-3 py-3">
-                <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-soft text-accent">
-                  ♥
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">
-                    <b>{p.sponsorName}</b> backed <b>{titleOf(p.opportunityId)}</b>
-                  </p>
-                  <p className="truncate text-xs text-muted">{p.tierName}</p>
-                </div>
-                <span className="shrink-0 font-extrabold tabular-nums">{money(p.amount)}</span>
-              </li>
-            ))}
-          </ul>
+          <ul className="mt-5 divide-y divide-line">{recent.slice(0, 3).map(pledgeRow)}</ul>
+          {recent.length > 3 && (
+            <More label={`Show ${Math.min(6, recent.length) - 3} more`} className="mt-1">
+              <ul className="divide-y divide-line">{recent.slice(3, 6).map(pledgeRow)}</ul>
+            </More>
+          )}
         </Reveal>
       </section>
 
