@@ -98,7 +98,8 @@ function SponsorRow({ s, i, step }: { s: DemoSponsor; i: number; step: number })
   );
 }
 
-export function HeroDemo({ campaign, sponsors }: { campaign: DemoCampaign; sponsors: DemoSponsor[] }) {
+/** Post → match → pledge on real data. With `react`, Peep in the hero sky reacts to each step. */
+export function HeroDemo({ campaign, sponsors, react = true }: { campaign: DemoCampaign; sponsors: DemoSponsor[]; react?: boolean }) {
   // Opens on the finished picture (good for a first glance and for thumbnails), then plays from step 1.
   const [step, setStep] = useState(2);
   const [paused, setPaused] = useState(false);
@@ -120,9 +121,9 @@ export function HeroDemo({ campaign, sponsors }: { campaign: DemoCampaign; spons
 
   // Peep, in the 3D scene behind, reacts to each step.
   useEffect(() => {
-    if (cycle === 0) return;
+    if (cycle === 0 || !react) return;
     window.dispatchEvent(new CustomEvent<Reaction>("peep", { detail: STEPS[step].react }));
-  }, [step, cycle]);
+  }, [step, cycle, react]);
 
   const ask = sponsors[0]?.ask;
   const pledged = useCount(step >= 2 && ask ? ask.amount : 0, step >= 2, 900);
@@ -208,14 +209,14 @@ export function HeroDemo({ campaign, sponsors }: { campaign: DemoCampaign; spons
               }}
               aria-current={step === i ? "step" : undefined}
               className={`relative w-full overflow-hidden rounded-full py-2 pl-2 pr-4 text-left transition-all duration-300 ${
-                step === i ? "bg-white text-[#2a2826] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]" : "glass-dark text-white/85 hover:text-white"
+                step === i ? "bg-ink text-bg shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)]" : "bg-card text-ink ring-1 ring-line hover:ring-ink/30"
               }`}
             >
               <span className="flex items-center gap-2.5">
-                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-extrabold ${step === i ? "bg-accent text-[#2a2826]" : "bg-white/15"}`}>{i + 1}</span>
+                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-extrabold ${step === i ? "bg-accent text-[#2a2826]" : "bg-bg"}`}>{i + 1}</span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-bold">{s.title}</span>
-                  <span className={`block truncate text-[11px] ${step === i ? "text-[#6e6a64]" : "text-white/60"}`}>{s.body}</span>
+                  <span className={`block truncate text-[11px] ${step === i ? "text-bg/70" : "text-muted"}`}>{s.body}</span>
                 </span>
               </span>
               {step === i && !paused && (

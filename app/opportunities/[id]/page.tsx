@@ -4,6 +4,7 @@ import { placeLabel } from "@/components/CampaignCard";
 import { CoverArt } from "@/components/CoverArt";
 import { FundingStats } from "@/components/Funding";
 import { MatchCard } from "@/components/MatchCard";
+import { PeepMark } from "@/components/Peep";
 import { ShareButton } from "@/components/ShareButton";
 import { TierRail, type SponsorOption } from "@/components/TierRail";
 import { Arrow, Eyebrow, Pill, SampleTag } from "@/components/ui";
@@ -20,8 +21,9 @@ function fmt(d: string) {
   return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
-export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CampaignPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | undefined>> }) {
   const { id } = await params;
+  const justPosted = (await searchParams)?.new === "1";
   const opp = await getOpportunity(id);
   if (!opp) notFound();
   const [sponsors, pledges] = await Promise.all([listSponsors(), listPledges()]);
@@ -30,6 +32,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
   const ranked = rankSponsors(opp, sponsors);
   const eligible = ranked.filter((r) => r.match.grade !== "Not eligible");
   const ineligible = ranked.filter((r) => r.match.grade === "Not eligible");
+  const strong = eligible.filter((r) => r.match.grade === "Excellent" || r.match.grade === "Strong");
   const options: SponsorOption[] = sponsors
     .map((s) => ({ id: s.id, name: s.name, blocked: scoreMatch(opp, s).blockers[0] }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -48,6 +51,22 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="-mt-2">
+      {justPosted && (
+        <div className="group animate-pop mb-8 flex flex-wrap items-center gap-4 rounded-3xl bg-mint-soft p-5 ring-1 ring-mint/40 sm:p-6" role="status">
+          <PeepMark className="h-14 w-16 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-2xl font-semibold">Your campaign is live.</p>
+            <p className="mt-1 text-sm text-muted">
+              {strong.length
+                ? `Peep found ${strong.length} strong sponsor fit${strong.length === 1 ? "" : "s"}, led by ${strong.slice(0, 3).map((r) => r.item.name).join(", ")}. Share your page, or reach out to them below.`
+                : "Share your page to start collecting pledges. Peep will flag new sponsors that fit as they join."}
+            </p>
+          </div>
+          <a href="#matches" className="btn-primary group">
+            See your matches <Arrow />
+          </a>
+        </div>
+      )}
       {/* Title block */}
       <header className="animate-rise max-w-4xl">
         <Eyebrow>
@@ -59,7 +78,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
       {/* Cover + funding */}
       <section className="mt-8 grid gap-8 lg:grid-cols-12 [&>*]:min-w-0">
-        <CoverArt id={opp.id} cause={opp.causes[0]} className="group aspect-[16/9] rounded-[28px] lg:col-span-8" />
+        <CoverArt id={opp.id} cause={opp.causes[0]} image={opp.coverImage} className="group aspect-[16/9] rounded-[28px] lg:col-span-8" />
         <aside className="lg:col-span-4">
           <FundingStats f={f} />
           <div className="mt-6 space-y-2">
@@ -110,6 +129,14 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
                 <p key={i}>{para}</p>
               ))}
             </div>
+            {opp.gallery && opp.gallery.length > 0 && (
+              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {opp.gallery.map((src, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={src} alt={`${opp.title}, photo ${i + 1}`} className="aspect-[4/3] w-full rounded-2xl object-cover ring-1 ring-line" />
+                ))}
+              </div>
+            )}
             <dl className="mt-8 border-t border-line">
               {details.map(([k, v]) => (
                 <div key={k} className="grid gap-1 border-b border-line py-3 sm:grid-cols-[140px_1fr]">

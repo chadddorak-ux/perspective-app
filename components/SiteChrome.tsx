@@ -6,7 +6,7 @@ import { Logo, SiteNav } from "./SiteNav";
 export { Logo };
 
 const FOOTER_LINKS = [
-  { title: "Nonprofits", links: [["/find", "Start a campaign"], ["/import", "Import a pitch"], ["/opportunities", "Discover campaigns"]] },
+  { title: "Nonprofits", links: [["/import", "Upload your pitch PDF"], ["/find", "Start a campaign"], ["/opportunities", "Discover campaigns"]] },
   { title: "Sponsors", links: [["/give", "Find your fit"], ["/sponsors", "Sponsor network"], ["/intros", "Warm intros"]] },
 ];
 

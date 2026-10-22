@@ -102,7 +102,16 @@ export function coverColors(cause: CauseId | undefined) {
   return { bg: p.sky[1], fg: "#2a2826", soft: p.sky[2] };
 }
 
-export function CoverArt({ id, cause, label, className = "" }: { id: string; cause?: CauseId; label?: string; className?: string }) {
+export function CoverArt({ id, cause, label, image, className = "" }: { id: string; cause?: CauseId; label?: string; image?: string; className?: string }) {
+  if (image) {
+    return (
+      <div className={`overflow-hidden bg-line ${/\babsolute\b/.test(className) ? "" : "relative"} ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        {label && <span className="absolute left-3 top-3 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-bold text-[#2a2826] shadow-sm backdrop-blur">{label}</span>}
+      </div>
+    );
+  }
   const scene = sceneOf(cause);
   const h = hash(id);
   const r = rand(h);

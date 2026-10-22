@@ -2,7 +2,8 @@ import Link from "next/link";
 import { CampaignCard } from "@/components/CampaignCard";
 import { CoverArt } from "@/components/CoverArt";
 import { HeroDemo, type DemoCampaign, type DemoSponsor } from "@/components/HeroDemo";
-import { PitchDemo, type PitchExample } from "@/components/home/PitchDemo";
+import { PdfDropButton } from "@/components/home/PdfDropButton";
+import { PdfDropDemo, type DropDemoData } from "@/components/home/PdfDropDemo";
 import { Radar } from "@/components/home/Radar";
 import { ScrollWords } from "@/components/home/ScrollWords";
 import { Marquee } from "@/components/Marquee";
@@ -10,12 +11,10 @@ import { CountUp, Reveal } from "@/components/Motion";
 import { World } from "@/components/scene/World";
 import type { Placement, SceneKind } from "@/components/scene/engine";
 import { Arrow, Eyebrow } from "@/components/ui";
-import { EXAMPLE_PITCHES } from "@/data/examples";
-import { extractWithRules } from "@/lib/extract";
 import { fundingFor, type Funding } from "@/lib/funding";
 import { money, rankSponsors } from "@/lib/match";
 import { directPitch } from "@/lib/outreach";
-import { AUDIENCES, CAUSES, CAUSE_GROUPS, INDUSTRIES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
+import { CAUSES, CAUSE_GROUPS, INDUSTRIES, SPONSOR_TYPES, label } from "@/lib/taxonomy";
 import { listOpportunities, listPledges, listSponsors } from "@/lib/store";
 import type { MatchResult, Opportunity } from "@/lib/types";
 
@@ -101,19 +100,23 @@ function EnvPanel({ kind, gremlin, title, sub, children }: { kind: SceneKind; gr
 const FAQ = [
   {
     q: "What does Perspective do?",
-    a: "It matches nonprofits with the brands, foundations and donors most likely to sponsor them. A nonprofit posts a campaign with a goal and sponsorship tiers; every sponsor in the network gets a fit score with the reasons behind it; sponsors pledge to the tier that fits.",
+    a: "It turns your sponsorship pitch into a campaign page, then pairs it with brands and donors whose funds are verified and whose giving goals your campaign meets. Upload your pitch PDF or start from scratch, fix anything Peep flags, post it free, and sponsors pledge to the tiers that fit them.",
+  },
+  {
+    q: "What does Peep do with my PDF?",
+    a: "Peep reads the text and photos right in your browser and fills in every field it can: campaign name, organization, dates, place, causes, tiers and benefits, and a cover photo. Then it flags anything missing. Nothing is posted until you've fixed the flags and pressed Post. When the site is set up with AI, the PDF is also read by Claude, which handles scanned pages and complex layouts.",
+  },
+  {
+    q: "Is it free?",
+    a: "Yes. Posting a campaign is free.",
   },
   {
     q: "How is a match scored?",
-    a: "Six factors out of 100: cause (30), geography (20), budget (15), audience (15), sponsor goals (15) and timing (5). Hard rules come first, so a sponsor that only funds 501(c)(3)s, or an industry a nonprofit has blocked, is marked not eligible instead of ranked.",
+    a: "Six factors out of 100: cause (30), geography (20), budget (15), audience (15), sponsor goals (15) and timing (5). Hard rules come first, so a sponsor that only funds 501(c)(3)s, or an industry you've turned down, is marked not eligible instead of ranked.",
   },
   {
     q: "Who is Peep?",
     a: "Peep is our matchmaking gremlin. It reads pitches, scores fits and cheers when a pledge lands. Click it in the sky up top and see what happens.",
-  },
-  {
-    q: "I already have a sponsorship deck. Do I start over?",
-    a: "No. Paste the pitch email or deck text into Import a pitch. Perspective pulls out the goal, tiers, dates, location and audience, builds the campaign, and drafts outreach to the best-fit sponsors.",
   },
   {
     q: "Is the data real?",
@@ -150,29 +153,22 @@ export default async function Home() {
     ask: match.suggestedTier ? { name: match.suggestedTier.name, amount: match.suggestedTier.amount } : undefined,
   }));
 
-  // Real parser output for the example pitches.
-  const pitches: PitchExample[] = EXAMPLE_PITCHES.map((p) => {
-    const d = extractWithRules(p.text).draft;
-    const opening = p.text
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l && !/^(hi|hello|dear)\b/i.test(l))
-      .join(" ");
-    return {
-      label: p.label,
-      text: opening.length > 210 ? `${opening.slice(0, opening.lastIndexOf(" ", 210))}…` : opening,
-      fields: [
-        { label: "Campaign", value: d.title || "—" },
-        { label: "Organization", value: d.orgName || "—" },
-        { label: "Where", value: [d.location.city, d.location.state].filter(Boolean).join(", ") || "—" },
-        { label: "When", value: dateRange(d) },
-        { label: "Tiers", value: d.tiers.length ? d.tiers.map((t) => money(t.amount)).join(" · ") : "—" },
-        { label: "Causes", value: d.causes.slice(0, 2).map((c) => label(CAUSES, c)).join(", ") || "—" },
-        { label: "Audience", value: d.audiences.slice(0, 2).map((a) => label(AUDIENCES, a)).join(", ") },
-        { label: "Goal", value: d.tiers.length ? money(d.tiers.reduce((s, t) => s + t.amount, 0)) + "+" : "—" },
-      ],
-    };
-  });
+  // The hero's PDF → campaign run uses the lead campaign (EAGLES SOAR arrived as exactly this kind of PDF).
+  const dropDemo: DropDemoData = {
+    fileName: `${lead.title.split(" ").slice(0, 2).join("-")}-Sponsorship.pdf`,
+    pages: 6,
+    id: lead.id,
+    cause: lead.causes[0],
+    title: lead.title,
+    org: lead.orgName,
+    when: dateRange(lead),
+    where: demoCampaign.place,
+    causes: lead.causes.slice(0, 3).map((c) => label(CAUSES, c)),
+    tiers: lead.tiers.map((t) => t.amount),
+    story: lead.summary,
+    goal: fundingFor(lead, pledges).goal,
+    sponsors: ranked.slice(0, 3).map(({ item, match }) => ({ name: item.name, score: match.score })),
+  };
 
   // Drafted pitches to the top three sponsors.
   const proposals = ranked.slice(0, 3).map(({ item, match }) => ({ sponsor: item.name, kind: sponsorKind(item), draft: directPitch(lead, item, match), tier: match.suggestedTier }));
@@ -208,25 +204,24 @@ export default async function Home() {
           <div className="mx-auto max-w-4xl text-center">
             <p className="glass-dark animate-rise inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold text-white/85">
               <span className="h-2 w-2 animate-blink rounded-full bg-mint" />
-              {rows.length} live campaigns · {sponsors.length} sponsors
+              Free for nonprofits · {rows.length} live campaigns
             </p>
             <h1 className="display animate-rise mt-6 text-[clamp(2.6rem,6.8vw,5.4rem)] text-[#fdf8f2] [animation-delay:60ms]">
-              Match your cause with sponsors who say yes.
+              Your pitch deck, turned into a funded campaign.
             </h1>
             <p className="animate-rise mx-auto mt-5 max-w-2xl text-lg text-white/75 sm:text-xl [animation-delay:120ms]">
-              Nonprofits post a campaign. Perspective finds the brands, foundations and donors that fit, shows exactly why, and they pledge.
+              Drop in your sponsorship PDF. Peep builds your campaign page, flags anything missing, then pairs you with brands and donors whose funds are verified and whose giving goals match your cause.
             </p>
             <div className="animate-rise mt-8 flex flex-wrap justify-center gap-3 [animation-delay:180ms]">
-              <Link href="/find" className="btn-bright group min-w-[200px] px-7 py-3.5 text-base">
-                I&apos;m a nonprofit <Arrow />
-              </Link>
-              <Link href="/give" className="btn-glass group min-w-[200px] px-7 py-3.5 text-base">
-                I&apos;m a sponsor <Arrow />
+              <PdfDropButton className="min-w-[230px] px-7 py-3.5 text-base" />
+              <Link href="/find" className="btn-glass group min-w-[200px] px-7 py-3.5 text-base">
+                Start a new campaign <Arrow />
               </Link>
             </div>
+            <p className="animate-rise mt-4 text-sm text-white/60 [animation-delay:220ms]">Post it free. Or drag your PDF anywhere on this page.</p>
           </div>
-          <div className="animate-rise mx-auto mt-14 max-w-5xl [animation-delay:240ms]">
-            <HeroDemo campaign={demoCampaign} sponsors={demoSponsors} />
+          <div className="animate-rise mx-auto mt-12 max-w-5xl [animation-delay:240ms]">
+            <PdfDropDemo data={dropDemo} />
           </div>
         </div>
       </FullBleed>
@@ -247,28 +242,41 @@ export default async function Home() {
         </Marquee>
       </FullBleed>
 
-      {/* The why, in one sentence */}
-      <section className="mx-auto max-w-4xl py-24 text-center sm:py-32">
+      {/* What we pair, and how */}
+      <section className="mx-auto max-w-5xl py-24 sm:py-32">
         <ScrollWords
-          className="display text-[clamp(1.9rem,4.4vw,3.4rem)] leading-[1.12]"
-          accent="Perspective"
-          text="“Sponsorship requests arrive every week. Most aren't a fit, and the few that are perfect get lost in the inbox.” So we built Perspective, to put the right people in the room when it matters most."
+          className="display mx-auto max-w-4xl text-center text-[clamp(1.9rem,4.4vw,3.4rem)] leading-[1.12]"
+          accent="verified"
+          text="We only bring you sponsors who are ready to give. Every brand and donor on Perspective has verified funds and tells us exactly what they want to support. Peep pairs your campaign with the ones whose goals it meets, so your ask lands with someone already looking for you."
         />
+        <div className="mt-14 grid gap-4 sm:grid-cols-3">
+          {[
+            { k: "Verified funds", v: "Sponsors confirm their budget before they pledge, so a yes means money, not maybe.", c: "bg-mint" },
+            { k: "Matched both ways", v: "Your causes, place, audience and tiers on one side. Each brand's and donor's requests on the other. Only real fits meet.", c: "bg-sky" },
+            { k: "Free to post", v: "Upload your pitch PDF or start from scratch. Posting a campaign costs nothing.", c: "bg-accent" },
+          ].map((x, i) => (
+            <Reveal key={x.k} delay={i * 80} className="rounded-3xl bg-card p-6 ring-1 ring-line">
+              <span aria-hidden className={`block h-3 w-3 rounded-full ${x.c}`} />
+              <p className="mt-4 font-display text-2xl font-semibold">{x.k}</p>
+              <p className="mt-2 text-muted">{x.v}</p>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
       {/* Meet Peep: from a pitch to matches to a drafted ask */}
       <EnvPanel
         kind="day"
         title="Meet Peep. Sponsorship, finally simple."
-        sub="Our matchmaking gremlin reads the pitch, scores every sponsor and drafts the ask."
+        sub="Our matchmaking gremlin reads your pitch, scores every sponsor and drafts the ask."
         gremlin={{ desktop: { x: 0.8, y: 0.72, size: 230 }, mobile: { x: 0.74, y: 0.74, size: 130 } }}
       >
         <Reveal className="text-center">
-          <h3 className="display mx-auto max-w-2xl text-3xl sm:text-[2.6rem]">From a pitch email to a live campaign, in one paste</h3>
-          <p className="mx-auto mt-3 max-w-xl text-muted">Paste any sponsorship ask. Peep pulls out the goal, tiers, dates and audience, then builds the campaign page.</p>
+          <h3 className="display mx-auto max-w-2xl text-3xl sm:text-[2.6rem]">Once you post, Peep finds the sponsors who&apos;ll say yes</h3>
+          <p className="mx-auto mt-3 max-w-xl text-muted">Every sponsor is scored against your campaign, with the reasons shown. The best fits get the right ask, and their pledges fill your bar.</p>
         </Reveal>
         <div className="mt-8">
-          <PitchDemo examples={pitches} />
+          <HeroDemo campaign={demoCampaign} sponsors={demoSponsors} react={false} />
         </div>
 
         <div className="mt-14 grid border-t border-line pt-12 md:grid-cols-2 md:divide-x md:divide-line">
@@ -344,7 +352,7 @@ export default async function Home() {
       <EnvPanel
         kind="mountains"
         title="Fund campaigns, not spreadsheets."
-        sub="Pledges land on a page everyone can see, with the rules both sides set."
+        sub="Pledges land on your page for everyone to see, with the rules you set."
         gremlin={{ desktop: { x: 0.83, y: 0.62, size: 150 }, mobile: { x: 0.8, y: 0.66, size: 96 } }}
       >
         <Reveal className="text-center">
@@ -477,11 +485,11 @@ export default async function Home() {
             <p className="eyebrow text-white/70">Get the right people in the room</p>
             <h2 className="display mt-4 max-w-2xl text-[clamp(2.6rem,6vw,4.8rem)] text-white">When it matters most.</h2>
             <div className="pointer-events-auto mt-8 flex flex-wrap gap-3">
-              <Link href="/find" className="btn-bright group px-7 py-3.5 text-base">
-                Start a campaign <Arrow />
+              <Link href="/import" className="btn-bright group px-7 py-3.5 text-base">
+                Upload your pitch PDF <Arrow />
               </Link>
-              <Link href="/opportunities" className="btn-glass group px-7 py-3.5 text-base">
-                Discover campaigns <Arrow />
+              <Link href="/find" className="btn-glass group px-7 py-3.5 text-base">
+                Start a new campaign <Arrow />
               </Link>
             </div>
           </div>

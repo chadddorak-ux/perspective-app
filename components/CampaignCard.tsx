@@ -23,6 +23,7 @@ export function CampaignCard({ opp, f, badge }: { opp: Opportunity; f: Funding; 
         <CoverArt
           id={opp.id}
           cause={opp.causes[0]}
+          image={opp.coverImage}
           label={`${KIND[opp.kind]} · ${placeLabel(opp)}`}
           className="aspect-[16/10]"
         />

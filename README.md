@@ -1,6 +1,6 @@
 # Perspective
 
-**Match any nonprofit with the brands, foundations and donors most likely to say yes**, and make the warm intro.
+**Turn a nonprofit's pitch deck into a funded campaign.** Drop in a sponsorship PDF; Perspective builds the campaign, flags anything missing, then pairs it with brands and donors whose funds are verified and whose giving goals it meets.
 
 Think grant finder, but for sponsorships and corporate giving, across every cause and every kind of sponsor. It's two-sided, every match comes with its reasons, and every match ends in a drafted pitch or a double opt-in introduction.
 
@@ -15,12 +15,23 @@ Perspective borrows the crowdfunding model from Kickstarter and GoFundMe:
 
 The difference is that every campaign also shows which sponsors fit it and why.
 
+The site speaks to nonprofits first: the hero is the PDF upload, and everything for sponsors sits in one "For sponsors" menu.
+
+### PDF → campaign
+
+1. **Read** (`lib/pdf-read.ts`): pdf.js runs in the browser and pulls out the text layer, the embedded photos (as JPEGs, largest first) and page previews. It loads on demand, and the same code runs in the single-file build.
+2. **Fill**: the text goes to `/api/extract`. With `ANTHROPIC_API_KEY` set, Claude reads the PDF itself, which also handles scans and complex layouts. Without a key, the rule-based parser reads the text, including deck layouts: letter-spaced headings, "X is a 501(c)(3)" intros, and tier benefits listed under each tier.
+3. **Check** (`lib/campaign-check.ts`): required gaps (organization, campaign name, pitch, cause, location, tiers, contact email, a future date for events) must be fixed before posting. Recommended ones (goal, with a suggestion from the tiers; EIN; cover photo; audience; story) are flagged but optional.
+4. **Post**: the campaign saves with its cover and gallery photos, and opens with its best-fit sponsors.
+
+![Review after reading a PDF](docs/screenshots/import-review.png)
+
 | Flow | Route | What it does |
 |---|---|---|
 | Discover | `/opportunities` | Browse live campaigns by cause group, with filters and sorts: happening soon, nearly funded, just launched, most sponsors, biggest goals. |
 | Campaign | `/opportunities/[id]` | Cover, story and funding stats ($ pledged of goal, % funded, sponsors, days to go). Tier cards show "X of Y left" and a pledge button. Below: best-fit sponsors with drafted outreach, and the list of sponsors who've pledged. |
 | Start a campaign | `/find` | GoFundMe-style five-step flow (basics, causes, place and time, goal and tiers, asks), then a review with a card preview, matching sponsors, and launch. |
-| Import a pitch | `/import` | Paste any sponsorship email or one-pager (and attach the PDF). It becomes a campaign plus matches. |
+| Upload a pitch PDF | `/import` | Drop a sponsorship deck or one-pager. Peep reads the text and photos, fills in the campaign, flags what's missing (required gaps block posting), and posts it free. A sample deck is built in; pasting a pitch email still works. |
 | For sponsors | `/give` | A brand or donor sets its goals and gets ranked campaigns with their funding progress and a "Back this campaign" action. |
 | Sponsor profile | `/sponsors/[id]` | What a sponsor funds, the campaigns it has backed, and its best-fit campaigns. |
 | Intros | `/intros` | Double opt-in intro pipeline: requested → opted in → introduced → won/passed. |
@@ -48,7 +59,7 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY`. This turns on Claude for pitch import, which reads PDFs and benefit grids much better. Without a key, import falls back to the built-in rule-based parser.
+Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY`. This turns on Claude for PDF import, which reads scanned pages and benefit grids much better. Without a key, PDFs are read in the browser and the rule-based parser fills in the campaign.
 
 ```bash
 npm test           # matching, extraction and outreach unit tests (node:test)
@@ -73,7 +84,7 @@ This produces the whole site as a single self-contained HTML file you can open b
 - Next-only modules are swapped for small browser stand-ins in `static/`.
 - Anything a visitor creates (campaigns, pledges, intros) is saved in their browser's localStorage.
 
-**Limitation:** pitch import always uses the rule-based parser here, because there's no server to hold an API key.
+**Limitation:** PDF import reads in the browser and uses the rule-based parser here, because there's no server to hold an API key. Scanned PDFs (no text layer) still give you their photos, but the fields need filling in by hand.
 
 The build also writes `out-static/artifact.html`, the same page without the `<html>`/`<head>`/`<body>` wrapper, for hosts that add their own.
 
@@ -134,6 +145,8 @@ lib/
   match.ts           scoring engine
   funding.ts         goals, pledges, tier slots, days to go
   extract.ts         rule-based pitch parser
+  pdf-read.ts        in-browser PDF reading: text, photos, page previews
+  campaign-check.ts  what a campaign still needs before it can post
   ai-extract.ts      Claude-based extraction (structured outputs)
   outreach.ts        pitch / opt-in / intro email drafts
   store-core.ts      store logic shared by both builds
@@ -142,6 +155,7 @@ static/              browser entry, router and Next stand-ins for the standalone
 scripts/             build-static.mjs
 data/seed.ts         fictional sample network, goals and pledges
 data/examples.ts     example pitches for the import demo
+data/sample-deck.ts  a sample sponsorship deck PDF (fictional org) for "Try a sample deck"
 docs/                product brief and screenshots
 ```
 

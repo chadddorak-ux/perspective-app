@@ -46,6 +46,8 @@ export type Opportunity = {
   excludedIndustries: IndustryId[]; // sponsors the organization won't accept
   partners: string[];
   contact: { name?: string; email?: string; phone?: string; website?: string };
+  coverImage?: string; // a JPEG/PNG data URL, often pulled from the pitch PDF
+  gallery?: string[]; // more images from the PDF, shown on the campaign page
   source: "seed" | "import" | "intake";
   sample?: boolean;
   featured?: boolean; // pinned to the top of the home page and Discover

@@ -521,6 +521,14 @@ textarea {
     opacity: 0;
   }
 }
+@keyframes scan {
+  from {
+    top: -8%;
+  }
+  to {
+    top: 92%;
+  }
+}
 @keyframes caret {
   50% {
     opacity: 0;

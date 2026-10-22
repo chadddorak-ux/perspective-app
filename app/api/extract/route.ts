@@ -27,9 +27,10 @@ export async function POST(req: Request) {
     }
   }
 
+  // Without AI the browser sends the PDF's text layer, which the rules parser reads.
   const result = extractWithRules(text);
   if (pdfBase64 && !text.trim()) {
-    result.warnings.unshift("Reading PDFs needs an ANTHROPIC_API_KEY. For now, paste the package text instead.");
+    result.warnings.unshift("This PDF has no readable text (it may be a scan). Set ANTHROPIC_API_KEY to read scanned pages, or fill in the fields below.");
   }
   return NextResponse.json(result);
 }

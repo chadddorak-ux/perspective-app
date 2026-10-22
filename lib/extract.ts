@@ -143,11 +143,13 @@ export function parseTiers(text: string): Tier[] {
   const lines = text.split(/\r?\n/);
   const tiers: Tier[] = [];
   const seen = new Set<number>();
-  const push = (name: string, amount: number) => {
+  const push = (name: string, amount: number, line?: number) => {
     if (amount < 250 || seen.has(amount)) return;
     seen.add(amount);
     const clean = name.replace(/^[\s•*·\-–—]+/, "").replace(/[\s:–—\-|(]+$/, "").trim();
-    tiers.push({ name: clean || `$${amount.toLocaleString("en-US")} level`, amount, benefits: [] });
+    const tier: Tier = { name: clean || `$${amount.toLocaleString("en-US")} level`, amount, benefits: [] };
+    if (line !== undefined) Object.assign(tier, tierDetails(lines, line));
+    tiers.push(tier);
   };
 
   lines.forEach((line, i) => {
@@ -172,10 +174,45 @@ export function parseTiers(text: string): Tier[] {
       const before = line.slice(0, line.indexOf(amounts[0])).replace(/[:–—\-|•*]+\s*$/, "").trim();
       const prev = lines.slice(Math.max(0, i - 2), i).reverse().find((l) => l.trim());
       const name = TIER_WORDS.test(before) ? before : prev && TIER_WORDS.test(prev) && prev.length < 60 ? prev : before;
-      if (name.length <= 80 && (TIER_WORDS.test(name) || /sponsor/i.test(line))) push(name, parseAmount(amounts[0]));
+      if (name.length <= 80 && (TIER_WORDS.test(name) || /sponsor/i.test(line))) push(name, parseAmount(amounts[0]), i);
     }
   });
   return tiers.sort((a, b) => b.amount - a.amount);
+}
+
+// "(exclusive)", "only one", "limited to 3": how many sponsors a tier takes.
+function availabilityOf(s: string): Tier["availability"] {
+  if (/\bexclusive\b|\bonly one\b|\bone available\b/i.test(s)) return "exclusive";
+  if (/\blimited\b|\b[2-5] available\b/i.test(s)) return "limited";
+  return undefined;
+}
+
+/**
+ * Benefits for a single-amount tier line: either listed in parentheses after
+ * the amount ("$5,000 (table for ten, logo in program)"), or as the short
+ * lines under it, the way sponsorship decks lay them out.
+ */
+function tierDetails(lines: string[], i: number): Pick<Tier, "availability" | "benefits"> {
+  const line = lines[i];
+  const availability = availabilityOf(line);
+  const after = line.slice(line.search(AMOUNT_RE) + 1);
+  const paren = after.match(/\(([^)]{3,})\)/)?.[1];
+  if (paren && !/^(exclusive|limited)/i.test(paren.trim())) {
+    return { availability, benefits: paren.split(/,\s*|;\s*/).map((b) => b.trim()).filter((b) => b.length > 2).map(capitalize) };
+  }
+  const benefits: string[] = [];
+  for (let j = i + 1; j < lines.length && benefits.length < 6; j++) {
+    const l = lines[j].replace(/^[\s•*·\-–—]+/, "").trim();
+    if (!l || l.match(AMOUNT_RE)) break;
+    // Stop at headings (one or two words) and at paragraphs.
+    if (l.split(/\s+/).length < 3 || l.length > 140 || (l.length > 80 && /[.!?]$/.test(l))) break;
+    benefits.push(capitalize(l.replace(/[.;]$/, "")));
+  }
+  return { availability, benefits };
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function parseLocation(text: string): Opportunity["location"] {
@@ -230,6 +267,9 @@ const ORG_SUFFIX =
   "Foundation|Fund|Alliance|Association|Society|Collective|Network|Coalition|Institute|Council|Club|Center|Centre|Project|Initiative|Inc\\.?|League|Academy|Trust|Partnership|Bank|Pantry|Rescue|Shelter|Ministries|Services|Theater|Theatre|Orchestra|Museum|Library|Clinic|Scouts|Soccer|Baseball|Basketball|Football|Sports|Conservancy|Fellowship|Mission|House|Works|Corps";
 
 function parseOrg(text: string): string | undefined {
+  // "Bayside Girls Who Build is a 501(c)(3) nonprofit…" names the organization most reliably.
+  const intro = text.match(/(?:^|[.\n]\s*)((?:[A-Z][\w.'’&-]*\s+){0,6}[A-Z][\w.'’&-]*)\s+is\s+an?\s+(?:[\w-]+\s+){0,3}?(?:501\s*\(?c\)?|nonprofit|non-profit|charity|charitable)/);
+  if (intro) return intro[1].replace(/^(The|Our)\s+/, "").trim();
   const m = text.match(new RegExp(`\\b((?:[A-Z][\\w.'’&-]*\\s+){1,6}(?:${ORG_SUFFIX}))\\b`));
   return m?.[1].replace(/^(The|Our|A)\s+/, "").trim();
 }
@@ -244,7 +284,8 @@ const NAMED_AFTER_VERB = new RegExp(
 );
 
 function parseTitle(text: string): string | undefined {
-  const m = text.match(new RegExp(`((?:[A-Z0-9&][\\w&'’.-]*\\s+){1,7}(?:${EVENT_WORDS}))(\\s+20\\d\\d)?\\b`));
+  // Names stay on one line, so deck headings above them don't leak in.
+  const m = text.match(new RegExp(`((?:[A-Z0-9&][\\w&'’.-]*[ \\t]+){1,7}(?:${EVENT_WORDS}))([ \\t]+20\\d\\d)?\\b`));
   if (!m) return text.match(NAMED_AFTER_VERB)?.[1];
   return (m[1] + (m[2] ?? "")).replace(/^(The|Our|A|An|Annual)\s+/, "").replace(/\s+/g, " ").trim();
 }
@@ -291,6 +332,10 @@ function parseOrgType(text: string): OrgTypeId {
 
 function summarize(text: string): string {
   const sentences = text
+    .split("\n")
+    // Drop headings: short lines that don't end like a sentence.
+    .filter((l) => l.trim().length >= 70 || /[.!?]["”)]?\s*$/.test(l))
+    .join(" ")
     .replace(/\s+/g, " ")
     // Split on sentence ends, but not after initials or titles ("Capt. Richard P. Hall").
     .split(/(?<=[.!?])(?<!\b[A-Z]\.)(?<!\b(?:Capt|Mr|Mrs|Ms|Dr|St|Lt|Col|Gen|Sgt|Maj|Inc|Jr|Sr)\.)\s+/)
@@ -316,7 +361,13 @@ function rankByMentions<T extends string>(text: string, table: [T, RegExp][]): T
     .map((m) => m.id);
 }
 
-export function extractWithRules(text: string): ExtractResult {
+/** Text pulled from PDFs: rejoin letter-spaced headings ("S P O N S O R S" → "SPONSORS"). */
+export function normalizeText(text: string): string {
+  return text.replace(/\b(?:[A-Z0-9] ){2,}[A-Z0-9]\b/g, (m) => m.replace(/ /g, ""));
+}
+
+export function extractWithRules(raw: string): ExtractResult {
+  const text = normalizeText(raw);
   const warnings: string[] = [];
   const dates = parseDates(text);
   const tiers = parseTiers(text);

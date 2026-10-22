@@ -16,6 +16,8 @@ const keys = <T extends Record<string, string>>(o: T) => Object.keys(o) as [keyo
 const text = (max: number) => z.string().trim().max(max);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("").transform(() => undefined));
 const usd = z.coerce.number().int().min(0).max(100_000_000);
+// Images travel as data URLs; ~1.5 MB each is plenty for a downscaled JPEG.
+const imageData = z.string().max(2_000_000).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, "Images must be JPEG, PNG or WebP");
 
 export const TierInput = z.object({
   name: text(120),
@@ -58,6 +60,8 @@ export const OpportunityInput = z.object({
       website: text(300).optional(),
     })
     .default({}),
+  coverImage: imageData.optional(),
+  gallery: z.array(imageData).max(6).optional(),
 });
 export type OpportunityInput = z.infer<typeof OpportunityInput>;
 

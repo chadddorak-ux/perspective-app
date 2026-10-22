@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PeepMark } from "./Peep";
 
+// Visitors are nonprofits first; everything for sponsors lives in one menu.
 const LEFT = [
+  { href: "/import", label: "Upload a PDF" },
   { href: "/opportunities", label: "Discover" },
-  { href: "/give", label: "For sponsors" },
-  { href: "/import", label: "Import a pitch" },
 ];
-const RIGHT = [
-  { href: "/sponsors", label: "Sponsors" },
-  { href: "/intros", label: "Intros" },
+const SPONSOR_LINKS = [
+  { href: "/give", label: "Find campaigns to back", note: "Ranked by fit with your goals" },
+  { href: "/sponsors", label: "Sponsor network", note: "Brands, foundations and donors" },
+  { href: "/intros", label: "Warm intros", note: "Double opt-in introductions" },
 ];
 
 export function Logo({ onDark = false }: { onDark?: boolean }) {
@@ -32,8 +33,26 @@ export function SiteNav() {
   const path = usePathname();
   const [dark, setDark] = useState(false);
   const [open, setOpen] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    setOpen(false);
+    setMenu(false);
+  }, [path]);
+
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !menuRef.current?.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [menu]);
 
   useEffect(() => {
     let raf = 0;
@@ -76,13 +95,32 @@ export function SiteNav() {
               {n.label}
             </Link>
           ))}
+          <div ref={menuRef} className="relative hidden lg:block">
+            <button
+              type="button"
+              className={`${link} flex items-center gap-1 ${SPONSOR_LINKS.some((n) => active(n.href)) ? (dark ? "text-white" : "text-brand") : ""}`}
+              aria-expanded={menu}
+              aria-haspopup="true"
+              onClick={() => setMenu((m) => !m)}
+            >
+              For sponsors
+              <svg aria-hidden viewBox="0 0 12 12" className={`h-3 w-3 transition-transform ${menu ? "rotate-180" : ""}`}>
+                <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {menu && (
+              <div className="glass animate-pop absolute left-0 top-full mt-3 w-72 rounded-2xl p-2 text-ink">
+                {SPONSOR_LINKS.map((n) => (
+                  <Link key={n.href} href={n.href} className={`block rounded-xl px-3 py-2.5 hover:bg-black/5 ${active(n.href)}`}>
+                    <span className="block text-[15px] font-bold">{n.label}</span>
+                    <span className="block text-xs text-muted">{n.note}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
-        <nav className={`flex items-center gap-1 rounded-2xl p-1.5 ${pill}`} aria-label="Account">
-          {RIGHT.map((n) => (
-            <Link key={n.href} href={n.href} className={`${link} hidden md:block ${active(n.href)}`}>
-              {n.label}
-            </Link>
-          ))}
+        <nav className={`flex items-center gap-1 rounded-2xl p-1.5 ${pill}`} aria-label="Get started">
           <Link href="/find" className={`${dark ? "btn-bright" : "btn-primary"} group hidden px-4 py-2 sm:inline-flex`}>
             Start a campaign
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
@@ -103,8 +141,14 @@ export function SiteNav() {
       </div>
       {open && (
         <div id="mobile-menu" className="glass animate-pop mx-auto mt-2 max-w-[1320px] rounded-2xl p-2 lg:hidden">
-          {[{ href: "/find", label: "Start a campaign" }, ...LEFT, ...RIGHT].map((n) => (
+          {[{ href: "/find", label: "Start a campaign" }, ...LEFT].map((n) => (
             <Link key={n.href} href={n.href} className={`block rounded-xl px-4 py-3 text-base font-semibold hover:bg-black/5 ${active(n.href)}`}>
+              {n.label}
+            </Link>
+          ))}
+          <p className="eyebrow mt-2 border-t border-line px-4 pb-1 pt-4 text-muted">For sponsors</p>
+          {SPONSOR_LINKS.map((n) => (
+            <Link key={n.href} href={n.href} className={`block rounded-xl px-4 py-2.5 text-base font-semibold hover:bg-black/5 ${active(n.href)}`}>
               {n.label}
             </Link>
           ))}
