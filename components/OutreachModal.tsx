@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Overlay } from "./Overlay";
 import { directPitch, introEmail, optInAsk, type Draft } from "@/lib/outreach";
 import type { MatchResult, Opportunity, SponsorProfile } from "@/lib/types";
 
@@ -48,7 +49,7 @@ export function OutreachModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose} role="dialog" aria-modal="true">
+    <Overlay onClose={onClose} label={`Draft outreach to ${sponsor.name}`}>
       <div className="card flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <h2 className="font-semibold">Draft outreach · {sponsor.name}</h2>
@@ -86,6 +87,6 @@ export function OutreachModal({
           <button className="btn-primary" onClick={copy}>{copied ? "Copied" : "Copy"}</button>
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }

@@ -104,13 +104,15 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
   // The cursor glides between targets.
   useLayoutEffect(() => {
     const host = box.current?.getBoundingClientRect();
-    if (!host) return;
+    if (!host || !box.current) return;
+    // Screen rects are scaled when the demo is shrunk to fit; the cursor moves in unscaled px.
+    const k = host.width / box.current.offsetWidth || 1;
     const at = (el: Element | null, dx = 0.5, dy = 0.55) => {
       const r = el?.getBoundingClientRect();
-      return r ? { x: r.left - host.left + r.width * dx, y: r.top - host.top + r.height * dy } : { x: host.width * 0.9, y: -20 };
+      return r ? { x: (r.left - host.left + r.width * dx) / k, y: (r.top - host.top + r.height * dy) / k } : { x: (host.width / k) * 0.9, y: -20 };
     };
     let target: { x: number; y: number } | null = null;
-    if (t < T.move) target = { x: host.width * 0.42, y: -30 };
+    if (t < T.move) target = { x: (host.width / k) * 0.42, y: -30 };
     else if (t < T.drop + 300) target = at(zone.current);
     else if (t >= T.fixGoal - 700 && t < T.typeEmail - 200) target = at(goalBtn.current);
     else if (t >= T.typeEmail - 200 && t < T.emailDone + 200) target = at(emailField.current, 0.3);
@@ -151,7 +153,7 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
           <div className="flex flex-col gap-3">
             <div
               ref={zone}
-              className={`relative grid min-h-[230px] place-items-center overflow-hidden rounded-2xl border-2 border-dashed p-4 text-center transition-all duration-500 sm:min-h-[300px] ${
+              className={`relative grid min-h-[170px] place-items-center overflow-hidden rounded-2xl border-2 border-dashed p-4 text-center transition-all duration-500 sm:min-h-[300px] ${
                 dropped ? "border-transparent bg-card" : t >= T.move + 600 ? "scale-[1.02] border-accent bg-brand-soft" : "border-line bg-card"
               }`}
             >
@@ -163,7 +165,7 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
                 </div>
               ) : (
                 <div className="relative h-full w-full">
-                  <div className="relative mx-auto h-[150px] w-[118px] sm:h-[190px] sm:w-[150px]">
+                  <div className="relative mx-auto h-[100px] w-[80px] sm:h-[190px] sm:w-[150px]">
                     {[2, 1, 0].map((k) => (
                       <div
                         key={k}
@@ -301,7 +303,7 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
       </div>
 
       {/* Steps */}
-      <ol className="mx-auto mt-4 grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-4">
+      <ol className="mx-auto mt-4 grid max-w-4xl grid-cols-4 gap-2">
         {STEPS.map((s, i) => (
           <li key={s.label}>
             <button
@@ -317,7 +319,7 @@ export function PdfDropDemo({ data }: { data: DropDemoData }) {
             >
               <span className="flex items-center gap-2">
                 <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-extrabold ${step === i && started ? "bg-accent text-[#2a2826]" : "bg-white/15"}`}>{i + 1}</span>
-                <span className="truncate text-[13px] font-bold">{s.label}</span>
+                <span className="hidden truncate text-[13px] font-bold sm:inline">{s.label}</span>
               </span>
             </button>
           </li>

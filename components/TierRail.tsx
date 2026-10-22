@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { money } from "@/lib/match";
 import type { TierFunding } from "@/lib/funding";
+import { Overlay } from "./Overlay";
 import { Arrow } from "./ui";
 import { peepReact, peepSay } from "@/lib/peep-events";
 
@@ -110,8 +111,8 @@ function PledgeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Sponsor ${tier.tier.name}`}>
-      <div className="card w-full max-w-md overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <Overlay onClose={onClose} label={`Sponsor ${tier.tier.name}`}>
+      <div className="card max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="bg-accent px-6 py-5 text-[#2a2826]">
           <p className="eyebrow text-[10px]">Pledge {money(tier.tier.amount)}</p>
           <h2 className="display mt-1 text-3xl font-semibold">{tier.tier.name}</h2>
@@ -181,6 +182,6 @@ function PledgeModal({
           </div>
         )}
       </div>
-    </div>
+    </Overlay>
   );
 }

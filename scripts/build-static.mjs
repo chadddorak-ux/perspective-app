@@ -87,11 +87,11 @@ const style = `${inlineFonts()}\n${css}`;
 const title = "Peep";
 const noscript = `<noscript><p style="padding:24px;font-family:system-ui">Peep needs JavaScript to run.</p></noscript>`;
 
-// Same as lib/theme.ts THEME_INIT: apply a saved light/dark choice before paint.
-const themeInit = `<script>try{var t=localStorage.getItem("peep-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>`;
+// Same as lib/theme.ts THEME_INIT: dark unless the visitor picked light, set before paint.
+const themeInit = `<script>try{document.documentElement.dataset.theme=localStorage.getItem("peep-theme")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>`;
 const body = `${themeInit}\n<div id="root"></div>\n${noscript}\n<script>${js}</script>`;
 const full = `<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

@@ -9,7 +9,7 @@
 import * as THREE from "three";
 import { withRim } from "./materials";
 
-export type Mood = "idle" | "happy" | "love" | "mischief" | "angry" | "attention" | "surprised" | "sleepy" | "sass";
+export type Mood = "idle" | "happy" | "love" | "mischief" | "angry" | "attention" | "surprised" | "sleepy" | "sass" | "impatient";
 export type Reaction =
   | "post"
   | "match"
@@ -26,6 +26,7 @@ export type Reaction =
   | "wave"
   | "pop"
   | "sass"
+  | "impatient"
   | "leap";
 
 type MouthKind = "smile" | "grin" | "smirk" | "sly" | "snarl" | "o" | "small";
@@ -42,6 +43,8 @@ const FACES: Record<Mood, FaceDef> = {
   surprised: { lid: 0, lower: 0, tilt: 0, brow: -0.22, browY: 0.1, ears: 0.45, blush: 0.3, flush: 0, mouth: "o", eye: 1.14 },
   // One brow up, lids low, a smirk: "mmm, what?"
   sass: { lid: 0.36, lower: 0.12, tilt: 0.06, brow: 0.04, browY: -0.01, browSkew: 0.15, ears: 0.15, blush: 0.45, flush: 0, mouth: "smirk", eye: 1 },
+  // Done waiting: lids low, eyes off to the side, one brow cocked.
+  impatient: { lid: 0.42, lower: 0.1, tilt: 0.22, brow: 0.28, browY: -0.02, browSkew: 0.07, ears: -0.25, blush: 0.1, flush: 0, mouth: "smirk", eye: 1 },
   sleepy: { lid: 0.74, lower: 0.12, tilt: -0.15, brow: -0.05, browY: -0.02, ears: -0.45, blush: 0.2, flush: 0, mouth: "small", eye: 1 },
 };
 
@@ -79,7 +82,6 @@ const C = {
   mouth: "#2b1430",
   tongue: "#ff7fa6",
   cheek: "#ff8db3",
-  heart: ["#ff6b8f", "#ff8a5c", "#ff9fc4"],
 };
 
 const HEAD = { y: 1.62, a: 1.12, b: 0.92, c: 0.94 };
@@ -109,17 +111,12 @@ function earShape(): THREE.Shape {
   return s;
 }
 
-function heartShape(): THREE.Shape {
-  const s = new THREE.Shape();
-  s.moveTo(0, -0.3);
-  s.bezierCurveTo(-0.05, -0.25, -0.35, -0.05, -0.35, 0.12);
-  s.bezierCurveTo(-0.35, 0.3, -0.12, 0.36, 0, 0.2);
-  s.bezierCurveTo(0.12, 0.36, 0.35, 0.3, 0.35, 0.12);
-  s.bezierCurveTo(0.35, -0.05, 0.05, -0.25, 0, -0.3);
-  return s;
-}
+export type GremlinOptions = {
+  /** Hearts float out of her stage and across the page, so the page draws them. */
+  onHearts?: (n: number) => void;
+};
 
-export function makeGremlin(): Gremlin {
+export function makeGremlin(opts: GremlinOptions = {}): Gremlin {
   const root = new THREE.Group();
   const hop = new THREE.Group();
   const squash = new THREE.Group();
@@ -371,17 +368,23 @@ export function makeGremlin(): Gremlin {
     squash.add(arm);
   }
 
+  // Feet pivot at the heel, so one can tap.
+  const feet: THREE.Group[] = [];
   for (const side of [-1, 1]) {
+    const heel = new THREE.Group();
+    heel.position.set(side * 0.32, 0.02, -0.08);
     const foot = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), matte(C.foot));
     foot.scale.set(0.24, 0.13, 0.3);
-    foot.position.set(side * 0.32, 0.07, 0.16);
-    squash.add(foot);
+    foot.position.set(0, 0.05, 0.24);
+    heel.add(foot);
     for (const k of [-1, 0, 1]) {
       const claw = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.08, 8), clawMat);
-      claw.position.set(side * 0.32 + k * 0.08, 0.06, 0.45);
+      claw.position.set(k * 0.08, 0.04, 0.53);
       claw.rotation.x = Math.PI / 2;
-      squash.add(claw);
+      heel.add(claw);
     }
+    squash.add(heel);
+    feet.push(heel);
   }
 
   // Her oil lantern. It hangs from her right claw and swings as she moves,
@@ -437,9 +440,7 @@ export function makeGremlin(): Gremlin {
   const LANTERN_H = 0.52 * 1.4; // handle top to the bottom of the base
   const LANTERN_GROUND = new THREE.Vector3(1.22, LANTERN_H, 0.32);
 
-  // Hearts for happy moments, and little puffs of steam for cross ones.
-  const heartGeo = new THREE.ExtrudeGeometry(heartShape(), { depth: 0.06, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 3, curveSegments: 16 });
-  heartGeo.center();
+  // Little puffs of steam for cross moments. (Hearts are drawn by the page.)
   type Particle = { mesh: THREE.Mesh; mat: THREE.MeshStandardMaterial; life: number; x: number; drift: number; spin: number };
   const particle = (geo: THREE.BufferGeometry, color: string, emissive: number): Particle => {
     const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: emissive, roughness: 0.5, transparent: true });
@@ -448,7 +449,7 @@ export function makeGremlin(): Gremlin {
     root.add(mesh);
     return { mesh, mat, life: -1, x: 0, drift: 0, spin: 0 };
   };
-  const hearts = Array.from({ length: 8 }, (_, i) => particle(heartGeo, C.heart[i % 3], 0.35));
+  const hearts = (n: number) => opts.onHearts?.(n);
   const steamGeo = new THREE.SphereGeometry(0.14, 14, 10);
   const steam = Array.from({ length: 6 }, () => particle(steamGeo, "#c9c3d6", 0.1));
   // life is -1 when idle; a small negative life is a stagger before it appears.
@@ -491,6 +492,8 @@ export function makeGremlin(): Gremlin {
   let swingV = 0;
   let motionVX = 0;
   let night = false;
+  let impatientUntil = -1;
+  let imp = 0; // the impatient pose, blended 0..1
   const handAt = new THREE.Vector3();
   const handPrev = new THREE.Vector3();
   let handPrimed = false;
@@ -514,6 +517,7 @@ export function makeGremlin(): Gremlin {
     if (mood !== "idle" && t > moodUntil && petting < 0.05) mood = "idle";
     petAmt = damp(petAmt, Math.min(1, petting / 1.2), 5, dt);
     dangle = damp(dangle, dangleWant, 8, dt);
+    imp = damp(imp, t < impatientUntil ? 1 : 0, 7, dt);
     const target = petAmt > 0.12 ? (petting > 2.5 ? FACES.love : FACES.happy) : FACES[mood];
 
     // Blend the face toward the mood.
@@ -620,6 +624,11 @@ export function makeGremlin(): Gremlin {
     if (action === "think") {
       lx = Math.sin(actionT * 5) > 0 ? 0.8 : -0.8;
       ly = -0.7;
+    } else if (imp > 0.5) {
+      // Eyes off to the side, with a pointed glance back at you now and then.
+      const glance = Math.sin(t * 0.8) > 0.55;
+      lx = glance ? 0 : -0.75;
+      ly = glance ? 0 : -0.25;
     } else if (mood === "mischief") {
       lx = 0.9;
       ly = 0.1;
@@ -745,6 +754,18 @@ export function makeGremlin(): Gremlin {
       rz = lerp(rz, 2.6, armsUp);
       lz = lerp(lz, -2.6, armsUp);
     }
+    // Impatient: arms folded, right claw holding the left elbow, a foot tapping.
+    // Both shoulders drop and come forward, out from under her chin, so the folded arms sit in front of her belly.
+    if (imp > 0.001) {
+      rz = lerp(rz, -1.57, imp);
+      rx = lerp(rx, 0, imp);
+      lz = lerp(lz, 1.3, imp);
+      lx2 = lerp(lx2, -1.0, imp);
+    }
+    right.position.set(lerp(0.6, 0.36, imp), lerp(0.98, 0.78, imp), lerp(0.12, 0.8, imp));
+    left.position.set(lerp(-0.6, -0.48, imp), lerp(0.98, 0.8, imp), lerp(0.12, 0.62, imp));
+    right.scale.y = 1 + 0.35 * imp;
+    feet[1].rotation.x = -0.4 * Math.max(0, Math.sin(t * 9)) * imp;
     if (dangle > 0.01) {
       rz = lerp(rz, 1.1 + Math.sin(t * 13) * 0.5, dangle);
       lz = lerp(lz, -1.1 - Math.sin(t * 13 + 1.3) * 0.5, dangle);
@@ -782,7 +803,7 @@ export function makeGremlin(): Gremlin {
       petHearts += dt;
       if (petting > 1.2 && petHearts > 0.7) {
         petHearts = 0;
-        emit(hearts, 1, 1.4);
+        hearts(1);
       }
     }
 
@@ -794,29 +815,22 @@ export function makeGremlin(): Gremlin {
       if (r >= 0.45 && r < 0.75) setMood("mischief", 1.8);
     }
 
-    // Particles.
-    for (const [pool, rise, life] of [
-      [hearts, 1.4, 1.5],
-      [steam, 0.9, 1.1],
-    ] as const) {
-      for (const h of pool) {
-        if (h.life === -1) continue;
-        h.life += dt;
-        if (h.life < 0) continue;
-        const p = h.life / life;
-        if (p >= 1) {
-          h.life = -1;
-          h.mesh.visible = false;
-          continue;
-        }
-        h.mesh.visible = true;
-        const base = pool === hearts ? 2.5 : 2.2;
-        h.mesh.position.set(h.x + Math.sin(p * 6) * 0.12 + h.drift * p, base + p * rise + y, pool === hearts ? 0.4 : -0.1);
-        const s = pool === hearts ? (p < 0.2 ? (p / 0.2) * 0.5 : 0.5 - p * 0.12) : 0.6 + p * 1.2;
-        h.mesh.scale.setScalar(s);
-        h.mesh.rotation.y = p * h.spin;
-        h.mat.opacity = p > 0.6 ? 1 - (p - 0.6) / 0.4 : pool === hearts ? 1 : 0.8;
+    // Steam.
+    for (const h of steam) {
+      if (h.life === -1) continue;
+      h.life += dt;
+      if (h.life < 0) continue;
+      const p = h.life / 1.1;
+      if (p >= 1) {
+        h.life = -1;
+        h.mesh.visible = false;
+        continue;
       }
+      h.mesh.visible = true;
+      h.mesh.position.set(h.x + Math.sin(p * 6) * 0.12 + h.drift * p, 2.2 + p * 0.9 + y, -0.1);
+      h.mesh.scale.setScalar(0.6 + p * 1.2);
+      h.mesh.rotation.y = p * h.spin;
+      h.mat.opacity = p > 0.6 ? 1 - (p - 0.6) / 0.4 : 0.8;
     }
     if (mood === "angry" && Math.random() < dt * 3) emit(steam, 1, 1.6);
   }
@@ -852,11 +866,11 @@ export function makeGremlin(): Gremlin {
         case "cheer":
           play("jump");
           setMood("happy", 2.5);
-          emit(hearts, kind === "pledge" ? 7 : 5, 1.6);
+          hearts(kind === "pledge" ? 7 : 5);
           break;
         case "love":
           setMood("love", 2.5);
-          emit(hearts, 4, 1.4);
+          hearts(4);
           break;
         case "giggle":
           play("giggle");
@@ -901,6 +915,14 @@ export function makeGremlin(): Gremlin {
         case "sass":
           play("sass");
           setMood("sass", 2.6);
+          break;
+        case "impatient":
+          impatientUntil = t + 6.5;
+          setMood("impatient", 6.5);
+          if (!lanternWant) {
+            lanternWant = 1; // she needs both claws for this
+            lanternRate = 1.4;
+          }
           break;
         case "leap":
           play("leap");

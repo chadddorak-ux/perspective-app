@@ -41,9 +41,16 @@
   --bubble-1: rgb(255 255 255 / 0.78);
   --bubble-2: rgb(255 255 255 / 0.36);
   --bubble-glint: rgb(255 255 255 / 0.95);
+  /* Main buttons: ink glass by day, milk glass by night. */
+  --btn-fg: #fffaf3;
+  --btn-1: rgb(70 60 84 / 0.92);
+  --btn-2: rgb(30 26 38 / 0.96);
+  --btn-glow: rgb(160 130 255 / 0.18);
+  --btn-shine: 0.85;
+  --bubble-inner: rgb(255 255 255 / 0.35);
 }
 
-/* Dark: the pages go to night too. Follows the OS unless the viewer picked light, and wins when they picked dark. */
+/* Dark: the default. The page script sets data-theme before paint; the OS rule only matters without JavaScript. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #15121d;
@@ -69,9 +76,15 @@
     --frost-1: rgb(36 30 50 / 0.82);
     --frost-2: rgb(36 30 50 / 0.62);
     --frost-edge: rgb(255 255 255 / 0.1);
-    --bubble-1: rgb(255 255 255 / 0.16);
+    --bubble-1: rgb(255 255 255 / 0.11);
     --bubble-2: rgb(255 255 255 / 0.05);
+    --bubble-inner: rgb(255 255 255 / 0.04);
     --bubble-glint: rgb(255 255 255 / 0.3);
+    --btn-fg: #221d2c;
+    --btn-1: rgb(255 252 247 / 0.96);
+    --btn-2: rgb(232 222 246 / 0.86);
+    --btn-glow: rgb(255 190 220 / 0.4);
+    --btn-shine: 0.4;
     color-scheme: dark;
   }
 }
@@ -99,9 +112,15 @@
   --frost-1: rgb(36 30 50 / 0.82);
   --frost-2: rgb(36 30 50 / 0.62);
   --frost-edge: rgb(255 255 255 / 0.1);
-  --bubble-1: rgb(255 255 255 / 0.16);
+  --bubble-1: rgb(255 255 255 / 0.11);
   --bubble-2: rgb(255 255 255 / 0.05);
+  --bubble-inner: rgb(255 255 255 / 0.04);
   --bubble-glint: rgb(255 255 255 / 0.3);
+  --btn-fg: #221d2c;
+  --btn-1: rgb(255 252 247 / 0.96);
+  --btn-2: rgb(232 222 246 / 0.86);
+  --btn-glow: rgb(255 190 220 / 0.4);
+  --btn-shine: 0.4;
   color-scheme: dark;
 }
 
@@ -239,7 +258,7 @@ textarea {
     inset: 2px 6px 48% 6px;
     border-radius: 999px 999px 50% 50% / 999px 999px 60% 60%;
     background: linear-gradient(180deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0));
-    opacity: 0.85;
+    opacity: var(--btn-shine);
     pointer-events: none;
     transition: opacity 0.3s ease;
   }
@@ -278,15 +297,15 @@ textarea {
     opacity: 0.5;
   }
 
-  /* Ink glass: the main call to action on cream. */
+  /* Ink glass: the main call to action on cream (milk glass at night). */
   .btn-primary {
-    color: #fffaf3;
+    color: var(--btn-fg);
     background:
       radial-gradient(90px circle at var(--mx, 50%) var(--my, 0%), rgb(255 255 255 / 0.32), transparent 70%),
-      linear-gradient(180deg, rgb(70 60 84 / 0.92), rgb(30 26 38 / 0.96));
+      linear-gradient(180deg, var(--btn-1), var(--btn-2));
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.35),
-      inset 0 -6px 14px rgb(160 130 255 / 0.18),
+      inset 0 -6px 14px var(--btn-glow),
       0 1px 2px rgb(0 0 0 / 0.2),
       0 10px 24px -10px rgb(var(--glass-shadow) / 0.55);
   }
@@ -306,7 +325,7 @@ textarea {
       linear-gradient(180deg, var(--bubble-1), var(--bubble-2));
     box-shadow:
       inset 0 0 0 1px var(--frost-edge),
-      inset 0 -8px 16px rgb(255 255 255 / 0.35),
+      inset 0 -8px 16px var(--bubble-inner),
       0 0 0 1px rgb(var(--glass-shadow) / 0.1),
       0 10px 24px -12px rgb(var(--glass-shadow) / 0.45);
   }

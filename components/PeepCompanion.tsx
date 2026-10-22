@@ -41,7 +41,37 @@ const SOUND_FOR: Partial<Record<Reaction, PeepSound>> = {
   wave: "grunt",
   pop: "boing",
   sass: "mmwhat",
+  impatient: "hmph",
 };
+
+const HEART_COLORS = ["#ff6b8f", "#ff8a5c", "#ff9fc4"];
+const HEART_PATH = "M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.3 1.8-2.1 3.3-3.3 5.4-3.3 3.6 0 5.7 3.8 4.2 7.3C19.5 16.4 12 21 12 21Z";
+
+/** Hearts drift up out of Peep and float away over the page. */
+function floatHearts(n: number, x: number, y: number, unit: number, reduced: boolean) {
+  const size = Math.max(14, Math.min(40, unit * 0.42));
+  for (let i = 0; i < n; i++) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    el.setAttribute("viewBox", "0 0 24 24");
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `<path d="${HEART_PATH}" fill="${HEART_COLORS[(i + Math.floor(Math.random() * 3)) % 3]}"/>`;
+    const sx = x + (Math.random() - 0.5) * unit * 1.2 - size / 2;
+    Object.assign(el.style, { position: "fixed", left: `${sx}px`, top: `${y - size / 2}px`, width: `${size}px`, height: `${size}px`, pointerEvents: "none", zIndex: "71", opacity: "0", filter: "drop-shadow(0 2px 4px rgb(255 80 130 / 0.35))" });
+    document.body.appendChild(el);
+    const rise = reduced ? 40 : 200 + Math.random() * 140;
+    const drift = (Math.random() - 0.5) * 180;
+    const wob = 14 + Math.random() * 14;
+    const spin = (Math.random() - 0.5) * 50;
+    const frames: Keyframe[] = [0, 0.15, 0.4, 0.65, 1].map((f, j) => ({
+      offset: f,
+      opacity: f === 0 ? 0 : f < 0.65 ? 1 : f === 1 ? 0 : 0.8,
+      transform: `translate(${(drift * f + Math.sin(f * Math.PI * 3) * wob).toFixed(1)}px, ${(-rise * f).toFixed(1)}px) rotate(${(spin * f).toFixed(1)}deg) scale(${j === 0 ? 0.3 : j === 1 ? 1.1 : 1 - f * 0.25})`,
+    }));
+    const anim = el.animate(frames, { duration: reduced ? 900 : 2100 + Math.random() * 700, delay: i * 120, easing: "cubic-bezier(0.25, 0.6, 0.35, 1)", fill: "both" });
+    anim.onfinish = () => el.remove();
+    anim.oncancel = () => el.remove();
+  }
+}
 
 const POKES: Reaction[] = ["giggle", "giggle", "spin", "mischief", "cheer", "surprised", "sass", "pop"];
 
@@ -158,7 +188,7 @@ export function PeepCompanion() {
     import("./scene/stage")
       .then(({ createStage }) => {
         if (disposed) return;
-        api = createStage(canvas.current!, { reduced: s.reduced });
+        api = createStage(canvas.current!, { reduced: s.reduced, onHearts: (n, x, y, unit) => floatHearts(n, x, y, unit, s.reduced) });
         api.setNight(currentTheme() === "dark");
         stage.current = api;
         api.setActive(true);
@@ -645,7 +675,7 @@ export function PeepCompanion() {
         say({ ...guideFor(path).idle, hold: 9 });
       } else if (!waited && idle > WAIT_MS * scale) {
         waited = true;
-        react("sass", soundReady());
+        react("impatient", soundReady());
         say({ text: pick(LINES.waiting), hold: 6 });
       } else if (!slept && idle > SLEEP_MS * scale) {
         slept = true;
@@ -707,7 +737,7 @@ export function PeepCompanion() {
         ref={bubble}
         role="status"
         data-open={line ? "1" : ""}
-        className="pointer-events-none left-0 top-0 z-50 w-[min(290px,calc(100vw-24px))]"
+        className="pointer-events-none left-0 top-0 z-[70] w-[min(290px,calc(100vw-24px))]"
         style={{ position: "fixed", visibility: line ? "visible" : "hidden" }}
       >
         {line && (

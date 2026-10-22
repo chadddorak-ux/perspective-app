@@ -4,6 +4,7 @@ import { CoverArt } from "@/components/CoverArt";
 import { MatchStory, type MatchStoryData } from "@/components/home/MatchStory";
 import { PdfDropButton } from "@/components/home/PdfDropButton";
 import { PdfDropDemo, type DropDemoData } from "@/components/home/PdfDropDemo";
+import { WatchFrame } from "@/components/home/WatchFrame";
 import { Marquee } from "@/components/Marquee";
 import { CountUp, Reveal } from "@/components/Motion";
 import { PeepMark } from "@/components/Peep";
@@ -276,7 +277,7 @@ export default async function Home() {
       <FullBleed className="mt-16 px-2 sm:mt-24 sm:px-6" data-nav-dark>
         <div className="relative mx-auto max-w-[1320px] overflow-hidden rounded-[32px]">
           <World kind="night" />
-          <div className="relative z-10 mx-auto max-w-6xl px-4 pb-[210px] pt-14 sm:px-8 sm:pt-20">
+          <div className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-14 sm:px-8 sm:pb-36 sm:pt-20">
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow text-white/70">Start in a minute</p>
               <h2 className="display mt-4 text-[clamp(2.4rem,5.6vw,4.6rem)] text-[#fdf8f2]">Your pitch deck, turned into a funded campaign.</h2>
@@ -291,9 +292,9 @@ export default async function Home() {
               </div>
               <p className="mt-4 text-sm text-white/60">Or drag your PDF anywhere on this page.</p>
             </div>
-            <div className="mx-auto mt-12 max-w-5xl">
+            <WatchFrame className="mx-auto mt-12 max-w-5xl" minScale={0.7}>
               <PdfDropDemo data={dropDemo} />
-            </div>
+            </WatchFrame>
           </div>
         </div>
       </FullBleed>

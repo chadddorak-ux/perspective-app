@@ -1,7 +1,7 @@
 "use client";
 
-// Light or dark. With no choice saved the site follows the OS; a choice is
-// saved per browser and set on <html data-theme> before the first paint.
+// Dark by default, light if you pick it. The choice is saved per browser and
+// set on <html data-theme> before the first paint.
 
 import { useEffect, useState } from "react";
 
@@ -9,13 +9,12 @@ export type Theme = "light" | "dark";
 const KEY = "peep-theme";
 
 /** Runs inline in <head>, before anything paints. */
-export const THEME_INIT = `try{var t=localStorage.getItem("${KEY}");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+export const THEME_INIT = `try{document.documentElement.dataset.theme=localStorage.getItem("${KEY}")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}`;
 
 export function currentTheme(): Theme {
   if (typeof document === "undefined") return "light";
   const t = document.documentElement.dataset.theme;
-  if (t === "light" || t === "dark") return t;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return t === "light" ? "light" : "dark";
 }
 
 export function setTheme(t: Theme): void {
@@ -29,17 +28,12 @@ export function setTheme(t: Theme): void {
 }
 
 export function useTheme(): Theme {
-  const [theme, set] = useState<Theme>("light");
+  const [theme, set] = useState<Theme>("dark");
   useEffect(() => {
     const sync = () => set(currentTheme());
     sync();
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    mq.addEventListener("change", sync);
     window.addEventListener("peep:theme", sync);
-    return () => {
-      mq.removeEventListener("change", sync);
-      window.removeEventListener("peep:theme", sync);
-    };
+    return () => window.removeEventListener("peep:theme", sync);
   }, []);
   return theme;
 }

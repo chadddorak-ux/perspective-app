@@ -27,7 +27,13 @@ const CAM_Z = 7.5;
 const FOV = 30;
 const TARGET_Y = 1.6;
 
-export function createStage(canvas: HTMLCanvasElement, opts: { reduced: boolean }): StageAPI {
+export type StageOptions = {
+  reduced: boolean;
+  /** Hearts to float up from the top of her head, at this screen point. */
+  onHearts?: (n: number, clientX: number, clientY: number, scale: number) => void;
+};
+
+export function createStage(canvas: HTMLCanvasElement, opts: StageOptions): StageAPI {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true });
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -46,7 +52,14 @@ export function createStage(canvas: HTMLCanvasElement, opts: { reduced: boolean 
   rim.position.set(2.5, 3, -5);
   scene.add(key, rim);
 
-  const peep = makeGremlin();
+  const peep = makeGremlin({
+    onHearts(n) {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width) return;
+      const at = toScreen(0, 2.5, rect);
+      opts.onHearts?.(n, at.x, at.y, unitPx(rect));
+    },
+  });
   scene.add(peep.root);
 
   function layout() {
@@ -133,12 +146,12 @@ export function createStage(canvas: HTMLCanvasElement, opts: { reduced: boolean 
     lanternDown: () => peep.lanternDown(),
     setNight(on) {
       peep.setNight(on);
-      hemi.color.set(on ? "#a8a4e0" : "#f3efff");
-      hemi.groundColor.set(on ? "#3a2c55" : "#d6b3dc");
-      hemi.intensity = on ? 1.05 : 1.6;
-      key.color.set(on ? "#b4c2ff" : "#fff2e8");
+      hemi.color.set(on ? "#d4dcef" : "#f3efff");
+      hemi.groundColor.set(on ? "#4a3a5e" : "#d6b3dc");
+      hemi.intensity = on ? 1.15 : 1.6;
+      key.color.set(on ? "#dfe6ff" : "#fff2e8");
       key.intensity = on ? 1.2 : 2.2;
-      rim.color.set(on ? "#9d8cff" : "#ffb8d4");
+      rim.color.set(on ? "#b9a8ff" : "#ffb8d4");
       if (opts.reduced) still();
     },
     setDangle: (on) => peep.setDangle(on),
