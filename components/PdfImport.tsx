@@ -12,6 +12,7 @@ import { US_STATES } from "@/lib/taxonomy";
 import { CoverArt } from "./CoverArt";
 import { EMPTY_OPPORTUNITY, OpportunityForm, cleanOpportunity } from "./OpportunityForm";
 import { PeepMark } from "./Peep";
+import { Consent, consentReady } from "./Consent";
 
 const MAX_PDF_BYTES = 20 * 1024 * 1024;
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -36,7 +37,7 @@ type Meta = { fileName?: string; pages: number; method: ExtractResult["method"];
  * The PDF → campaign tool: drop a pitch deck, watch Peep read it, fix what it
  * flags, post. A campaign is only created once nothing required is missing.
  */
-export function PdfImport({ aiEnabled, examples }: { aiEnabled: boolean; examples: { label: string; text: string }[] }) {
+export function PdfImport({ aiEnabled, examples, forBrand }: { aiEnabled: boolean; examples: { label: string; text: string }[]; forBrand?: string }) {
   const [stage, setStage] = useState<"drop" | "reading" | "review">("drop");
   const [phase, setPhase] = useState<Phase>("open");
   const [progress, setProgress] = useState<PdfProgress | null>(null);
@@ -114,7 +115,7 @@ export function PdfImport({ aiEnabled, examples }: { aiEnabled: boolean; example
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (stage === "reading") return <Reading phase={phase} progress={progress} read={read} aiEnabled={aiEnabled} />;
-  if (stage === "review" && meta) return <Review draft={draft} setDraft={setDraft} meta={meta} read={read} onRestart={() => setStage("drop")} />;
+  if (stage === "review" && meta) return <Review draft={draft} setDraft={setDraft} meta={meta} read={read} onRestart={() => setStage("drop")} forBrand={forBrand} />;
   return <DropStage onFile={(file) => run({ file })} onText={(text) => run({ text })} error={error} examples={examples} aiEnabled={aiEnabled} />;
 }
 
@@ -316,15 +317,19 @@ function Review({
   meta,
   read,
   onRestart,
+  forBrand,
 }: {
   draft: OpportunityDraft;
   setDraft: (d: OpportunityDraft) => void;
   meta: Meta;
   read: PdfRead | null;
   onRestart: () => void;
+  forBrand?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [consentOk, setConsentOk] = useState(false);
+  const [consentName, setConsentName] = useState(draft.contact.name ?? "");
   const [error, setError] = useState<string | null>(null);
   const gaps = campaignGaps(draft);
   const required = gaps.filter((g) => g.level === "required");
@@ -357,10 +362,18 @@ function Review({
       const res = await fetch("/api/opportunities", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ opportunity: { ...cleanOpportunity(draft), coverImage: draft.coverImage, gallery: draft.gallery?.length ? draft.gallery : undefined }, source: "import" }),
+        body: JSON.stringify({
+          opportunity: { ...cleanOpportunity(draft), coverImage: draft.coverImage, gallery: draft.gallery?.length ? draft.gallery : undefined },
+          source: "import",
+          consent: { by: consentName },
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Couldn't post the campaign");
+      // Came from a brand's request link: send the new campaign straight to that brand.
+      if (forBrand) {
+        await fetch("/api/pitches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ opportunityId: json.id, sponsorId: forBrand, via: "request-link" }) }).catch(() => {});
+      }
       peepReact("cheer");
       peepSay({ text: "We did it! Your campaign is live, and I'm already lining up sponsors. Iconic.", hold: 6 });
       router.push(`/opportunities/${json.id}?new=1`);
@@ -465,9 +478,14 @@ function Review({
           <OpportunityForm value={draft} onChange={setDraft} />
         </section>
 
+        {required.length === 0 && (
+          <div className="mt-6">
+            <Consent org={draft.orgName} name={consentName} onName={setConsentName} checked={consentOk} onChecked={setConsentOk} />
+          </div>
+        )}
         <div className="glass sticky bottom-3 z-20 flex items-center gap-3 rounded-2xl p-2 pr-4">
-          <button type="button" className="btn-primary px-6 py-3 text-base" disabled={busy || required.length > 0} onClick={post}>
-            {busy ? "Posting…" : required.length ? `Fix ${required.length} thing${required.length === 1 ? "" : "s"} to post` : "Post campaign · free"}
+          <button type="button" className="btn-primary px-6 py-3 text-base" disabled={busy || required.length > 0 || !consentReady(consentOk, consentName)} onClick={post}>
+            {busy ? "Posting…" : required.length ? `Fix ${required.length} thing${required.length === 1 ? "" : "s"} to post` : consentReady(consentOk, consentName) ? "Post campaign · free" : "Approve the page to post"}
           </button>
           <p className="min-w-0 flex-1 text-sm text-muted">
             {required.length

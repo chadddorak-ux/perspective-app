@@ -3,6 +3,7 @@ import { money } from "@/lib/match";
 import type { Funding } from "@/lib/funding";
 import { CAUSES, label } from "@/lib/taxonomy";
 import type { Opportunity } from "@/lib/types";
+import { verificationFor } from "@/lib/verify";
 import { CoverArt } from "./CoverArt";
 import { ProgressBar, daysLabel } from "./Funding";
 import { SampleTag } from "./ui";
@@ -36,6 +37,11 @@ export function CampaignCard({ opp, f, badge }: { opp: Opportunity; f: Funding; 
       <div className="p-5">
         <div className="flex items-center gap-2 text-xs text-muted">
           <span className="truncate">{opp.orgName}</span>
+          {verificationFor(opp).verified && (
+            <span className="shrink-0 text-good" title="Peep Verified: 501(c)(3) status, sanctions screen and the organization's approval">
+              ✓
+            </span>
+          )}
           {opp.sample && <SampleTag />}
         </div>
         <h3 className="mt-1 line-clamp-2 font-display text-lg font-semibold leading-snug tracking-tight group-hover:text-brand">{opp.title}</h3>

@@ -35,6 +35,14 @@ export const {
   updateIntroStatus,
   listPledges,
   createPledge,
+  getPledge,
+  updatePledge,
+  updateSponsor,
+  listPitches,
+  createPitch,
+  updatePitch,
+  listVotes,
+  createVote,
 } = store;
 
 export function resetUserData() {

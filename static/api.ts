@@ -6,8 +6,13 @@ import * as introById from "../app/api/intros/[id]/route";
 import * as intros from "../app/api/intros/route";
 import * as match from "../app/api/match/route";
 import * as opportunities from "../app/api/opportunities/route";
+import * as pitchById from "../app/api/pitches/[id]/route";
+import * as pitches from "../app/api/pitches/route";
+import * as pledgeById from "../app/api/pledges/[id]/route";
 import * as pledges from "../app/api/pledges/route";
+import * as sponsorById from "../app/api/sponsors/[id]/route";
 import * as sponsors from "../app/api/sponsors/route";
+import * as votes from "../app/api/votes/route";
 
 type Handler = (req: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response>;
 
@@ -19,6 +24,11 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
   ["POST", /^\/api\/intros$/, intros.POST as Handler],
   ["PATCH", /^\/api\/intros\/(?<id>[^/]+)$/, introById.PATCH as unknown as Handler],
   ["POST", /^\/api\/pledges$/, pledges.POST as Handler],
+  ["PATCH", /^\/api\/pledges\/(?<id>[^/]+)$/, pledgeById.PATCH as unknown as Handler],
+  ["PATCH", /^\/api\/sponsors\/(?<id>[^/]+)$/, sponsorById.PATCH as unknown as Handler],
+  ["POST", /^\/api\/pitches$/, pitches.POST as Handler],
+  ["PATCH", /^\/api\/pitches\/(?<id>[^/]+)$/, pitchById.PATCH as unknown as Handler],
+  ["POST", /^\/api\/votes$/, votes.POST as Handler],
 ];
 
 const networkFetch = window.fetch.bind(window);

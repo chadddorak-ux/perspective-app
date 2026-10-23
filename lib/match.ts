@@ -329,6 +329,28 @@ export function rankOpportunities(sp: SponsorProfile, opps: Opportunity[], now?:
     .sort((a, b) => b.match.score - a.match.score);
 }
 
+/** A small organization: a modest goal and no tier above $10K. */
+export function isSmallOrg(opp: Opportunity): boolean {
+  const top = Math.max(0, ...opp.tiers.map((t) => t.amount));
+  const goal = opp.goal ?? opp.tiers.reduce((sum, t) => sum + t.amount, 0);
+  return goal <= 30000 && top <= 10000;
+}
+
+/**
+ * Keep small organizations in view: if none made the top `n`, lift the best
+ * eligible one (score 50+) into the last visible spot and flag it. Big,
+ * polished nonprofits shouldn't crowd out the rest. Ineligible results stay last.
+ */
+export function withSmallOrgSpotlight(ranked: Ranked<Opportunity>[], n = 5): (Ranked<Opportunity> & { spotlight?: boolean })[] {
+  const eligible = ranked.filter((r) => r.match.grade !== "Not eligible");
+  const blocked = ranked.filter((r) => r.match.grade === "Not eligible");
+  if (eligible.slice(0, n).some((r) => isSmallOrg(r.item))) return ranked;
+  const pick = eligible.slice(n).find((r) => isSmallOrg(r.item) && r.match.score >= 50);
+  if (!pick) return ranked;
+  const rest = eligible.filter((r) => r !== pick);
+  return [...rest.slice(0, n - 1), { ...pick, spotlight: true }, ...rest.slice(n - 1), ...blocked];
+}
+
 export function primaryCause(ids: CauseId[]): string {
   return ids.length ? label(CAUSES, ids[0]) : "community";
 }

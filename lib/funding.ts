@@ -1,6 +1,6 @@
 // Crowdfunding-style progress for a listing: goal, pledged, tiers left, days to go.
 
-import type { Opportunity, Pledge, Tier } from "./types.ts";
+import { GENERAL_SUPPORT, type Opportunity, type Pledge, type Tier } from "./types.ts";
 
 const DAY_MS = 86_400_000;
 const DEFAULT_SLOTS: Record<NonNullable<Tier["availability"]>, number> = { exclusive: 1, limited: 3, multiple: 10 };
@@ -19,7 +19,12 @@ export function goalFor(opp: Opportunity): number {
   return opp.goal ?? suggestedGoal(opp.tiers);
 }
 
-export type TierFunding = { tier: Tier; slots: number; taken: number; left: number };
+/** `taken` counts circle shares as fractions; `circle` is how far the open giving circle is filled. */
+export type TierFunding = { tier: Tier; slots: number; taken: number; left: number; circle?: number };
+
+/** Tiers this size and up can be split four ways by a giving circle of small businesses. */
+export const CIRCLE_MIN = 4000;
+export const CIRCLE_SHARE = 0.25;
 
 export type Funding = {
   goal: number;
@@ -47,18 +52,27 @@ export function fundingFor(opp: Opportunity, pledges: Pledge[], now: Date = new 
     state: ended ? "closed" : percent >= 100 ? "funded" : "open",
     tiers: opp.tiers.map((tier) => {
       const slots = tierSlots(tier);
-      const taken = mine.filter((p) => p.tierName === tier.name).length;
-      return { tier, slots, taken, left: Math.max(0, slots - taken) };
+      const taken = mine.filter((p) => p.tierName === tier.name).reduce((sum, p) => sum + (p.share ?? 1), 0);
+      const partial = Math.round((taken % 1) * 100) / 100;
+      return { tier, slots, taken, left: Math.max(0, Math.round((slots - taken) * 100) / 100), ...(partial > 0 && { circle: partial }) };
     }),
   };
 }
 
 /** Why a pledge can't be taken, or null when it can. */
-export function pledgeProblem(opp: Opportunity, tierName: string, pledges: Pledge[], now: Date = new Date()): string | null {
+export function pledgeProblem(opp: Opportunity, tierName: string, pledges: Pledge[], now: Date = new Date(), share?: number): string | null {
   const f = fundingFor(opp, pledges, now);
   if (f.state === "closed") return "This campaign has ended";
+  if (tierName === GENERAL_SUPPORT) return null; // always open
   const t = f.tiers.find((x) => x.tier.name === tierName);
   if (!t) return "That tier doesn't exist";
-  if (t.left === 0) return `${tierName} is fully sponsored`;
+  if (t.left <= 0) return `${tierName} is fully sponsored`;
+  if (share) {
+    if (t.tier.amount < CIRCLE_MIN) return `${tierName} is too small to split into a circle`;
+    if (t.left < share) return `${tierName} is fully sponsored`;
+    return null;
+  }
+  // A whole slot can't be taken while only part of one is left (a circle is filling it).
+  if (t.left < 1) return `Only giving-circle shares are left on ${tierName}`;
   return null;
 }

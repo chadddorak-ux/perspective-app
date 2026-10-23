@@ -74,3 +74,28 @@ describe("seed pledges", () => {
     }
   });
 });
+
+describe("giving circles and general support", () => {
+  const opp = makeOpp({ tiers: [{ name: "Big", amount: 8000, availability: "exclusive", benefits: [] }, { name: "Small", amount: 1000, benefits: [] }] });
+  const NOW2 = new Date("2026-10-21T12:00:00Z");
+  const share = (id: string): Pledge => ({ id, opportunityId: "opp", sponsorName: id, tierName: "Big", amount: 2000, share: 0.25, status: "pledged", createdAt: "2026-10-01T00:00:00Z" });
+
+  it("counts circle shares as parts of a slot", () => {
+    const f = fundingFor(opp, [share("a"), share("b")], NOW2);
+    const big = f.tiers.find((t) => t.tier.name === "Big")!;
+    assert.equal(big.taken, 0.5);
+    assert.equal(big.left, 0.5);
+    assert.equal(big.circle, 0.5);
+  });
+
+  it("only takes shares once a circle has started, and fills up at four", () => {
+    assert.match(pledgeProblem(opp, "Big", [share("a")], NOW2) ?? "", /circle shares/);
+    assert.equal(pledgeProblem(opp, "Big", [share("a")], NOW2, 0.25), null);
+    assert.match(pledgeProblem(opp, "Big", ["a", "b", "c", "d"].map(share), NOW2, 0.25) ?? "", /fully sponsored/);
+    assert.match(pledgeProblem(opp, "Small", [], NOW2, 0.25) ?? "", /too small/);
+  });
+
+  it("always accepts general operating support", () => {
+    assert.equal(pledgeProblem(opp, "General operating support", [], NOW2), null);
+  });
+});

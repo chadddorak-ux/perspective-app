@@ -122,7 +122,7 @@ export function Breakdown({ match }: { match: MatchResult }) {
  */
 export function Scribble({ children, color = "var(--brand)" }: { children: React.ReactNode; color?: string }) {
   return (
-    <span className="scribble relative inline-block whitespace-nowrap">
+    <span className="scribble relative inline-block">
       {children}
       <svg aria-hidden viewBox="0 0 300 24" preserveAspectRatio="none" className="pointer-events-none absolute -bottom-[0.12em] left-[-2%] h-[0.32em] w-[104%] overflow-visible">
         <path d="M4 15 C 60 5, 110 21, 160 12 S 250 6, 296 13" pathLength={1} fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" />

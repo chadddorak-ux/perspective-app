@@ -11,6 +11,7 @@ import { MatchCard } from "./MatchCard";
 import { EMPTY_OPPORTUNITY, FORM_STEPS, OpportunityForm, cleanOpportunity } from "./OpportunityForm";
 import { Arrow } from "./ui";
 import { peepReact, peepSay } from "@/lib/peep-events";
+import { Consent, consentReady } from "./Consent";
 
 const REVIEW = FORM_STEPS.length;
 
@@ -28,6 +29,8 @@ export function CampaignWizard() {
   const [reached, setReached] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"match" | "publish" | null>(null);
+  const [consentOk, setConsentOk] = useState(false);
+  const [consentName, setConsentName] = useState("");
   const [results, setResults] = useState<Ranked<SponsorProfile>[] | null>(null);
   const top = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -69,7 +72,7 @@ export function CampaignWizard() {
     setBusy("publish");
     setError(null);
     try {
-      const { id } = await post("/api/opportunities", { opportunity: cleanOpportunity(draft), source: "intake" });
+      const { id } = await post("/api/opportunities", { opportunity: cleanOpportunity(draft), source: "intake", consent: { by: consentName } });
       peepReact("cheer");
       peepSay({ text: "Launched! Your campaign is live, and I'm already lining up sponsors. We love to see it.", hold: 6 });
       router.push(`/opportunities/${id}`);
@@ -168,7 +171,8 @@ export function CampaignWizard() {
                 </ul>
                 {error && <p className="mt-4 text-sm text-bad">{error}</p>}
                 <div className="mt-6 flex flex-col gap-2">
-                  <button className="btn-primary group py-3" onClick={publish} disabled={busy !== null}>
+                  <Consent compact org={draft.orgName} name={consentName} onName={setConsentName} checked={consentOk} onChecked={setConsentOk} />
+                  <button className="btn-primary group py-3" onClick={publish} disabled={busy !== null || !consentReady(consentOk, consentName)}>
                     {busy === "publish" ? "Launching…" : "Launch campaign"} <Arrow />
                   </button>
                   <button className="btn-secondary" onClick={preview} disabled={busy !== null}>

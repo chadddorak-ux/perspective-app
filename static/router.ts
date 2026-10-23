@@ -16,6 +16,9 @@ const TOKENS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^\/give$/, () => "give"],
   [/^\/import$/, () => "import"],
   [/^\/intros$/, () => "intros"],
+  [/^\/receipts\/([^/]+)$/, (m) => `receipt-${m[1]}`],
+  [/^\/brand\/([^/]+)$/, (m) => `brand-${m[1]}`],
+  [/^\/request\/([^/]+)$/, (m) => `request-${m[1]}`],
 ];
 
 export function tokenFor(path: string): string | null {
@@ -30,6 +33,9 @@ export function pathForToken(token: string): string | null {
   if (token === "") return "/";
   if (token.startsWith("campaign-")) return `/opportunities/${token.slice(9)}`;
   if (token.startsWith("sponsor-")) return `/sponsors/${token.slice(8)}`;
+  if (token.startsWith("receipt-")) return `/receipts/${token.slice(8)}`;
+  if (token.startsWith("brand-")) return `/brand/${token.slice(6)}`;
+  if (token.startsWith("request-")) return `/request/${token.slice(8)}`;
   const plain: Record<string, string> = { discover: "/opportunities", sponsors: "/sponsors", start: "/find", give: "/give", import: "/import", intros: "/intros" };
   return plain[token] ?? null;
 }

@@ -15,6 +15,7 @@ const SPONSOR_LINKS = [
   { href: "/give", label: "Find campaigns to back", note: "Ranked by fit with your goals" },
   { href: "/sponsors", label: "Sponsor network", note: "Brands, foundations and donors" },
   { href: "/intros", label: "Warm intros", note: "Double opt-in introductions" },
+  { href: "/brand/coral-coast-cu", label: "Brand dashboard", note: "Your kit, pitch inbox, receipts and team votes (sample)" },
 ];
 
 export function Logo({ onDark = false }: { onDark?: boolean }) {

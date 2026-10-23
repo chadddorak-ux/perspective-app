@@ -91,6 +91,24 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
         ]}
       />
 
+      {/* Local first: most small businesses give where they work. */}
+      <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl bg-card p-3 text-sm ring-1 ring-line">
+        <span className="px-1 font-bold">Give locally:</span>
+        {[...states]
+          .sort()
+          .slice(0, 8)
+          .map((st) => (
+            <Link key={st} href={link({ state: state === st ? undefined : st })} className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${state === st ? "bg-ink text-bg ring-ink" : "ring-line hover:ring-ink/30"}`}>
+              {US_STATES[st] ?? st}
+            </Link>
+          ))}
+        {state && state !== "virtual" && (
+          <span className="basis-full px-1 pt-1 text-xs text-muted">
+            Small business? Bigger tiers here can be split four ways in a giving circle, so neighbors share the cost and the credit.
+          </span>
+        )}
+      </div>
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           <span className="font-mono text-ink">{rows.length}</span> live campaigns

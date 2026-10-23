@@ -147,3 +147,38 @@ This is the hardest part, and it's the moat.
 - **Who's the beachhead?** Connector-led (boards, chambers, alumni networks) grows supply and demand together, so this prototype leans that way. Organization-led is easier to sell but cold on supply.
 - **Metro-first or cause-first rollout?** Density matters more than breadth: 200 sponsors in one metro beat 2,000 spread nationally. Alternatively, start with one cause vertical where brands already sponsor heavily (youth sports, hunger, animal welfare) and expand.
 - **How much of a sponsor's profile is visible to organizations?** Default: organizations see fit and reasons, but contact paths only after opt-in.
+
+## Competitive position and what we built from it
+
+The full analysis is in [`reports/Peep competitive landscape.md`](../reports/Peep%20competitive%20landscape.md). In short: CSR suites (Benevity, Bonterra, YourCause) move corporate money but are built for employee giving; sponsorship tools (SponsorUnited, SponsorCX, Passionfroot) handle tiers but not charity; nonprofit tools (Givebutter, Zeffy, GoFundMe Pro) bring no brand money. Nobody closes the loop from a nonprofit's PDF to a matched, verified, correctly papered gift, and nobody handles the gift-versus-sponsorship line that the 2026 1% corporate floor makes matter.
+
+Built into the prototype from the report:
+
+| Report idea | Where it lives |
+|---|---|
+| Brand profile + asset vault, drafted from public info | `/sponsors/[id]`, `/brand/[id]#kit`, `lib/brand-kit.ts` |
+| Funding-gated kit access (opens when the gift clears, one year, revocable) | Campaign page "Your backers' brand kits", dashboard Gifts & receipts |
+| 513(i) tagline guard and tier compliance labels | Kit editor, tier cards, `lib/compliance.ts` |
+| Placement-proof loop | Campaign "Backed by" (upload), dashboard (approve) |
+| Pitch inbox with fit rules and quotas; decline reasons | Brand profile, request page, dashboard inbox, `lib/pitch.ts` |
+| "Send them to Peep" request link | `/request/[id]`, dashboard Request link, `/import?for=` |
+| Gift-or-sponsorship switch with dual paperwork | Pledge dialog, `/receipts/[id]`, `lib/receipts.ts` |
+| 1% floor calculator and bunching planner | `/give`, `lib/tax.ts` |
+| Verified-arrival page | `/receipts/[id]` |
+| Explainable matching with a small-org spotlight | `/give` matcher, brand profile, `withSmallOrgSpotlight` |
+| Quiet mode (private / anonymous) | Pledge dialog |
+| Story kit (reverse vault) | Campaign page |
+| Budget-year calendar and lead-time guard | Brand profile, request page, pitch rules |
+| Year-end finance pack | Dashboard overview (CSV) |
+| Peep Verified badge | Campaign poster and cards, receipt page, `lib/verify.ts` |
+| Consent-first pages | Import and wizard, `api/opportunities` |
+| Local-first feed and giving circles | Discover "Give locally", tier "Join the circle" |
+| Team vote | Dashboard Team vote |
+| Peep Pledge badge | Brand profile, dashboard Settings (embed HTML) |
+| Impact digest | Dashboard overview |
+| Renewals with a graceful end | Pledge dialog, dashboard Gifts & receipts |
+| Unrestricted tier | "General operating support" on every campaign |
+| Standing disaster pool | `/give`, dashboard Settings |
+
+Still to do before real money: payments (Stripe Connect for sponsorships paid directly to nonprofits; a receipting intermediary for pure gifts), real IRS bulk-file and OFAC checks, a donor-advised fund partner for bunched gifts paid out across tax years, California AB 488 registration, and tax counsel sign-off on receipt language.
+

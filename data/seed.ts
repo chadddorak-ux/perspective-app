@@ -727,6 +727,23 @@ export const seedSponsors: SponsorProfile[] = [
 
 type PledgeSeed = [opportunityId: string, sponsor: string, tierName: string, amount: number];
 
+// Budget years, public commitments and disaster pools for a few sample brands.
+const SPONSOR_EXTRAS: Record<string, Partial<SponsorProfile>> = {
+  aeronova: { fiscalYearEnd: 12, givingBudget: 150000 },
+  "coral-coast-cu": { fiscalYearEnd: 6, givingBudget: 40000, peepPledge: { kind: "percent-profit", value: 1, since: "2025-01-01" }, disasterPool: 5000 },
+  "pawsome-pet-co": { fiscalYearEnd: 12, givingBudget: 60000, peepPledge: { kind: "fixed", value: 50000, since: "2024-01-01" } },
+  "trailhead-outfitters": { fiscalYearEnd: 1, givingBudget: 30000, peepPledge: { kind: "percent-profit", value: 1, since: "2023-02-01" } },
+  "summit-mutual": { fiscalYearEnd: 12, givingBudget: 120000, disasterPool: 50000 },
+  "atlas-logistics": { fiscalYearEnd: 9, givingBudget: 45000, disasterPool: 20000 },
+  "freshfield-market": { fiscalYearEnd: 6, givingBudget: 50000, disasterPool: 10000 },
+  "copperline-software": { fiscalYearEnd: 3, givingBudget: 80000 },
+  "hearth-and-crumb": { fiscalYearEnd: 12, givingBudget: 5000, peepPledge: { kind: "fixed", value: 5000, since: "2026-01-01" } },
+  "sunny-side-burgers": { fiscalYearEnd: 12, givingBudget: 12000 },
+  "lumen-telecom": { fiscalYearEnd: 12, givingBudget: 100000 },
+  "keystone-community-bank": { fiscalYearEnd: 12, givingBudget: 35000, disasterPool: 5000 },
+};
+for (const sp of seedSponsors) Object.assign(sp, SPONSOR_EXTRAS[sp.id]);
+
 // Commitments already in place. Sponsors with an id in the network are linked
 // by id; the rest are local supporters without a profile.
 const PLEDGES: PledgeSeed[] = [
@@ -764,6 +781,8 @@ const PLEDGES: PledgeSeed[] = [
 
 export const seedPledges: Pledge[] = PLEDGES.map(([opportunityId, who, tierName, amount], i) => {
   const profile = seedSponsors.find((s) => s.id === who);
+  // Spread pledge dates so the "recent" feed mixes campaigns (7 is coprime with the count).
+  const created = Date.parse("2026-10-19T00:00:00Z") - ((i * 7) % PLEDGES.length) * 86_400_000;
   return {
     id: `seed-pledge-${i + 1}`,
     opportunityId,
@@ -771,8 +790,12 @@ export const seedPledges: Pledge[] = PLEDGES.map(([opportunityId, who, tierName,
     sponsorName: profile?.name ?? who,
     tierName,
     amount,
+    // Most sample backers took acknowledgment-only gifts; the bigger brand deals are sponsorships.
+    kind: amount >= 15000 && profile?.type === "brand" ? "sponsorship" : "gift",
+    recognition: i % 9 === 4 ? "anonymous" : "public",
     status: "confirmed",
-    // Spread pledge dates so the "recent" feed mixes campaigns (7 is coprime with the count).
-    createdAt: new Date(Date.parse("2026-10-19T00:00:00Z") - ((i * 7) % PLEDGES.length) * 86_400_000).toISOString(),
+    createdAt: new Date(created).toISOString(),
+    // Funds cleared a few days after the pledge; the newest few are still in transit.
+    ...(i % 6 !== 5 && { clearedAt: new Date(created + 3 * 86_400_000).toISOString(), acknowledgedAt: new Date(created + 4 * 86_400_000).toISOString() }),
   };
 });

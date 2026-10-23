@@ -4,13 +4,17 @@ import { placeLabel } from "@/components/CampaignCard";
 import { CauseArt, LOOKS, artTheme } from "@/components/CauseArt";
 import { FundingStats } from "@/components/Funding";
 import { MatchCard } from "@/components/MatchCard";
+import { CopyButton, KitDownloads, ProofUpload } from "@/components/BrandAssets";
 import { More } from "@/components/More";
 import { PeepMark } from "@/components/Peep";
 import { ShareButton } from "@/components/ShareButton";
 import { TierRail, type SponsorOption } from "@/components/TierRail";
 import { Reveal } from "@/components/Motion";
 import { Arrow, Pill, SampleTag, Scribble } from "@/components/ui";
+import { kitAccess, kitFor } from "@/lib/brand-kit";
 import { fundingFor } from "@/lib/funding";
+import { storyKitFor } from "@/lib/giving-report";
+import { verificationFor } from "@/lib/verify";
 import { money, rankSponsors, scoreMatch } from "@/lib/match";
 import { AUDIENCES, CAUSES, INDUSTRIES, ORG_TYPES, SUPPORT_TYPES, label } from "@/lib/taxonomy";
 import { getOpportunity, listPledges, listSponsors } from "@/lib/store";
@@ -53,7 +57,22 @@ export default async function CampaignPage({ params, searchParams }: { params: P
   const theme = artTheme(opp);
   const look = LOOKS[theme];
   const paras = (opp.story ?? opp.summary).split(/\n{2,}/);
-  const verified = opp.orgType !== "other" && !!opp.ein;
+  const check = verificationFor(opp);
+  const story = storyKitFor(opp);
+  // Backers whose gift has cleared and who chose to be recognized: their kits are open to this nonprofit.
+  const kits = mine
+    .filter((p) => p.sponsorId && kitAccess(p).open)
+    .map((p) => ({ p, sp: sponsors.find((s) => s.id === p.sponsorId)! }))
+    .filter((k, i, all) => k.sp && all.findIndex((x) => x.sp.id === k.sp.id) === i);
+  const kitCard = ({ p, sp }: (typeof kits)[number]) => (
+    <div key={sp.id} className="rounded-3xl bg-card p-5 ring-1 ring-line">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="font-bold">{sp.name}</p>
+        <span className="text-[10px] text-muted">until {kitAccess(p).until}</span>
+      </div>
+      <KitDownloads name={sp.name} kit={kitFor(sp)} />
+    </div>
+  );
   const fact = ([icon, k, v]: [Icon, string, string]) => (
     <div key={k} className="flex gap-3 rounded-2xl bg-card p-4 ring-1 ring-line">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#2a2826]" style={{ background: icon === "ban" ? "var(--line)" : look.sky[2] }}>
@@ -103,7 +122,13 @@ export default async function CampaignPage({ params, searchParams }: { params: P
               <span className="text-muted">by</span>
               <span className="font-bold">{opp.orgName}</span>
               {opp.sample && <SampleTag />}
-              {verified && <span className="rounded-full bg-mint-soft px-2.5 py-1 text-[11px] font-bold text-good">✓ {label(ORG_TYPES, opp.orgType)}</span>}
+              {check.verified ? (
+                <span className="rounded-full bg-mint-soft px-2.5 py-1 text-[11px] font-bold text-good" title={check.checks.map((c) => `${c.label}: ${c.detail}`).join("\n")}>
+                  ✓ Peep Verified
+                </span>
+              ) : (
+                opp.orgType === "501c3" && <span className="rounded-full bg-bg px-2.5 py-1 text-[11px] font-bold text-muted ring-1 ring-line">{label(ORG_TYPES, opp.orgType)}</span>
+              )}
               {opp.ein && <span className="font-mono text-xs text-muted">EIN {opp.ein}</span>}
               {opp.featured && <span className="eyebrow rounded-full bg-ink px-2.5 py-1 text-[10px] text-bg">★ Featured</span>}
             </p>
@@ -165,6 +190,7 @@ export default async function CampaignPage({ params, searchParams }: { params: P
           ["#tiers", `Tiers (${opp.tiers.length})`],
           ["#matches", "Best-fit sponsors"],
           ["#sponsors", `Sponsors (${f.sponsors})`],
+          ["#story-kit", "Story kit"],
         ].map(([href, l]) => (
           <a key={href} href={href} className="whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold text-muted hover:bg-bg hover:text-ink">
             {l}
@@ -256,27 +282,97 @@ export default async function CampaignPage({ params, searchParams }: { params: P
               <p className="mt-3 text-muted">No sponsors yet. Be the first to back this campaign.</p>
             ) : (
               <ul className="mt-4 divide-y divide-line border-y border-line">
-                {mine.map((p) => (
-                  <li key={p.id} className="flex items-center gap-4 py-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink font-mono text-xs text-bg">
-                      {p.sponsorName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      {p.sponsorId ? (
-                        <Link href={`/sponsors/${p.sponsorId}`} className="font-medium hover:text-brand">{p.sponsorName}</Link>
-                      ) : (
-                        <span className="font-medium">{p.sponsorName}</span>
-                      )}
-                      <p className="text-xs text-muted">
-                        {p.tierName}
-                        {p.status === "pledged" && " · awaiting confirmation"}
-                        {p.contact === "essentials" && " · essentials only"}
-                      </p>
-                    </div>
-                    <span className="font-mono text-sm font-semibold">{money(p.amount)}</span>
-                  </li>
-                ))}
+                {mine.map((p) => {
+                  const shown = p.recognition === "anonymous" ? "Anonymous supporter" : p.recognition === "private" ? "A private supporter" : p.sponsorName;
+                  const named = p.recognition !== "anonymous" && p.recognition !== "private";
+                  return (
+                    <li key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink font-mono text-xs text-bg">
+                        {named ? p.sponsorName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "♥"}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        {named && p.sponsorId ? (
+                          <Link href={`/sponsors/${p.sponsorId}`} className="font-medium hover:text-brand">{shown}</Link>
+                        ) : (
+                          <span className="font-medium">{shown}</span>
+                        )}
+                        <p className="text-xs text-muted">
+                          {p.share ? `${p.tierName} · circle share` : p.tierName}
+                          {p.kind === "sponsorship" ? " · sponsorship" : " · gift"}
+                          {p.clearedAt ? " · funds arrived" : " · transfer on its way"}
+                          {p.contact === "essentials" && " · essentials only"}
+                          {p.renews && " · renews yearly"}
+                        </p>
+                        {(p.proofs?.length ?? 0) > 0 && (
+                          <div className="mt-2 flex gap-1.5">
+                            {p.proofs!.map((x) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={x.id} src={x.image} alt="Placement photo" title={x.status === "approved" ? "Approved by the sponsor" : "Waiting for the sponsor's approval"} className={`h-10 w-14 rounded-md object-cover ring-2 ${x.status === "approved" ? "ring-mint" : "ring-line"}`} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {named && p.clearedAt && <ProofUpload pledgeId={p.id} />}
+                        <Link href={`/receipts/${p.id}`} className="text-xs font-bold text-brand hover:underline">Receipt</Link>
+                        <span className="font-mono text-sm font-semibold">{money(p.amount)}</span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
+            )}
+          </section>
+
+          {/* Backers' brand kits: the nonprofit never has to ask for a logo file. */}
+          {kits.length > 0 && (
+            <section id="kits" className="scroll-mt-44">
+              <Chapter n="05" title="Your backers' brand kits" color={look.accent} />
+              <p className="mt-3 text-sm text-muted">
+                For {opp.orgName}: logos, colors and approved words from every backer whose gift has cleared. Recognition stays to name, logo and tagline. Access lasts a year.
+              </p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {kits.slice(0, 2).map(kitCard)}
+              </div>
+              {kits.length > 2 && (
+                <More label={`${kits.length - 2} more kit${kits.length - 2 === 1 ? "" : "s"}`} className="mt-3">
+                  <div className="grid gap-4 sm:grid-cols-2">{kits.slice(2).map(kitCard)}</div>
+                </More>
+              )}
+            </section>
+          )}
+
+          {/* The reverse vault: what backers may reuse in their own posts. */}
+          <section id="story-kit" className="scroll-mt-44">
+            <Chapter n={kits.length ? "06" : "05"} title="Story kit for backers" color={look.accent} />
+            <p className="mt-3 text-sm text-muted">
+              Numbers, a quote and photos {opp.orgName} is happy for its backers to share in their own updates. {story.drafted && "Drafted from this page until the organization adds its own."}
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {story.stats.map((st) => (
+                <div key={st.label} className="rounded-2xl bg-card p-4 ring-1 ring-line">
+                  <p className="font-display text-2xl font-semibold">{st.value}</p>
+                  <p className="text-xs text-muted">{st.label}</p>
+                </div>
+              ))}
+            </div>
+            {story.quote && (
+              <blockquote className="mt-3 rounded-2xl bg-card p-5 ring-1 ring-line">
+                <p className="font-display text-lg leading-snug">&ldquo;{story.quote.text}&rdquo;</p>
+                <footer className="mt-2 flex items-center justify-between gap-3 text-xs text-muted">
+                  <span>— {story.quote.by}</span>
+                  <CopyButton text={`"${story.quote.text}" — ${story.quote.by}`} label="Copy quote" />
+                </footer>
+              </blockquote>
+            )}
+            {(opp.gallery?.length ?? 0) > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {opp.gallery!.map((src, i) => (
+                  <a key={i} href={src} download={`${opp.id}-photo-${i + 1}.jpg`} className="text-xs font-bold text-brand hover:underline">
+                    Photo {i + 1} ↓
+                  </a>
+                ))}
+              </div>
             )}
           </section>
 
@@ -286,6 +382,7 @@ export default async function CampaignPage({ params, searchParams }: { params: P
             <div className="min-w-0 flex-1">
               <p className="font-display text-xl font-semibold">Built by Peep from {opp.orgName}&apos;s pitch.</p>
               <p className="mt-1 text-sm text-muted">Every campaign on Peep starts as the same polished one-pager, so ideas compete, not design budgets.</p>
+              {opp.consent && <p className="mt-1 text-xs text-muted">Approved for publishing by {opp.consent.by} on {fmt(opp.consent.at.slice(0, 10))}.</p>}
             </div>
             <Link href="/import" className="btn-secondary group">
               Turn your pitch into one <Arrow />
@@ -299,11 +396,8 @@ export default async function CampaignPage({ params, searchParams }: { params: P
               <FundingStats f={f} />
             </div>
             <h2 className="eyebrow mb-3 text-muted">Choose a tier</h2>
-            {opp.tiers.length ? (
-              <TierRail opportunityId={opp.id} tiers={f.tiers} sponsors={options} closed={f.state === "closed"} />
-            ) : (
-              <p className="card p-5 text-sm text-muted">This campaign hasn&apos;t listed sponsorship tiers yet.</p>
-            )}
+            {!opp.tiers.length && <p className="card mb-3 p-5 text-sm text-muted">This campaign hasn&apos;t listed sponsorship tiers yet, but it takes unrestricted gifts.</p>}
+            <TierRail opportunityId={opp.id} orgName={opp.orgName} tiers={f.tiers} sponsors={options} closed={f.state === "closed"} />
           </div>
         </aside>
       </div>
@@ -317,7 +411,7 @@ function Chapter({ n, title, color }: { n: string; title: string; color: string 
       <span className="font-display text-5xl font-semibold leading-none" style={{ color }}>
         {n}
       </span>
-      <h2 className="display text-3xl font-semibold sm:text-4xl">
+      <h2 className="display min-w-0 text-[1.7rem] font-semibold leading-tight sm:text-4xl">
         <Scribble color={color}>{title}</Scribble>
       </h2>
     </Reveal>

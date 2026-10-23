@@ -11,6 +11,9 @@ import * as Give from "../app/give/page";
 import * as Home from "../app/page";
 import * as Import from "../app/import/page";
 import * as Intros from "../app/intros/page";
+import * as Receipt from "../app/receipts/[id]/page";
+import * as BrandDashboard from "../app/brand/[id]/page";
+import * as RequestPage from "../app/request/[id]/page";
 import * as Sponsor from "../app/sponsors/[id]/page";
 import * as Sponsors from "../app/sponsors/page";
 import { SiteChrome } from "../components/SiteChrome";
@@ -29,6 +32,9 @@ const ROUTES: [RegExp, PageModule][] = [
   [/^\/give$/, Give as PageModule],
   [/^\/import$/, Import as PageModule],
   [/^\/intros$/, Intros as PageModule],
+  [/^\/receipts\/(?<id>[^/]+)$/, Receipt as PageModule],
+  [/^\/brand\/(?<id>[^/]+)$/, BrandDashboard as PageModule],
+  [/^\/request\/(?<id>[^/]+)$/, RequestPage as PageModule],
 ];
 
 function NotFound() {

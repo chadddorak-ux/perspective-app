@@ -148,3 +148,18 @@ describe("sample network", () => {
     assert.deepEqual(blocked.sort(), ["big-easy-brewing", "fastbreak-sportsbook"]);
   });
 });
+
+describe("small-org spotlight", () => {
+  it("keeps a small organization in the top five", async () => {
+    const { withSmallOrgSpotlight, rankOpportunities, isSmallOrg } = await import("./match.ts");
+    const { makeOpp, makeSponsor } = await import("./test-factories.ts");
+    const big = (i: number) => makeOpp({ id: `big${i}`, orgName: `Big ${i}`, tiers: [{ name: "Top", amount: 25000, benefits: [] }] });
+    const small = makeOpp({ id: "small", orgName: "Tiny", expectedReach: 50, audiences: [], tiers: [{ name: "Friend", amount: 1000, benefits: [] }] });
+    const sp = makeSponsor({ budget: { min: 1000, max: 30000 } });
+    const ranked = rankOpportunities(sp, [...[1, 2, 3, 4, 5, 6].map(big), small], new Date("2026-10-21T12:00:00Z"));
+    assert.ok(isSmallOrg(small));
+    const out = withSmallOrgSpotlight(ranked);
+    const idx = out.findIndex((r) => r.item.id === "small");
+    assert.ok(idx > -1 && idx < 5, `small org at ${idx}`);
+  });
+});

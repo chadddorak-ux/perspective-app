@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fundingFor } from "@/lib/funding";
-import { rankOpportunities, rankSponsors } from "@/lib/match";
+import { rankOpportunities, rankSponsors, withSmallOrgSpotlight } from "@/lib/match";
 import { OpportunityInput, SponsorInput, firstError } from "@/lib/schemas";
 import { listOpportunities, listPledges, listSponsors } from "@/lib/store";
 import type { Opportunity, SponsorProfile } from "@/lib/types";
@@ -23,7 +23,8 @@ export async function POST(req: Request) {
     if (!parsed.success) return NextResponse.json({ error: firstError(parsed.error) }, { status: 400 });
     const sp: SponsorProfile = { ...parsed.data, id: "draft", source: "intake", createdAt: now };
     const [opps, pledges] = await Promise.all([listOpportunities(), listPledges()]);
-    const results = rankOpportunities(sp, opps).map((r) => ({ ...r, funding: fundingFor(r.item, pledges) }));
+    // A small organization is always kept in the top five when one fits.
+    const results = withSmallOrgSpotlight(rankOpportunities(sp, opps)).map((r) => ({ ...r, funding: fundingFor(r.item, pledges) }));
     return NextResponse.json({ results });
   }
 

@@ -223,8 +223,8 @@ export function WhyPeep({ data }: { data: WhyData }) {
         points={[
           ["wallet", "Set a budget", "One amount, verified up front."],
           ["target", "Pick what matters", "Causes and places you back."],
-          ["send", "Peep transfers", "Funds moved, arrival confirmed."],
-          ["receipt", "Instant receipt", "Tax paperwork, done for you."],
+          ["receipt", "Transfer + receipt", "Proof it arrived, paperwork done."],
+          ["page", "Your brand kit", "Nonprofits pull your logo files themselves."],
         ]}
         cta={{ href: "/give", label: "Find campaigns to back" }}
         aside="Say thanks and set up a call, or keep it to the essentials. Your call."

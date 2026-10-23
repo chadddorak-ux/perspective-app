@@ -2,9 +2,20 @@
 // (localStorage). Each backend only supplies how to read and write user data.
 
 import { seedOpportunities, seedPledges, seedSponsors } from "../data/seed.ts";
-import type { IntroRequest, IntroStatus, Opportunity, Pledge, SponsorProfile } from "./types.ts";
+import type { IntroRequest, IntroStatus, Opportunity, Pitch, Pledge, SponsorProfile, Vote } from "./types.ts";
 
-export type DB = { opportunities: Opportunity[]; sponsors: SponsorProfile[]; intros: IntroRequest[]; pledges: Pledge[] };
+/** Edits people make to sample data (seed rows always come from code, so their changes live here). */
+type Overrides = { pledges: Record<string, Partial<Pledge>>; sponsors: Record<string, Partial<SponsorProfile>> };
+
+export type DB = {
+  opportunities: Opportunity[];
+  sponsors: SponsorProfile[];
+  intros: IntroRequest[];
+  pledges: Pledge[];
+  pitches: Pitch[];
+  votes: Vote[];
+  overrides: Overrides;
+};
 
 export type Backend = {
   read(): Promise<Partial<DB> | null>;
@@ -21,12 +32,18 @@ function uuid(): string {
 
 export function createStore(backend: Backend, cache: { db?: Promise<DB> } = {}) {
   const load = (): Promise<DB> => {
-    cache.db ??= backend.read().then((saved) => ({
-      opportunities: [...(saved?.opportunities ?? []), ...seedOpportunities],
-      sponsors: [...(saved?.sponsors ?? []), ...seedSponsors],
-      intros: saved?.intros ?? [],
-      pledges: [...(saved?.pledges ?? []), ...seedPledges],
-    }));
+    cache.db ??= backend.read().then((saved) => {
+      const overrides: Overrides = { pledges: saved?.overrides?.pledges ?? {}, sponsors: saved?.overrides?.sponsors ?? {} };
+      return {
+        opportunities: [...(saved?.opportunities ?? []), ...seedOpportunities],
+        sponsors: [...(saved?.sponsors ?? []), ...seedSponsors.map((sp) => ({ ...sp, ...overrides.sponsors[sp.id] }))],
+        intros: saved?.intros ?? [],
+        pledges: [...(saved?.pledges ?? []), ...seedPledges.map((p) => ({ ...p, ...overrides.pledges[p.id] }))],
+        pitches: saved?.pitches ?? [],
+        votes: saved?.votes ?? [],
+        overrides,
+      };
+    });
     return cache.db;
   };
 
@@ -37,7 +54,16 @@ export function createStore(backend: Backend, cache: { db?: Promise<DB> } = {}) 
       sponsors: db.sponsors.filter((s) => s.source !== "seed"),
       intros: db.intros,
       pledges: db.pledges.filter((p) => !p.id.startsWith("seed-")),
+      pitches: db.pitches,
+      votes: db.votes,
+      overrides: db.overrides,
     });
+
+  /** Apply a patch to a row; for sample rows, remember the patch so it survives reloads. */
+  function patchRow<T extends { id: string }>(row: T, patch: Partial<T>, seeded: boolean, bucket: Record<string, Partial<T>>) {
+    Object.assign(row, patch);
+    if (seeded) bucket[row.id] = { ...bucket[row.id], ...patch };
+  }
 
   function slugify(s: string): string {
     return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48);
@@ -85,6 +111,15 @@ export function createStore(backend: Backend, cache: { db?: Promise<DB> } = {}) 
     return sp;
   }
 
+  async function updateSponsor(id: string, patch: Partial<SponsorProfile>): Promise<SponsorProfile | undefined> {
+    const db = await load();
+    const sp = db.sponsors.find((s) => s.id === id);
+    if (!sp) return undefined;
+    patchRow(sp, patch, sp.source === "seed", db.overrides.sponsors);
+    await save(db);
+    return sp;
+  }
+
   async function listIntros(): Promise<IntroRequest[]> {
     return (await load()).intros;
   }
@@ -126,5 +161,74 @@ export function createStore(backend: Backend, cache: { db?: Promise<DB> } = {}) 
     return pledge;
   }
 
-  return { listOpportunities, getOpportunity, createOpportunity, listSponsors, getSponsor, createSponsor, listIntros, createIntro, updateIntroStatus, listPledges, createPledge };
+  async function getPledge(id: string): Promise<Pledge | undefined> {
+    return (await load()).pledges.find((p) => p.id === id);
+  }
+
+  async function updatePledge(id: string, patch: Partial<Pledge>): Promise<Pledge | undefined> {
+    const db = await load();
+    const pledge = db.pledges.find((p) => p.id === id);
+    if (!pledge) return undefined;
+    patchRow(pledge, patch, pledge.id.startsWith("seed-"), db.overrides.pledges);
+    await save(db);
+    return pledge;
+  }
+
+  async function listPitches(): Promise<Pitch[]> {
+    return (await load()).pitches;
+  }
+
+  async function createPitch(input: Pick<Pitch, "opportunityId" | "sponsorId" | "note" | "via">): Promise<Pitch> {
+    const db = await load();
+    const now = new Date().toISOString();
+    const pitch: Pitch = { ...input, id: uuid(), status: "sent", createdAt: now, updatedAt: now };
+    db.pitches.unshift(pitch);
+    await save(db);
+    return pitch;
+  }
+
+  async function updatePitch(id: string, patch: Pick<Pitch, "status" | "reason">): Promise<Pitch | undefined> {
+    const db = await load();
+    const pitch = db.pitches.find((p) => p.id === id);
+    if (!pitch) return undefined;
+    Object.assign(pitch, patch, { updatedAt: new Date().toISOString() });
+    await save(db);
+    return pitch;
+  }
+
+  async function listVotes(): Promise<Vote[]> {
+    return (await load()).votes;
+  }
+
+  async function createVote(input: Pick<Vote, "sponsorId" | "opportunityId" | "voter">): Promise<Vote> {
+    const db = await load();
+    // One vote per person per pool: a new vote replaces their old one.
+    db.votes = db.votes.filter((v) => !(v.sponsorId === input.sponsorId && v.voter.toLowerCase() === input.voter.toLowerCase()));
+    const vote: Vote = { ...input, id: uuid(), createdAt: new Date().toISOString() };
+    db.votes.unshift(vote);
+    await save(db);
+    return vote;
+  }
+
+  return {
+    listOpportunities,
+    getOpportunity,
+    createOpportunity,
+    listSponsors,
+    getSponsor,
+    createSponsor,
+    updateSponsor,
+    listIntros,
+    createIntro,
+    updateIntroStatus,
+    listPledges,
+    createPledge,
+    getPledge,
+    updatePledge,
+    listPitches,
+    createPitch,
+    updatePitch,
+    listVotes,
+    createVote,
+  };
 }

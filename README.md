@@ -42,11 +42,24 @@ The site speaks to nonprofits first, and everything for sponsors sits in one "Fo
 | Campaign | `/opportunities/[id]` | A Peep one-pager: a poster with the title, organizer, date, place and funding, beside an arch window with an animated illustration for the cause. Then numbered chapters: the story (with a pull quote and polaroid photos), at a glance, best-fit sponsors with drafted outreach, and who's backed it. Funding stats and the tiers ("X of Y left", pledge) sit in a sticky column. |
 | Start a campaign | `/find` | GoFundMe-style five-step flow (basics, causes, place and time, goal and tiers, asks), then a review with a card preview, matching sponsors, and launch. |
 | Upload a pitch PDF | `/import` | Drop a sponsorship deck or one-pager. Peep reads the text and photos, fills in the campaign, flags what's missing (required gaps block posting), and posts it free. A sample deck is built in; pasting a pitch email still works. |
-| For sponsors | `/give` | A brand or donor sets its goals and gets ranked campaigns with their funding progress and a "Back this campaign" action. |
-| Sponsor profile | `/sponsors/[id]` | What a sponsor funds, the campaigns it has backed, and its best-fit campaigns. |
+| For sponsors | `/give` | The 1% floor calculator with a bunching planner, the standing disaster pool, and the matcher: a brand or donor sets its goals and gets ranked campaigns (a small organization always gets a top-five spot). |
+| Brand profile | `/sponsors/[id]` | A brand's public page: brand kit preview (the rest locked until a gift clears), Peep Pledge badge, budget year and best time to ask, and a "Pitch this brand" panel that enforces fit, lead time and one pitch per organization per quarter. |
+| Brand dashboard | `/brand/[id]` | Pitch inbox (interested, or decline with a reason), gifts and receipts with kit access and renewals, placement photos to approve, the brand kit editor with a tagline guard, the request link, a team vote, settings (budget year, giving budget, disaster pool, Peep Pledge), an impact digest and the year-end finance CSV. |
+| Request link | `/request/[id]` | What a brand puts on its site instead of a donations inbox: its criteria, then "upload your pitch PDF" (posted campaigns go straight to its inbox) or pick an existing campaign. |
+| Receipt | `/receipts/[id]` | Where the money is: a timeline (pledged, cleared, confirmed, receipt issued), the checks run at payout, and the right document, a charitable acknowledgment or a sponsorship invoice, ready to print. |
 | Intros | `/intros` | Double opt-in intro pipeline: requested → opted in → introduced → won/passed. |
 
-**Pledges are commitments, not payments.** The organizer confirms them and sends an agreement. Each pledge also records whether the sponsor wants to keep in touch or keep it to the essentials.
+**Pledges are commitments, not payments.** No money moves in the prototype; the receipt page has "play the nonprofit" buttons that stand in for the transfer landing. Each pledge records:
+- **Gift or sponsorship.** A gift gets a charitable acknowledgment with the right quid pro quo statement; a sponsorship gets an invoice for the brand's books as a business expense (no 1% floor). Tier cards are labeled "Gift-ready", "Gift with perks" or "Sponsorship (has advertising)" by `lib/compliance.ts`, which reads each benefit in IRC 513(i) terms.
+- **Recognition:** public, private (only the nonprofit knows) or anonymous. Anything but public keeps the brand kit locked.
+- **Contact:** keep in touch, or just the essentials.
+- **Renewal**, **circle shares** (tiers of $4K+ can be split four ways by local businesses) and **Peep's 3% fee**, paid by the sponsor on top so the nonprofit receives the full amount.
+
+**Every campaign takes unrestricted gifts.** "General operating support" sits under the tiers, any amount, always a clean gift.
+
+**The asset vault.** Each brand has a kit (logos as SVG, colors, approved tagline and boilerplate, usage rules). It's drafted from public info until the brand uploads its own (`lib/brand-kit.ts`). A nonprofit sees a backer's full kit on its campaign page once that gift clears, for a year, unless the brand closes it. The nonprofit uploads placement photos; the brand approves them from its dashboard. Going the other way, each campaign has a **story kit** (numbers, a quote, photos) that backers can reuse.
+
+**Consent first.** A campaign only goes live when someone from the organization approves it; the page records who and when. Campaigns with a valid EIN, a 501(c)(3) org type and consent show **Peep Verified** (the IRS and sanctions checks are simulated in the prototype).
 
 **Pledges follow the matching rules.** A sponsor in the network can't pledge to a campaign it's blocked from (a cause it excludes, or an industry the organization declines). Tiers also stop accepting pledges once their slots fill.
 
@@ -158,7 +171,10 @@ app/                 Next.js App Router pages and API routes
   api/opportunities  save a listing
   api/sponsors       save a sponsor profile
   api/intros         create / update intro requests
-  api/pledges        pledge to a tier (slots and blockers enforced)
+  api/pledges        pledge to a tier (slots, circles, blockers enforced); [id] clears, confirms, proofs, kit access, renewals
+  api/sponsors/[id]  update a brand's kit (tagline guard), budget year, budget, disaster pool, Peep Pledge
+  api/pitches        pitch a brand (fit, lead time and quarterly quota enforced); [id] replies
+  api/votes          team votes on where a pool goes
 components/          UI (forms, match cards, outreach drafts)
 lib/
   taxonomy.ts        causes (NTEE-mapped), audiences, objectives, industries, regions
@@ -169,6 +185,13 @@ lib/
   campaign-check.ts  what a campaign still needs before it can post
   ai-extract.ts      Claude-based extraction (structured outputs)
   outreach.ts        pitch / opt-in / intro email drafts
+  compliance.ts      benefits in IRS terms (acknowledgment, perks, advertising), tagline guard
+  tax.ts             the 2026 1% corporate floor and gift bunching
+  receipts.ts        transfer timeline, gift acknowledgments, sponsorship invoices, Peep's fee
+  pitch.ts           pitch rules (fit, lead time, quota) and brand budget calendars
+  brand-kit.ts       drafted kits, SVG logos, funding-gated kit access
+  verify.ts          Peep Verified checks
+  giving-report.ts   story kits, impact digest, year-end finance CSV
   store-core.ts      store logic shared by both builds
   store.ts           server persistence (.data/db.json + seed)
 static/              browser entry, router and Next stand-ins for the standalone build
@@ -177,6 +200,7 @@ data/seed.ts         fictional sample network, goals and pledges
 data/examples.ts     example pitches for the import demo
 data/sample-deck.ts  a sample sponsorship deck PDF (fictional org) for "Try a sample deck"
 docs/                product brief and screenshots
+reports/             competitive landscape report (research notes in research_notes/)
 ```
 
 Persistence is a JSON file for prototyping. `lib/store.ts` is the only module that touches storage, so swapping in Postgres is a contained change.

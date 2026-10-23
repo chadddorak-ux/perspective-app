@@ -87,6 +87,24 @@ export function guideFor(path: string): Guide {
       idle: { text: "Need more intros? Post a campaign and I'll find the fits.", cta: { label: "Start a campaign", href: "/find" } },
     };
   }
+  if (path.startsWith("/brand/")) {
+    return {
+      hello: { text: "Your brand HQ! Kit, pitches, receipts. Upload your logo once and I hand it out so nobody emails yous for it again." },
+      idle: { text: "Psst. Got pitches waiting? Say yes or give a reason. Ghosting is not cute." },
+    };
+  }
+  if (path.startsWith("/request/")) {
+    return {
+      hello: { text: "Ooh, they take requests through me. Upload your deck and I'll send it over looking gorgeous." },
+      idle: { text: "Your pitch, their inbox, zero awkward emails. Upload it!", cta: UPLOAD },
+    };
+  }
+  if (path.startsWith("/receipts/")) {
+    return {
+      hello: { text: "Here's where the money is. When it lands, the receipt shows up. Literally that simple." },
+      idle: { text: "Need the paperwork? Print it or save it as a PDF. I already did the hard parts." },
+    };
+  }
   return {
     hello: { text: "I'm here if yous need me." },
     idle: { text: "Psst! Your next step: post your campaign free.", cta: UPLOAD },
