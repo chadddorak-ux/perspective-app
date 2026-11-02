@@ -82,41 +82,62 @@ public struct SearchResult: Hashable, Sendable, Identifiable {
     public var snippet: String
 }
 
-/// P0 local string search over the in-memory, decrypted snapshot. There is no separate
-/// index, so deleted text cannot linger in one.
+/// P0 local search. A `Corpus` holds pre-folded text derived from the in-memory snapshot. It
+/// lives only in RAM, is rebuilt whenever the snapshot changes (so deleted text cannot
+/// linger), and is never persisted — there is no on-disk index.
 public enum LocalSearch {
+    public struct Corpus: Sendable {
+        struct Entry: Sendable {
+            var result: SearchResult
+            var folded: String
+            /// Original text used for snippets (notes only).
+            var snippetSource: String?
+        }
+        var entries: [Entry] = []
+
+        public init(_ snapshot: VaultSnapshot) {
+            for p in snapshot.people.values {
+                let text = [p.displayName, p.preferredName, p.relationshipLabel, p.city, p.notes, p.circles.joined(separator: " ")].compactMap { $0 }.joined(separator: " ")
+                entries.append(Entry(result: SearchResult(id: "person:\(p.id)", kind: .person, personID: p.id, title: p.name, snippet: [p.relationshipLabel, p.city].compactMap { $0 }.joined(separator: " · ")), folded: Grounding.fold(text)))
+            }
+            for s in snapshot.sources.values {
+                entries.append(Entry(result: SearchResult(id: "source:\(s.id)", kind: .note, personID: s.personIDs.first, title: s.title ?? "Note", snippet: ""), folded: Grounding.fold(s.text), snippetSource: s.text))
+            }
+            for f in snapshot.facts.values {
+                entries.append(Entry(result: SearchResult(id: "fact:\(f.id)", kind: .detail, personID: f.personID, title: f.label, snippet: f.value), folded: Grounding.fold(f.label + " " + f.value)))
+            }
+            for p in snapshot.promises.values where p.status == .open {
+                entries.append(Entry(result: SearchResult(id: "promise:\(p.id)", kind: .promise, personID: p.personIDs.first, title: "Promise", snippet: p.description), folded: Grounding.fold(p.description)))
+            }
+            for g in snapshot.gifts.values {
+                entries.append(Entry(result: SearchResult(id: "gift:\(g.id)", kind: .gift, personID: g.personID, title: "Gift idea", snippet: g.title), folded: Grounding.fold(g.title + " " + (g.details ?? ""))))
+            }
+        }
+
+        public func search(_ query: String, limit: Int = 50) -> [SearchResult] {
+            let terms = Grounding.terms(query)
+            guard !terms.isEmpty else { return [] }
+            var results: [SearchResult] = []
+            for entry in entries where terms.allSatisfy(entry.folded.contains) {
+                var result = entry.result
+                if let text = entry.snippetSource { result.snippet = LocalSearch.snippet(text, folded: entry.folded, term: terms[0]) }
+                results.append(result)
+            }
+            return Array(results.sorted { ($0.kind.rawValue, $0.title, $0.id) < ($1.kind.rawValue, $1.title, $1.id) }.prefix(limit))
+        }
+    }
+
     public static func search(_ query: String, in snapshot: VaultSnapshot, limit: Int = 50) -> [SearchResult] {
-        let terms = Grounding.terms(query)
-        guard !terms.isEmpty else { return [] }
-        func matches(_ text: String?) -> Bool {
-            guard let text else { return false }
-            let folded = Grounding.fold(text)
-            return terms.allSatisfy(folded.contains)
-        }
-        func snippet(_ text: String) -> String {
-            let folded = Grounding.fold(text)
-            guard let first = terms.first, let range = folded.range(of: first) else { return String(text.prefix(80)) }
-            let offset = folded.distance(from: folded.startIndex, to: range.lowerBound)
-            let start = text.index(text.startIndex, offsetBy: max(0, min(offset - 30, text.count)))
-            return (start > text.startIndex ? "…" : "") + String(text[start...].prefix(100))
-        }
-        var results: [SearchResult] = []
-        for p in snapshot.people.values where matches([p.displayName, p.preferredName, p.relationshipLabel, p.city, p.notes, p.circles.joined(separator: " ")].compactMap { $0 }.joined(separator: " ")) {
-            results.append(SearchResult(id: "person:\(p.id)", kind: .person, personID: p.id, title: p.name, snippet: [p.relationshipLabel, p.city].compactMap { $0 }.joined(separator: " · ")))
-        }
-        for s in snapshot.sources.values where matches(s.text) {
-            results.append(SearchResult(id: "source:\(s.id)", kind: .note, personID: s.personIDs.first, title: s.title ?? "Note", snippet: snippet(s.text)))
-        }
-        for f in snapshot.facts.values where matches(f.label + " " + f.value) {
-            results.append(SearchResult(id: "fact:\(f.id)", kind: .detail, personID: f.personID, title: f.label, snippet: f.value))
-        }
-        for p in snapshot.promises.values where p.status == .open && matches(p.description) {
-            results.append(SearchResult(id: "promise:\(p.id)", kind: .promise, personID: p.personIDs.first, title: "Promise", snippet: p.description))
-        }
-        for g in snapshot.gifts.values where matches(g.title + " " + (g.details ?? "")) {
-            results.append(SearchResult(id: "gift:\(g.id)", kind: .gift, personID: g.personID, title: "Gift idea", snippet: g.title))
-        }
-        return Array(results.sorted { ($0.kind.rawValue, $0.title, $0.id) < ($1.kind.rawValue, $1.title, $1.id) }.prefix(limit))
+        Corpus(snapshot).search(query, limit: limit)
+    }
+
+    static func snippet(_ text: String, folded: String, term: String) -> String {
+        guard let range = folded.range(of: term) else { return String(text.prefix(100)) }
+        let offset = folded.distance(from: folded.startIndex, to: range.lowerBound)
+        // Folding can change lengths for some scripts; clamp to the original text.
+        let startOffset = max(0, min(offset - 30, text.count))
+        let start = text.index(text.startIndex, offsetBy: startOffset)
+        return (start > text.startIndex ? "…" : "") + String(text[start...].prefix(100))
     }
 }
 

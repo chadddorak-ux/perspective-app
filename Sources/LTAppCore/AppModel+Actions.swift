@@ -519,7 +519,8 @@ extension AppModel {
     // MARK: Search and views
 
     public func search(_ query: String) -> [SearchResult] {
-        LocalSearch.search(query, in: snapshot)
+        if searchCorpus == nil { searchCorpus = LocalSearch.Corpus(snapshot) }
+        return searchCorpus?.search(query) ?? []
     }
 
     public func upcoming(days: Int = 60) -> [UpcomingItem] {

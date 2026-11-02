@@ -44,7 +44,9 @@ public final class AppModel {
     }
 
     public internal(set) var phase: Phase = .starting
-    public internal(set) var snapshot = VaultSnapshot()
+    public internal(set) var snapshot = VaultSnapshot() {
+        didSet { searchCorpus = nil }
+    }
     public internal(set) var today = TodayState.empty
     public private(set) var isDemo = false
     public private(set) var notificationAuthorization: NotificationAuthorization = .notDetermined
@@ -60,6 +62,8 @@ public final class AppModel {
     @ObservationIgnored var backgroundedAt: Date?
     /// Merges can be undone within the current session only (FR1).
     @ObservationIgnored var mergeUndoStack: [MergePlan] = []
+    /// In-memory search corpus, rebuilt lazily after any snapshot change. Never persisted.
+    @ObservationIgnored var searchCorpus: LocalSearch.Corpus?
 
     public init(environment: AppEnvironment) {
         env = environment
