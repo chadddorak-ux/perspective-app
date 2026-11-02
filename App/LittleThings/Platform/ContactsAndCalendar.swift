@@ -90,7 +90,7 @@ struct ContactPicker: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: CNContactPickerViewController, context: Context) {}
 
     @MainActor
-    final class Coordinator: NSObject, CNContactPickerDelegate {
+    final class Coordinator: NSObject, @preconcurrency CNContactPickerDelegate {
         let onPick: ([ImportedContact]) -> Void
         let onCancel: () -> Void
         init(onPick: @escaping ([ImportedContact]) -> Void, onCancel: @escaping () -> Void) {

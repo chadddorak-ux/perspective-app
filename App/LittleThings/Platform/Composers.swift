@@ -25,7 +25,7 @@ struct MessageComposer: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: MFMessageComposeViewController, context: Context) {}
 
     @MainActor
-    final class Coordinator: NSObject, MFMessageComposeViewControllerDelegate {
+    final class Coordinator: NSObject, @preconcurrency MFMessageComposeViewControllerDelegate {
         let onFinish: (ComposerResult) -> Void
         init(onFinish: @escaping (ComposerResult) -> Void) { self.onFinish = onFinish }
 
@@ -60,7 +60,7 @@ struct MailComposer: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
 
     @MainActor
-    final class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+    final class Coordinator: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         let onFinish: (ComposerResult) -> Void
         init(onFinish: @escaping (ComposerResult) -> Void) { self.onFinish = onFinish }
 

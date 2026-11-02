@@ -65,7 +65,7 @@ struct GeneratedExtraction {
         RawExtraction(
             facts: facts.map { RawFact(personName: $0.personName.nilIfEmpty, category: $0.category, label: $0.label, value: $0.value, excerpt: $0.excerpt) },
             dates: dates.map { RawDate(personName: $0.personName.nilIfEmpty, label: $0.label, kind: $0.kind, dateText: $0.dateText, excerpt: $0.excerpt) },
-            promises: promises.map { RawPromise(personName: $0.personName.nilIfEmpty, description: $0.description, owner: $0.owner, kind: $0.kind, dueText: $0.dueText.nilIfEmpty, excerpt: $0.excerpt) },
+            promises: promises.map { RawPromise(personName: $0.personName.nilIfEmpty, description: $0.action, owner: $0.owner, kind: $0.kind, dueText: $0.dueText.nilIfEmpty, excerpt: $0.excerpt) },
             lifeEvents: lifeEvents.map { RawLifeEvent(personName: $0.personName.nilIfEmpty, category: $0.category, summary: $0.summary, dateText: $0.dateText.nilIfEmpty, excerpt: $0.excerpt) }
         )
     }
@@ -100,7 +100,8 @@ struct GeneratedDate {
 @Generable
 struct GeneratedPromise {
     var personName: String
-    var description: String
+    @Guide(description: "What was promised, in a few words")
+    var action: String
     @Guide(description: "me if the note's author committed, them if the other person did")
     var owner: String
     @Guide(description: "commitment or followUp")
