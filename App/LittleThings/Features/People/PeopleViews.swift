@@ -179,8 +179,9 @@ struct PersonEditView: View {
         p.notes = notes.nilIfEmpty
         p.boundaries = boundaries.nilIfEmpty
         p.reminderPreferences.cadenceDays = cadence == 0 ? nil : cadence
-        Task {
-            if person == nil { _ = try? await model.addPerson(p) } else { try? await model.updatePerson(p) }
+        let isNew = person == nil
+        Task { [p] in
+            if isNew { _ = try? await model.addPerson(p) } else { try? await model.updatePerson(p) }
             dismiss()
         }
     }

@@ -67,18 +67,35 @@ final class ShareViewController: UIViewController {
         }
     }
 
+    // Completion-handler APIs keep the non-Sendable NSItemProvider on the main actor and
+    // hand back only Sendable values. File contents are read inside the handler, while the
+    // provided URL is guaranteed to be valid.
     private func loadText(_ provider: NSItemProvider) async -> String? {
-        try? await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) as? String
+        await withCheckedContinuation { continuation in
+            provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, _ in
+                continuation.resume(returning: item as? String)
+            }
+        }
     }
 
     private func loadURL(_ provider: NSItemProvider) async -> URL? {
-        try? await provider.loadItem(forTypeIdentifier: UTType.url.identifier) as? URL
+        await withCheckedContinuation { continuation in
+            provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, _ in
+                continuation.resume(returning: item as? URL)
+            }
+        }
     }
 
     private func loadFile(_ provider: NSItemProvider) async -> (name: String, data: Data)? {
-        guard let url = try? await provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) as? URL,
-              let data = try? Data(contentsOf: url) else { return nil }
-        return (url.lastPathComponent, data)
+        await withCheckedContinuation { continuation in
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+                guard let url = item as? URL, let data = try? Data(contentsOf: url) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: (url.lastPathComponent, data))
+            }
+        }
     }
 }
 

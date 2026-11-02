@@ -140,7 +140,10 @@ struct AddMemoryView: View {
         if recorder.isRecording {
             guard let url = recorder.stop() else { return }
             Task {
-                do { text += (text.isEmpty ? "" : "\n") + (try await OnDeviceTranscriber.transcribe(fileURL: url)) }
+                do {
+                    let transcript = try await OnDeviceTranscriber.transcribe(fileURL: url)
+                    text += (text.isEmpty ? "" : "\n") + transcript
+                }
                 catch { self.error = "Couldn't transcribe on this iPhone. You can type instead." }
             }
         } else {

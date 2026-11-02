@@ -95,7 +95,7 @@ struct SettingsView: View {
         Binding(get: { model.snapshot.preferences[keyPath: keyPath] }, set: { value in
             var p = model.snapshot.preferences
             p[keyPath: keyPath] = value
-            Task { try? await model.updatePreferences(p) }
+            Task { [p] in try? await model.updatePreferences(p) }
         })
     }
 
@@ -107,7 +107,7 @@ struct SettingsView: View {
             let c = Calendar.current.dateComponents([.hour, .minute], from: date)
             var p = model.snapshot.preferences
             p[keyPath: keyPath] = TimeOfDay(hour: c.hour ?? 9, minute: c.minute ?? 0)
-            Task { try? await model.updatePreferences(p) }
+            Task { [p] in try? await model.updatePreferences(p) }
         })
     }
 }

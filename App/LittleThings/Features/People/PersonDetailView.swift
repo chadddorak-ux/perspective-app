@@ -235,12 +235,12 @@ struct PersonDetailView: View {
             Toggle("Suggest check-ins from connected conversations", isOn: Binding(get: { person.reminderPreferences.observedPatternEnabled }, set: { v in
                 var p = person
                 p.reminderPreferences.observedPatternEnabled = v
-                Task { try? await model.updatePerson(p) }
+                Task { [p] in try? await model.updatePerson(p) }
             }))
             Toggle("Favorite", isOn: Binding(get: { person.isFavorite }, set: { v in
                 var p = person
                 p.isFavorite = v
-                Task { try? await model.updatePerson(p) }
+                Task { [p] in try? await model.updatePerson(p) }
             }))
             Button(person.isArchived ? "Unarchive" : "Archive") { Task { try? await model.setArchived(personID, !person.isArchived) } }
             Button("Delete \(person.name)", role: .destructive) { deletionPlan = model.deletionPreview(for: personID) }

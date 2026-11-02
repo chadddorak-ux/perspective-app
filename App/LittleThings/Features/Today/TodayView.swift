@@ -90,7 +90,7 @@ struct TodayView: View {
                     Button("Not now") {
                         var p = model.snapshot.preferences
                         p.notificationPermissionRequested = true
-                        Task { try? await model.updatePreferences(p) }
+                        Task { [p] in try? await model.updatePreferences(p) }
                     }
                 }
             }
@@ -106,7 +106,7 @@ struct TodayView: View {
                     Button("Later") {
                         var p = model.snapshot.preferences
                         p.backupPromptShown = true
-                        Task { try? await model.updatePreferences(p) }
+                        Task { [p] in try? await model.updatePreferences(p) }
                     }
                 }
             }
