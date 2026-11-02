@@ -29,6 +29,25 @@ final class LittleThingsUITests: XCTestCase {
         app.buttons["savePersonButton"].tap()
     }
 
+    /// Form cells are created lazily; scroll until the element exists.
+    func scrollTo(_ element: XCUIElement, maxSwipes: Int = 6) -> XCUIElement {
+        var swipes = 0
+        while !element.exists && swipes < maxSwipes {
+            app.swipeUp()
+            swipes += 1
+        }
+        return element
+    }
+
+    /// Tapping a Form toggle's center can hit its label; tap the switch itself if still off.
+    func turnOn(_ toggle: XCUIElement) {
+        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
+        if (toggle.value as? String) != "1" {
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        }
+        XCTAssertEqual(toggle.value as? String, "1")
+    }
+
     func testOnboardingWithoutPermissions() {
         createVault()
         XCTAssertTrue(app.buttons["chooseContactsButton"].waitForExistence(timeout: 5))
@@ -46,7 +65,7 @@ final class LittleThingsUITests: XCTestCase {
         let text = app.textFields["promiseText"]
         text.tap()
         text.typeText("Send the photographer's number")
-        app.switches["Due date"].tap()
+        turnOn(app.switches["dueDateToggle"])
         app.buttons["savePromiseButton"].tap()
         XCTAssertTrue(app.otherElements["card-promise.due"].waitForExistence(timeout: 5))
     }
@@ -90,7 +109,7 @@ final class LittleThingsUITests: XCTestCase {
         createVault()
         addPerson("Rachel Adams")
         app.tabBars.buttons["Settings"].tap()
-        let backup = app.buttons["backupLink"].firstMatch
+        let backup = scrollTo(app.buttons["backupLink"].firstMatch)
         XCTAssertTrue(backup.waitForExistence(timeout: 3))
         backup.tap()
         let create = app.buttons["createBackupButton"]

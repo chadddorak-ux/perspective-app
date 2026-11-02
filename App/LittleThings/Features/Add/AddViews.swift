@@ -420,6 +420,7 @@ struct AddPromiseView: View {
                 TextField(kind == .commitment ? "e.g. Send the book recommendation" : "e.g. Ask how the interview went", text: $description, axis: .vertical)
                     .accessibilityIdentifier("promiseText")
                 Toggle("Due date", isOn: $hasDue)
+                    .accessibilityIdentifier("dueDateToggle")
                 if hasDue { DatePicker("Due", selection: $due, displayedComponents: .date) }
                 Toggle("Pin to Today", isOn: $pinned)
             } footer: {

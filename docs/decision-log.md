@@ -107,9 +107,15 @@ records can be written in any order but an orphan can never commit. Uniqueness c
 enforce idempotency at storage level: `(provider, fingerprint)` for capture records and
 `idempotency_key` for action attempts.
 
-The whole decrypted working set is loaded into memory while unlocked (P0). Search is a string
-scan of that snapshot, so there is no separate index that could retain deleted text. Performance
-at 1,000 people / 20,000 notes is **not yet measured** (PRD §11 target: first screen < 2 s).
+The whole decrypted working set is loaded into memory while unlocked (P0). Search scans an
+in-memory corpus of pre-folded text derived from that snapshot; the corpus is rebuilt after every
+change and never persisted, so there is no index that could retain deleted text.
+
+Measured 2026-11-02 on the Linux build container (release build, not the reference iPhone) with
+1,000 people and 20,000 notes: open + decrypt + load 0.33 s, one engine pass 11 ms, corpus build
+0.17 s, search p95 129 ms (PRD targets: first screen < 2 s, search p95 < 300 ms after warm-up).
+The first measurement found search p95 at 449 ms because every query re-folded all notes; the
+corpus fixed it. Device measurement is still required.
 
 ## D6 — Vault key handling (2026-11-02)
 

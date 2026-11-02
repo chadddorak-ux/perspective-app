@@ -212,5 +212,5 @@ Test references use `Target/Suite.test`. "Fixtures" are the PRD §11 synthetic p
 | Synthetic fixtures; demo labelled, never mixed | Passed (logic) | `SyntheticFixtures`, `noPasscodeBlocksRealDataButDemoWorksSeparately` |
 | UI tests listed in PRD §11 | Written; simulator run in CI (non-blocking) | `App/LittleThingsUITests` |
 | Accessibility (Dynamic Type, VoiceOver, reduced motion) | Implemented with system controls and labels; **not audited** | — |
-| Performance targets (1,000 people / 20,000 notes) | **Not measured** | — |
+| Performance targets (1,000 people / 20,000 notes) | Measured on a Linux x86 container (release build), **not the reference iPhone**: open + decrypt + load 22,000 records 0.33 s; engine pass 11 ms; search corpus build 0.17 s, then search p95 129 ms (first attempt was 449 ms and was fixed). Device measurement still required | `LT_PERF=1 swift test -c release -Xswiftc -enable-testing --filter PerformanceTests` |
 | Physical-device verification list | **Not done** | `docs/handoff.md` |

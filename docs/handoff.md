@@ -78,7 +78,8 @@ package, all tested)
 12. Network inspection with integrations disabled: no app-originated traffic.
 13. Accessibility audit: Dynamic Type at the largest sizes, VoiceOver order and labels,
     reduced motion, contrast in both appearances.
-14. Performance at 1,000 people / 20,000 notes on the reference device.
+14. Performance at 1,000 people / 20,000 notes on the reference device. (Linux container
+    release build: load 0.33 s, engine 11 ms, search p95 129 ms after a 0.17 s corpus build.)
 
 ## Known gaps and next work (in dependency order)
 
