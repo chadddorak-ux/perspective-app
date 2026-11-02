@@ -48,7 +48,7 @@ package, all tested)
 
 | Command | Where | Result |
 |---|---|---|
-| `swift build --build-tests` / `swift test` | Local Linux container (Swift 6.4.2, SQLCipher 4.5.6) | 168 tests in 8 targets, all passing |
+| `swift build --build-tests` / `swift test` | Local Linux container (Swift 6.4.2, SQLCipher 4.5.6) | 169 tests in 8 targets, all passing (plus an opt-in benchmark) |
 | `swiftc -parse` on all 19 app Swift files | Local Linux | All parse |
 | `./scripts/privacy-guards.sh` | Local and CI | Pass; also verified it fails on a planted probe |
 | CI `core-linux` (`swift:6.4.2-noble`) | GitHub Actions | Pass |

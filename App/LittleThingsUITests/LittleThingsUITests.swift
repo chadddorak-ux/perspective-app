@@ -122,8 +122,9 @@ final class LittleThingsUITests: XCTestCase {
         createVault()
         addPerson("Chris Lee")
         app.tabBars.buttons["Settings"].tap()
-        app.swipeUp()
-        app.buttons["deleteEverythingButton"].tap()
+        let delete = scrollTo(app.buttons["deleteEverythingButton"])
+        XCTAssertTrue(delete.waitForExistence(timeout: 3))
+        delete.tap()
         app.buttons["confirmDeleteEverything"].firstMatch.tap()
         XCTAssertTrue(app.buttons["createVaultButton"].waitForExistence(timeout: 5))
     }

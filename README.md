@@ -16,7 +16,7 @@ The product requirements are in [`docs/PRD.md`](docs/PRD.md) (the implementation
 
 | Area | State |
 |---|---|
-| Core package (`LittleThingsKit`) | Implemented; **168 tests passing** on Linux (Swift 6.4.2, SQLCipher 4.5.6) and in CI on Linux and macOS |
+| Core package (`LittleThingsKit`) | Implemented; **169 tests passing** on Linux (Swift 6.4.2, SQLCipher 4.5.6) and in CI on Linux and macOS |
 | iPhone app (SwiftUI) and share extension | Implemented; compiled in CI with Xcode on the iOS Simulator SDK; **not yet run on a device** |
 | UI tests | Written; run in CI on a simulator (non-blocking until stabilized) |
 | Device verification (Face ID, Keychain, notifications, Contacts, Calendar, Messages, on-device AI, network inspection) | **Not done** — see [`docs/handoff.md`](docs/handoff.md) |

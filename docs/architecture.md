@@ -76,7 +76,7 @@ archives keyed from a user-held recovery key; restore is staged, verified and at
 | LTIntelligenceTests | date parsing, grounding, invented content rejection, prompt injection, ambiguity, drafts, personalization guard, briefs | 21 |
 | LTCaptureTests | HPKE inbox, idempotent capture, WhatsApp/LinkedIn import, rhythm from imports, revocation | 11 |
 | LTPolicyTests | approvals, recipients, rules, scope, dedupe, unknown outcomes, expiry, purchases, gifts | 15 |
-| LTAppCoreTests | end-to-end flows: onboarding without permissions, restart, relock, demo, memory review, drafts, pause, delete, share inbox, backup, delete-all, merge undo, imports, calendar, search, contacts | 19 |
+| LTAppCoreTests | end-to-end flows: onboarding without permissions, restart, relock, demo, memory review, drafts, pause, delete, share inbox, backup, delete-all, merge undo, imports, calendar, search, contacts, conflicting dates; opt-in performance benchmark | 20 (+1 opt-in) |
 
 UI tests (`App/LittleThingsUITests`) cover onboarding without permission, add person/date/promise,
 draft cancel, pause, demo, backup start and delete-all; they run in CI on a simulator but are
