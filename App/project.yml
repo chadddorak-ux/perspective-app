@@ -1,0 +1,139 @@
+# XcodeGen spec for the LittleThings.ai iPhone app.
+#
+#   brew install xcodegen
+#   cd App && xcodegen generate && open LittleThings.xcodeproj
+#
+# Identifiers use a placeholder reverse-DNS prefix (LT_BUNDLE_PREFIX). The littlethings.ai
+# domain is not assumed to be owned; set your own prefix and DEVELOPMENT_TEAM before
+# running on a device. The App Group identifier is derived from the same prefix.
+
+name: LittleThings
+options:
+  bundleIdPrefix: com.example.littlethings
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    LT_BUNDLE_PREFIX: com.example.littlethings
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    # No analytics or crash-reporting SDKs are linked. Keep it that way.
+
+packages:
+  LittleThingsKit:
+    path: ..
+
+targets:
+  LittleThings:
+    type: application
+    platform: iOS
+    sources:
+      - path: LittleThings
+    dependencies:
+      - package: LittleThingsKit
+        product: LTAppCore
+      - package: LittleThingsKit
+        product: LTDomain
+      - package: LittleThingsKit
+        product: LTVault
+      - package: LittleThingsKit
+        product: LTSuggestions
+      - package: LittleThingsKit
+        product: LTIntegrations
+      - package: LittleThingsKit
+        product: LTIntelligence
+      - package: LittleThingsKit
+        product: LTCapture
+      - package: LittleThingsKit
+        product: LTPolicy
+      - target: LittleThingsShare
+    entitlements:
+      path: LittleThings/LittleThings.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.$(LT_BUNDLE_PREFIX)
+    info:
+      path: LittleThings/Info.plist
+      properties:
+        CFBundleDisplayName: LittleThings
+        LTAppGroupIdentifier: group.$(LT_BUNDLE_PREFIX)
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSFaceIDUsageDescription: LittleThings uses Face ID to unlock your private, on-device vault.
+        NSContactsUsageDescription: LittleThings reads only the contacts you choose, to keep names, numbers and birthdays up to date on this iPhone.
+        NSCalendarsFullAccessUsageDescription: LittleThings reads the calendars and events you select so it can offer a brief before you meet and ask afterward whether it happened.
+        NSMicrophoneUsageDescription: LittleThings records a voice memory only while you hold the record button. Audio is transcribed on this iPhone and then deleted.
+        NSSpeechRecognitionUsageDescription: Voice memories are transcribed on this iPhone. LittleThings only offers recording when on-device transcription is available.
+        NSPhotoLibraryUsageDescription: LittleThings reads the photo you pick to recognize text on this iPhone.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(LT_BUNDLE_PREFIX).app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+
+  LittleThingsShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+    dependencies:
+      - package: LittleThingsKit
+        product: LTCapture
+      - package: LittleThingsKit
+        product: LTDomain
+    entitlements:
+      path: ShareExtension/LittleThingsShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.$(LT_BUNDLE_PREFIX)
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: LittleThings
+        LTAppGroupIdentifier: group.$(LT_BUNDLE_PREFIX)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsFileWithMaxCount: 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(LT_BUNDLE_PREFIX).app.share
+
+  LittleThingsUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: LittleThingsUITests
+    dependencies:
+      - target: LittleThings
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(LT_BUNDLE_PREFIX).uitests
+        TEST_TARGET_NAME: LittleThings
+
+schemes:
+  LittleThings:
+    build:
+      targets:
+        LittleThings: all
+        LittleThingsUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LittleThingsUITests

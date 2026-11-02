@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths-ignore: ["docs/**", "**.md"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  privacy-guards:
+    name: Privacy guards
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/privacy-guards.sh
+
+  core-linux:
+    name: Core package tests (Linux, system SQLCipher + swift-crypto)
+    runs-on: ubuntu-24.04
+    container: swift:6.4.2-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SQLCipher
+        run: apt-get update && apt-get install -y --no-install-recommends libsqlcipher-dev
+      - name: Build
+        run: swift build --build-tests
+      - name: Test
+        run: swift test
+
+  apple:
+    name: Package tests (macOS) and iOS app build
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          swift --version
+      - name: Package tests on macOS (CryptoKit + Zetetic SQLCipher.swift)
+        run: swift test
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          cd App && xcodegen generate
+      - name: Build app and share extension for the iOS Simulator
+        run: |
+          set -o pipefail
+          cd App
+          xcodebuild -project LittleThings.xcodeproj -scheme LittleThings \
+            -destination 'generic/platform=iOS Simulator' -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 200
+      - name: Pick a simulator
+        run: |
+          # Prefer the newest non-Max iPhone Pro; fall back to any iPhone.
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, re, sys
+          devices = json.load(sys.stdin)['devices']
+          def version(runtime):
+              m = re.search(r'iOS-(\d+)-(\d+)', runtime)
+              return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+          phones = [(version(rt), d) for rt, ds in devices.items() if 'iOS' in rt for d in ds if d['name'].startswith('iPhone')]
+          pros = [p for p in phones if 'Pro' in p[1]['name'] and 'Max' not in p[1]['name']]
+          best = max(pros or phones, key=lambda p: p[0])
+          print(best[1]['udid'])
+          ")
+          echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
+          xcrun simctl list devices | grep "$DEVICE"
+      - name: UI tests (simulator)
+        continue-on-error: true
+        run: |
+          cd App
+          set +e
+          xcodebuild -project LittleThings.xcodeproj -scheme LittleThings \
+            -destination "id=$DEVICE" CODE_SIGNING_ALLOWED=NO \
+            -skip-testing:LittleThingsUITests/ScreenshotTour test > ui-tests.log 2>&1
+          status=$?
+          grep -E "error:|Test Case .*(passed|failed)|Executed [0-9]+ test" ui-tests.log
+          exit $status
+      - name: Screenshot tour (simulator, demo data)
+        continue-on-error: true
+        run: |
+          cd App
+          rm -rf "$HOME/littlethings-screens"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl status_bar "$DEVICE" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+          xcrun simctl io "$DEVICE" recordVideo --codec=h264 --force "$HOME/littlethings-tour.mp4" &
+          RECORDER=$!
+          set +e
+          xcodebuild -project LittleThings.xcodeproj -scheme LittleThings \
+            -destination "id=$DEVICE" CODE_SIGNING_ALLOWED=NO \
+            -only-testing:LittleThingsUITests/ScreenshotTour test > tour.log 2>&1
+          status=$?
+          kill -INT $RECORDER; wait $RECORDER
+          grep -E "error:|Test Case .*(passed|failed)|Executed [0-9]+ test" tour.log
+          mkdir -p "$HOME/littlethings-screens"
+          cp "$HOME/littlethings-tour.mp4" "$HOME/littlethings-screens/" 2>/dev/null || true
+          xcrun simctl list devices | grep "$DEVICE" > "$HOME/littlethings-screens/device.txt"
+          ls -la "$HOME/littlethings-screens"
+          exit $status
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-screenshots
+          path: ~/littlethings-screens
+          if-no-files-found: warn
+          retention-days: 30
