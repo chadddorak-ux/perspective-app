@@ -82,6 +82,7 @@ extension AppModel {
             if let birthday = plan.birthdayCandidate { changes.append(.upsert(.importantDate(birthday))) }
         }
         try await commit(changes)
+        try await markDateConflicts(for: Set(ids))
         return ids
     }
 
@@ -161,6 +162,7 @@ extension AppModel {
             changes.append(.upsert(.lifeEvent(ProposalMaterializer.lifeEvent(event, personID: person, source: source, confirmed: true, now: now))))
         }
         try await commit(changes)
+        try await markDateConflicts(for: Set(selection.dates.map(\.1)))
     }
 
     public var reviewQueue: [ReviewItem] { ReviewQueue.items(in: snapshot) }
@@ -179,7 +181,16 @@ extension AppModel {
 
     // MARK: Dates, promises, interactions, trips, gifts
 
-    public func save(_ date: ImportantDate) async throws { try await commit([.upsert(.importantDate(date))]) }
+    public func save(_ date: ImportantDate) async throws {
+        try await commit([.upsert(.importantDate(date))])
+        try await markDateConflicts(for: [date.personID])
+    }
+
+    /// Marks conflicting birthdays/anniversaries as disputed so they go to review (FR2).
+    func markDateConflicts(for people: Set<PersonID>) async throws {
+        let changes = DateConflictDetector.disputeChanges(for: people, in: snapshot, now: now)
+        if !changes.isEmpty { try await commit(changes) }
+    }
     public func save(_ promise: Promise) async throws { try await commit([.upsert(.promise(promise))]) }
     public func save(_ gift: GiftIdea) async throws { try await commit([.upsert(.gift(gift))]) }
     public func save(_ trip: Trip) async throws { try await commit([.upsert(.trip(trip))]) }

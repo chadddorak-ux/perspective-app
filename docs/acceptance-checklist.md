@@ -37,7 +37,7 @@ Test references use `Target/Suite.test`. "Fixtures" are the PRD §11 synthetic p
 | Criterion | Status | Evidence |
 |---|---|---|
 | Every extracted fact links to its source | Passed (logic) | `memoryCaptureProposesGroundedItemsAndConfirmsWithProvenance`, `autoSaveOnlyForExplicitNonSensitiveResolvedItems` (`hasRequiredProvenance`) |
-| Conflicting dates appear for review | Partially: unconfirmed and leap-day items go to the review queue; automatic detection of two conflicting dates for the same occasion is **not built** (merge flags possible duplicate dates) | `possibleDuplicateDates` in `MergePlan` |
+| Conflicting dates appear for review | Passed (logic): a second, different birthday/anniversary marks both disputed; no reminders until one is kept | `DateConflictTests/conflictingBirthdaysGoToReviewAndStopReminders` |
 | Deleting source triggers review or removal of dependent facts and suggestions | Passed (logic) | `deletingSourceRemovesUnconfirmedDerivedDetailsAndInvalidatesCardsAndDrafts`, `deletingSourceCanKeepConfirmedDetailsWithoutExcerpt` |
 | No deleted text remains in search indexes or generated briefs | Passed (logic) | `searchIsLocalAndForgetsDeletedText`, `briefUsesOnlyConfirmedNonSensitiveInformation`; no separate index exists |
 

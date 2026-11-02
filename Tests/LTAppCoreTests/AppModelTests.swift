@@ -355,3 +355,37 @@ struct AppModelTests {
         #expect(try await model.importContacts([picked[0]]).isEmpty)
     }
 }
+
+@MainActor
+@Suite("Conflicting dates (FR2)")
+struct DateConflictTests {
+    @Test func conflictingBirthdaysGoToReviewAndStopReminders() async throws {
+        let env = TestEnvironment(); defer { env.directory.cleanup() }
+        let model = AppModel(environment: env.environment)
+        model.start()
+        await model.createVault()
+        let maya = try await model.addPerson(Person(displayName: "Maya Chen", createdAt: TestDates.fixtureNow))
+        let first = ImportantDate(personID: maya.id, category: .birthday, schedule: .annual(AnnualDate(month: 11, day: 10)!), createdAt: TestDates.fixtureNow)
+        try await model.save(first)
+        #expect(model.today.visible.contains { $0.ruleID == .dateUpcoming })
+
+        // A note later says the birthday is November 12.
+        let capture = try await model.addMemory("Maya's birthday is November 12.", people: [maya.id])
+        var selection = ProposalSelection()
+        selection.dates = capture.proposal.dates.map { ($0, maya.id, nil) }
+        try await model.confirm(selection, from: capture.source)
+
+        let dates = model.snapshot.importantDates.values.filter { $0.personID == maya.id }
+        #expect(dates.count == 2)
+        #expect(dates.allSatisfy { $0.confirmation == .disputed })
+        #expect(!(model.today.visible + model.today.more).contains { $0.ruleID == .dateUpcoming })
+        let reviewDates = model.reviewQueue.filter { if case .date = $0 { return true } else { return false } }
+        #expect(reviewDates.count == 2)
+
+        // Keep Nov 10, dismiss Nov 12: the remaining date is confirmed and reminders return.
+        try await model.resolve(.date(dates.first { $0.id != first.id }!.id), accept: false)
+        try await model.resolve(.date(first.id), accept: true)
+        #expect(model.snapshot.importantDates[first.id]?.confirmation == .confirmed)
+        #expect(model.today.visible.contains { $0.ruleID == .dateUpcoming })
+    }
+}

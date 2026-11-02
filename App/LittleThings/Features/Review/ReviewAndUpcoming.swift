@@ -44,7 +44,11 @@ struct ReviewQueueView: View {
         let s = model.snapshot
         switch item {
         case .fact(let id): return s.facts[id].map { "\(name($0.personID)) — \($0.label): \($0.value)" } ?? ""
-        case .date(let id): return s.importantDates[id].map { "\(name($0.personID)) — \($0.label)" } ?? ""
+        case .date(let id):
+            return s.importantDates[id].map { date in
+                let conflict = date.confirmation == .disputed ? " — differs from another saved \(date.label.lowercased()); keep one" : ""
+                return "\(name(date.personID)) — \(date.label)\(conflict)"
+            } ?? ""
         case .leapDayChoice(let id): return s.importantDates[id].map { "\(name($0.personID)) — \($0.label) is Feb 29. Which day in other years?" } ?? ""
         case .promise(let id): return s.promises[id].map { $0.description } ?? ""
         case .lifeEvent(let id): return s.lifeEvents[id].map { "\(name($0.personID)) — \($0.summary)" + ($0.eventDay == nil ? " (no date)" : "") } ?? ""

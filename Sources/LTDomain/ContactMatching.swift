@@ -198,3 +198,43 @@ public enum MergePlanner {
         return MergePlan(kept: keptID, absorbed: absorbedID, changes: changes, undoChanges: undo, possibleDuplicateDates: possibleDuplicateDates)
     }
 }
+
+/// Detects conflicting annual dates (FR2): one person with two different birthdays or
+/// anniversaries. Conflicts are marked disputed so neither drives reminders until reviewed.
+public enum DateConflictDetector {
+    static let singleValued: Set<DateCategory> = [.birthday, .anniversary]
+
+    /// Changes marking every conflicting, not-yet-disputed date for `personIDs` as disputed.
+    public static func disputeChanges(for personIDs: Set<PersonID>, in snapshot: VaultSnapshot, now: Date) -> [RecordChange] {
+        var changes: [RecordChange] = []
+        for personID in personIDs.sorted() {
+            for category in singleValued.sorted(by: { $0.rawValue < $1.rawValue }) {
+                let dates = snapshot.importantDates.values
+                    .filter { $0.personID == personID && $0.category == category }
+                    .sorted { $0.id < $1.id }
+                let distinct = Set(dates.compactMap { date -> String? in
+                    guard case .annual(let a) = date.schedule else { return nil }
+                    return "\(a.month)-\(a.day)"
+                })
+                guard distinct.count > 1 else { continue }
+                for date in dates where date.confirmation != .disputed {
+                    var updated = date
+                    updated.confirmation = .disputed
+                    updated.updatedAt = now
+                    changes.append(.upsert(.importantDate(updated)))
+                }
+            }
+        }
+        return changes
+    }
+
+    /// Whether a date currently conflicts with another of the same single-valued category.
+    public static func conflicts(_ date: ImportantDate, in snapshot: VaultSnapshot) -> Bool {
+        guard singleValued.contains(date.category), case .annual(let a) = date.schedule else { return false }
+        return snapshot.importantDates.values.contains { other in
+            guard other.id != date.id, other.personID == date.personID, other.category == date.category,
+                  case .annual(let b) = other.schedule else { return false }
+            return a.month != b.month || a.day != b.day
+        }
+    }
+}

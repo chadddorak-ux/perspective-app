@@ -45,7 +45,8 @@ public enum ReviewQueue {
         case .date(let id):
             guard var date = snapshot.importantDates[id] else { return [] }
             if !accept { return [.delete(.importantDate(id))] }
-            date.confirmation = .confirmed
+            // A conflicting date stays disputed until the other one is dismissed.
+            date.confirmation = DateConflictDetector.conflicts(date, in: snapshot) ? .disputed : .confirmed
             if date.leapDayPolicy == nil { date.leapDayPolicy = leapDayPolicy }
             date.updatedAt = now
             return [.upsert(.importantDate(date))]
