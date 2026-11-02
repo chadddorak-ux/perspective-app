@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  privacy-guards:
+    name: Privacy guards
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/privacy-guards.sh
+
+  core-linux:
+    name: Core package tests (Linux, system SQLCipher + swift-crypto)
+    runs-on: ubuntu-24.04
+    container: swift:6.4.2-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SQLCipher
+        run: apt-get update && apt-get install -y --no-install-recommends libsqlcipher-dev
+      - name: Build
+        run: swift build --build-tests
+      - name: Test
+        run: swift test
+
+  apple:
+    name: Package tests (macOS) and iOS app build
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          swift --version
+      - name: Package tests on macOS (CryptoKit + Zetetic SQLCipher.swift)
+        run: swift test
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          cd App && xcodegen generate
+      - name: Build app and share extension for the iOS Simulator
+        run: |
+          set -o pipefail
+          cd App
+          xcodebuild -project LittleThings.xcodeproj -scheme LittleThings \
+            -destination 'generic/platform=iOS Simulator' -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 200
+      - name: UI tests (simulator)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          cd App
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          xcodebuild -project LittleThings.xcodeproj -scheme LittleThings \
+            -destination "id=$DEVICE" CODE_SIGNING_ALLOWED=NO test | tail -n 200
