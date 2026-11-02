@@ -5,6 +5,9 @@ Status of every PRD acceptance criterion as of 2026-11-02.
 - **Passed (logic)**: verified by automated tests of the core package (run on Linux locally and
   in CI on Linux and macOS). The app layer that wires it to the UI has not run on a device.
 - **Passed (build)**: the code compiles for the iOS Simulator in CI; behavior not exercised.
+- **Passed (simulator)**: exercised by a UI test running the real app in the iOS Simulator in CI
+  (in-memory key store and notification fakes via `-ui-testing`; no Keychain, permissions or
+  network involved).
 - **Not tested (device)**: requires a physical iPhone and/or Xcode run that has not happened.
 - **Not built**: not implemented in this iteration.
 - **Failed**: tested and not meeting the criterion.
@@ -15,7 +18,7 @@ Test references use `Target/Suite.test`. "Fixtures" are the PRD §11 synthetic p
 
 | Gate | Status | Evidence |
 |---|---|---|
-| Phase 1: records survive restart, DB not readable as plaintext, manual operation works without permissions and network | Passed (logic); device not tested | `LTVaultTests/recordsSurviveRestart`, `databaseFileContainsNoPlaintext`, `wrongKeyFailsClosedAndLeavesDataIntact`; `LTAppCoreTests/onboardingWorksWithoutAnyPermission`, `recordsSurviveRestartAndUnlockRequiresAuthentication` |
+| Phase 1: records survive restart, DB not readable as plaintext, manual operation works without permissions and network | Passed (logic) and manual operation passed (simulator); device not tested | `LTVaultTests/recordsSurviveRestart`, `databaseFileContainsNoPlaintext`, `wrongKeyFailsClosedAndLeavesDataIntact`; `LTAppCoreTests/onboardingWorksWithoutAnyPermission`, `recordsSurviveRestartAndUnlockRequiresAuthentication` |
 | Phase 2: date and rule edge cases pass; every card explains its evidence | Passed (logic) | `LTDomainTests` date suite (16 tests); `LTSuggestionsTests` (33); `everyCardExplainsItselfWithoutAModel` |
 | Phase 3: denial/revocation/cancellation accurate; no invented interactions; no hidden cloud calls | Passed (logic) for calendar denial, import revocation, draft cancel; privacy guards in CI. Contacts/Calendar/Notifications on device: not tested | `calendarRefreshHonorsDeniedAccessAndUpdatesMovedEvents`, `revokingAnImportStopsCaptureAndCanDeleteCopies`, `draftCancelAndSendOutcomesAreRecordedPrecisely`, `scripts/privacy-guards.sh` |
 | Phase 4: P0 acceptance passes or blockers documented | Partially: logic passes; device verification, accessibility audit, performance and network inspection are documented blockers | This file; `docs/handoff.md` |
@@ -210,7 +213,7 @@ Test references use `Target/Suite.test`. "Fixtures" are the PRD §11 synthetic p
 | Voice only when on-device transcription is guaranteed; raw audio deleted | Implemented; not tested (device) | `OnDeviceTranscriber` |
 | Privacy beta gate items | See `docs/privacy.md` — device items not done | — |
 | Synthetic fixtures; demo labelled, never mixed | Passed (logic) | `SyntheticFixtures`, `noPasscodeBlocksRealDataButDemoWorksSeparately` |
-| UI tests listed in PRD §11 | Written; simulator run in CI (non-blocking) | `App/LittleThingsUITests` |
+| UI tests listed in PRD §11 | Passed (simulator) except as noted: onboarding without permission, add person/date/promise → card, review draft → cancel, pause person, demo labelled and exits, backup starts with a recovery key, delete everything → onboarding — all 7 passed in CI run 6. Export → restore through the document picker is not UI-tested (covered by `backupRestoreRoundTripsToANewDevice`) | `App/LittleThingsUITests`, CI job "Package tests (macOS) and iOS app build" |
 | Accessibility (Dynamic Type, VoiceOver, reduced motion) | Implemented with system controls and labels; **not audited** | — |
 | Performance targets (1,000 people / 20,000 notes) | Measured on a Linux x86 container (release build), **not the reference iPhone**: open + decrypt + load 22,000 records 0.33 s; engine pass 11 ms; search corpus build 0.17 s, then search p95 129 ms (first attempt was 449 ms and was fixed). Device measurement still required | `LT_PERF=1 swift test -c release -Xswiftc -enable-testing --filter PerformanceTests` |
 | Physical-device verification list | **Not done** | `docs/handoff.md` |

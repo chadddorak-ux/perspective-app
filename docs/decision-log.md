@@ -231,7 +231,8 @@ App Group identifiers derive from `LT_BUNDLE_PREFIX` (default `com.example.littl
 `.github/workflows/ci.yml` runs (1) `scripts/privacy-guards.sh`, (2) the package tests on Linux
 with system SQLCipher, and (3) on macOS the package tests against CryptoKit and the Zetetic
 binary, an XcodeGen project generation, a simulator build of the app and share extension, and the
-UI tests (non-blocking until they have been stabilized on a simulator). The repository is public,
+7 UI tests on an iPhone simulator (all passing since run 6; still marked non-blocking until they
+have stayed green for several runs). Docs-only pushes skip CI. The repository is public,
 so these runs do not consume paid minutes. The guards fail on remote-model symbols, analytics or
 crash SDKs, networking APIs in core modules, logging calls, weak or synchronized Keychain classes,
 and card/CVV fields.

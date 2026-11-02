@@ -53,8 +53,10 @@ package, all tested)
 | `./scripts/privacy-guards.sh` | Local and CI | Pass; also verified it fails on a planted probe |
 | CI `core-linux` (`swift:6.4.2-noble`) | GitHub Actions | Pass |
 | CI `swift test` on `macos-latest` (CryptoKit + Zetetic SQLCipher binary) | GitHub Actions | Pass |
-| CI `xcodegen generate` + `xcodebuild … iOS Simulator build` (Xcode 26.6, iOS 26.5 SDK) | GitHub Actions | Run 1 failed (Swift 6 concurrency: non-Sendable static in Contacts adapter); fixed; see CI for the latest result |
-| CI UI tests on a simulator | GitHub Actions | Non-blocking; see CI |
+| CI `swift test` on macOS | GitHub Actions | "Test run with 168 tests in 16 suites passed" (run 3; before the FR2 conflict test was added) |
+| CI `xcodegen generate` + `xcodebuild … iOS Simulator build` (Xcode 26.6, iOS 26.5 SDK) | GitHub Actions | Runs 1–2 failed on Swift 6 concurrency diagnostics in the Contacts/MessageUI adapters (non-Sendable static; delegate conformances); fixed; **BUILD SUCCEEDED** from run 3 onward |
+| CI UI tests on an iPhone simulator (7 tests) | GitHub Actions | Run 3: 3/7; run 4: 5/7; run 5: 6/7; **run 6: 7/7 passing** (fixes were test selectors and lazy-Form scrolling, not app logic) |
+| `LT_PERF=1 swift test -c release … --filter PerformanceTests` | Local Linux | load 0.33 s, engine 11 ms, search p95 129 ms (was 449 ms before the corpus fix) |
 
 ## Unverified device behavior (must be checked on a physical iPhone)
 
@@ -83,8 +85,9 @@ package, all tested)
 
 ## Known gaps and next work (in dependency order)
 
-1. **Get the app green in CI and run it on a device**; work through the list above, then mark the
-   acceptance checklist rows.
+1. **Run the app on a physical iPhone** (it already builds and runs in the simulator in CI); work
+   through the list above, then update the acceptance checklist. Consider making the UI-test CI
+   step blocking once it has been stable for several runs.
 2. **First automatic capture route** (Phase 5): prototype Gmail metadata on-device (AppAuth/PKCE,
    `gmail.metadata`, testing mode) → observed interactions per contact with honest coverage;
    then Microsoft Graph `Mail.ReadBasic`. Each needs a device-side network adapter with a
