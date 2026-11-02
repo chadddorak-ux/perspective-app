@@ -9,7 +9,7 @@ import SwiftUI
 // MARK: - Contacts
 
 enum ContactMapping {
-    static let keys: [CNKeyDescriptor] = [
+    static var keys: [CNKeyDescriptor] { [
         CNContactIdentifierKey as CNKeyDescriptor,
         CNContactGivenNameKey as CNKeyDescriptor,
         CNContactFamilyNameKey as CNKeyDescriptor,
@@ -18,7 +18,7 @@ enum ContactMapping {
         CNContactEmailAddressesKey as CNKeyDescriptor,
         CNContactBirthdayKey as CNKeyDescriptor,
         CNContactImageDataAvailableKey as CNKeyDescriptor,
-    ]
+    ] }
 
     /// Reads only fields LittleThings uses. Postal addresses are deliberately not read.
     static func imported(_ contact: CNContact) -> ImportedContact {
@@ -89,6 +89,7 @@ struct ContactPicker: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: CNContactPickerViewController, context: Context) {}
 
+    @MainActor
     final class Coordinator: NSObject, CNContactPickerDelegate {
         let onPick: ([ImportedContact]) -> Void
         let onCancel: () -> Void
