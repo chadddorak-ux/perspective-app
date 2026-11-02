@@ -90,9 +90,13 @@ final class LittleThingsUITests: XCTestCase {
         createVault()
         addPerson("Rachel Adams")
         app.tabBars.buttons["Settings"].tap()
-        app.staticTexts["Encrypted backup"].tap()
-        app.buttons["createBackupButton"].tap()
-        XCTAssertTrue(app.staticTexts["Your recovery key".uppercased()].waitForExistence(timeout: 3) || app.staticTexts["Your recovery key"].exists)
+        let backup = app.buttons["backupLink"].firstMatch
+        XCTAssertTrue(backup.waitForExistence(timeout: 3))
+        backup.tap()
+        let create = app.buttons["createBackupButton"]
+        XCTAssertTrue(create.waitForExistence(timeout: 3))
+        create.tap()
+        XCTAssertTrue(app.staticTexts["recoveryKeyText"].waitForExistence(timeout: 3))
     }
 
     func testDeleteEverythingReturnsToOnboarding() {

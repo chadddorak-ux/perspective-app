@@ -61,7 +61,9 @@ struct SettingsView: View {
 
                 Section {
                     NavigationLink("Encrypted backup") { BackupView() }
+                        .accessibilityIdentifier("backupLink")
                     NavigationLink("Restore from backup") { RestoreView() }
+                        .accessibilityIdentifier("restoreLink")
                 } header: { Text("Backup") } footer: {
                     if let last = model.snapshot.preferences.lastBackupAt {
                         Text("Last backup \(last.formatted(.dateTime.month().day().year()))")
@@ -204,6 +206,7 @@ struct BackupView: View {
                         .font(.system(.title3, design: .monospaced))
                         .textSelection(.enabled)
                         .accessibilityLabel("Recovery key \(key.displayString.map(String.init).joined(separator: " "))")
+                        .accessibilityIdentifier("recoveryKeyText")
                     TextField("Type the last four characters to confirm", text: $confirmation)
                         .textInputAutocapitalization(.characters)
                     Button("I've written it down") {

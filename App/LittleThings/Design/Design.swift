@@ -85,6 +85,7 @@ struct DemoBanner: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(Color.yellow.opacity(0.25))
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("demoBanner")
     }
 }

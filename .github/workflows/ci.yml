@@ -62,8 +62,11 @@ jobs:
       - name: UI tests (simulator)
         continue-on-error: true
         run: |
-          set -o pipefail
           cd App
           DEVICE=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          set +e
           xcodebuild -project LittleThings.xcodeproj -scheme LittleThings \
-            -destination "id=$DEVICE" CODE_SIGNING_ALLOWED=NO test | tail -n 200
+            -destination "id=$DEVICE" CODE_SIGNING_ALLOWED=NO test > ui-tests.log 2>&1
+          status=$?
+          grep -E "error:|Test Case .*(passed|failed)|Executed [0-9]+ test" ui-tests.log
+          exit $status
