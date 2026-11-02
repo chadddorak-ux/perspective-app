@@ -62,7 +62,11 @@ let package = Package(
         .target(name: "LTSuggestions", dependencies: ["LTDomain"]),
 
         // Integration protocols, capability registry, notification planning, calendar reconciliation.
-        .target(name: "LTIntegrations", dependencies: ["LTDomain", "LTSuggestions", "LTCryptoSupport"]),
+        .target(
+            name: "LTIntegrations",
+            dependencies: ["LTDomain", "LTSuggestions", "LTCryptoSupport"],
+            resources: [.copy("Resources/capability-matrix.json")]
+        ),
 
         // Local intelligence contract: untrusted-output validation, pattern extraction, templates.
         .target(name: "LTIntelligence", dependencies: ["LTDomain"]),
